@@ -17,3 +17,5 @@ Linux, Windows & Mac OS.
 - [GameBoy CPU Manual](http://www.codeslinger.co.uk/pages/projects/gameboy/files/GB.pdf)
 - [CodeSlinger](http://www.codeslinger.co.uk/pages/projects/gameboy/beginning.html)
 - [Gameboy Opcodes](http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
+- [Pandocs](http://bgb.bircd.org/pandocs.htm)
+- [Imran Nazar](http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-Memory)

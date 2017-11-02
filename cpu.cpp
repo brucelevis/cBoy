@@ -16,7 +16,60 @@ typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
 
 // initialize vars
-WORD Cpu::pc = 0x100;
+WORD Cpu::pc = 0;
+Cpu::Register Cpu::sp = {};
+Cpu::Register Cpu::regAF = {};
+Cpu::Register Cpu::regBC = {};
+Cpu::Register Cpu::regDE = {};
+Cpu::Register Cpu::regHL = {};
+
+// init cpu
+int Cpu::Init()
+{
+	// init registers
+	Cpu::regAF.reg = 0x01B0;
+	Cpu::regBC.reg = 0x0013;
+	Cpu::regDE.reg = 0x00D8;
+	Cpu::regHL.reg = 0x014D;
+	// init program counter
+	Cpu::pc = 0x00;
+	// init stack pointer
+	Cpu::sp.reg = 0xFFFE;
+	// init memory
+	Memory::Write(0xFF05, 0x00);
+	Memory::Write(0xFF06, 0x00);
+	Memory::Write(0xFF07, 0x00);
+	Memory::Write(0xFF10, 0x80);
+	Memory::Write(0xFF11, 0xBF);
+	Memory::Write(0xFF12, 0xF3);
+	Memory::Write(0xFF14, 0xBF);
+	Memory::Write(0xFF16, 0x3F);
+	Memory::Write(0xFF17, 0x00);
+	Memory::Write(0xFF19, 0xBF);
+	Memory::Write(0xFF1A, 0x7F);
+	Memory::Write(0xFF1B, 0xFF);
+	Memory::Write(0xFF1C, 0x9F);
+	Memory::Write(0xFF1E, 0xBF);
+	Memory::Write(0xFF20, 0xFF);
+	Memory::Write(0xFF21, 0x00);
+	Memory::Write(0xFF22, 0x00);
+	Memory::Write(0xFF23, 0xBF);
+	Memory::Write(0xFF24, 0x77);
+	Memory::Write(0xFF25, 0xF3);
+	Memory::Write(0xFF26, 0xF1);
+	Memory::Write(0xFF40, 0x91);
+	Memory::Write(0xFF42, 0x00);
+	Memory::Write(0xFF43, 0x00);
+	Memory::Write(0xFF45, 0x00);
+	Memory::Write(0xFF47, 0xFC);
+	Memory::Write(0xFF48, 0xFF);
+	Memory::Write(0xFF49, 0xFF);
+	Memory::Write(0xFF4A, 0x00);
+	Memory::Write(0xFF4B, 0x00);
+	Memory::Write(0xFFFF, 0x00);
+
+	return 0;
+}
 
 // execute opcode
 int Cpu::ExecuteOpcode()
@@ -30,7 +83,7 @@ int Cpu::ExecuteOpcode()
 	switch(opcode)
 	{
 		case 0x00: // nop
-			Log::UnimplementedOpcode(opcode);
+			Log::Normal("nop");
 		break;
 
 		case 0x01: // LD BC,d16

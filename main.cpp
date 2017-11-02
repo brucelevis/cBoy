@@ -7,6 +7,7 @@
 // includes
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include "include/bios.h"
 #include "include/cpu.h"
 #include "include/lcd.h"
 #include "include/memory.h"
@@ -18,6 +19,8 @@
 #define SCREEN_HEIGHT 144
 // emulator settings
 #define MAX_CYCLES 69905
+// should we step through instructions?
+int stepThrough = true;
 // has the user requested to quit the emulator?
 bool shouldQuit = false;
 // the SDL window
@@ -88,7 +91,7 @@ static void EmulationLoop()
 }
 
 // main loop
-static void ExecuteLoop()
+static void StartMainLoop()
 {
 	// create an SDL event
 	SDL_Event event;
@@ -99,17 +102,43 @@ static void ExecuteLoop()
 		// handle events
 		while (SDL_PollEvent(&event) != 0)
 		{
-			// if the user has clicked the 'x' button on the window
-			if (event.type == SDL_QUIT)
+			// check events
+			switch(event.type)
 			{
-				shouldQuit = true;
-			}
+				case SDL_QUIT: // user quit
+					shouldQuit = true;
+				break;
 
-			// execute the emulation loop
-			EmulationLoop();
+            	// key down event
+				case SDL_KEYDOWN:
+					// Check the SDLKey values
+					switch(event.key.keysym.sym)
+					{
+						case SDLK_UP:
+						case SDLK_DOWN:
+							if (stepThrough)
+							{
+								EmulationLoop();
+							}
+						break;
+
+						case SDLK_LEFT:
+							stepThrough = !stepThrough;
+
+						default:
+						break;
+					}
+				break;
+			}
 
 			// update the surface
 			SDL_UpdateWindowSurface(window);
+		}
+
+		// execute the emulation loop
+		if (!stepThrough)
+		{
+			EmulationLoop();
 		}
 	}
 }
@@ -120,10 +149,13 @@ int main(int argc, char* args[])
 	// init SDL
 	if (InitSDL())
 	{
-		// load rom
-		Rom::Load("bios.bin");
+		// init the Cpu
+		Cpu::Init();
+		// load bios
+		Bios::Load("bios.bin");
+		Log::Critical("Data at memory location 0x00 = %#04x", Memory::Read(0x00));
 		// execute the main loop
-		ExecuteLoop();
+		StartMainLoop();
 	}
 
 	// close

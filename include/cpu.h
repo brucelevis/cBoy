@@ -17,12 +17,25 @@ typedef signed short SIGNED_WORD;
 class Cpu
 {
 	public:
+		static int Init();
 		static int ExecuteOpcode();
 		static int ExecuteExtendedOpcode();
 		static int ExecuteNextOpcode();
 
 	private:
+		union Register {
+			WORD reg;
+			struct {
+				BYTE lo;
+				BYTE hi;
+			};
+		};
 		static WORD pc;
+		static Register sp;
+		static Register regAF;
+		static Register regBC;
+		static Register regDE;
+		static Register regHL;
 };
 
 #endif

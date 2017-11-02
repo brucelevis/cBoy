@@ -1,27 +1,27 @@
 /*
 	Project: cBoy: A Gameboy emulator written in C++
 	Author: Danny Glover - https://github.com/DannyGlover
-	File: rom.h
+	File: bios.h
 */
 
-#ifndef ROM_H
-#define ROM_H
+#ifndef BIOS_H
+#define BIOS_H
 
 // definitions
 typedef unsigned char BYTE;
 
-// rom class
-class Rom
+// bios class
+class Bios
 {
 	public:
 		static bool Load(const char *fileName);
-		static void Close();
+		static void Remove();
 
 	public:
-		static BYTE cartridgeMem[0x200000];
+		static BYTE biosMem[0x100];
 
 	private:
-		static const char *currentRomFileName;
+		static const char *biosFileName;
 };
 
 #endif

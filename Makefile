@@ -1,12 +1,12 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = main.cpp cpu.cpp lcd.cpp log.cpp memory.cpp rom.cpp
+OBJS = main.cpp bios.cpp cpu.cpp lcd.cpp log.cpp memory.cpp rom.cpp
 
 #CC specifies which compiler we're using
 CC = g++
 
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -w suppresses all warnings
-COMPILER_FLAGS = -w
+#COMPILER_FLAGS = 
 
 #LINKER_FLAGS specifies the libraries we're linking against
 LINKER_FLAGS = -lSDL2
