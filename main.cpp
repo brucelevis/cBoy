@@ -120,7 +120,9 @@ int main(int argc, char* args[])
 	// init SDL
 	if (InitSDL())
 	{
-		// Execute the main loop
+		// load rom
+		Rom::Load("bios.bin");
+		// execute the main loop
 		ExecuteLoop();
 	}
 

@@ -7,6 +7,9 @@
 #ifndef LOG_H
 #define LOG_H
 
+// definitions
+typedef unsigned char BYTE;
+
 // log class
 class Log
 {
@@ -15,6 +18,7 @@ class Log
 		static void Warning(char* fmt, ...);
 		static void Error(char* fmt, ...);
 		static void Critical(char* fmt, ...);
+		static void UnimplementedOpcode(BYTE opcode);
 };
 
 #endif

@@ -8,6 +8,9 @@
 #include <SDL2/SDL.h>
 #include "include/log.h"
 
+// definitions
+typedef unsigned char BYTE;
+
 // normal/standard log output
 void Log::Normal(char* fmt, ...)
 {
@@ -34,4 +37,10 @@ void Log::Critical(char* fmt, ...)
 {
 	va_list argList;
 	SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, fmt, argList);
+}
+
+// log unimplemented opcode
+void Log::UnimplementedOpcode(BYTE opcode)
+{
+	Log::Warning("Opcode 0x%x Not Implemented", opcode);
 }
