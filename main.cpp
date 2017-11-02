@@ -7,18 +7,25 @@
 // includes
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include "include/cpu.h"
+#include "include/lcd.h"
 #include "include/memory.h"
 #include "include/log.h"
+#include "include/rom.h"
 
 // screen dimensions
-const int SCREEN_WIDTH = 160;
-const int SCREEN_HEIGHT = 144;
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 144
+// emulator settings
+#define MAX_CYCLES 69905
 // has the user requested to quit the emulator?
 bool shouldQuit = false;
 // the SDL window
 SDL_Window* window = NULL;
 // the SDL surface
 SDL_Surface* screenSurface = NULL;
+// Cycles executed
+int cyclesThisUpdate = 0;
 
 // init SDL
 static bool InitSDL()
@@ -62,6 +69,24 @@ static void Close()
 	SDL_Quit();
 }
 
+// emulation loop
+static void EmulationLoop()
+{
+	// 
+	if (cyclesThisUpdate < MAX_CYCLES)
+	{
+		int cycles = Cpu::ExecuteNextOpcode(); 
+		cyclesThisUpdate += cycles;
+
+		// update timers; 
+		// update graphics; 
+		// do interupts;
+	}
+	
+	// render the screen
+	Lcd::Render();
+}
+
 // main loop
 static void ExecuteLoop()
 {
@@ -79,6 +104,9 @@ static void ExecuteLoop()
 			{
 				shouldQuit = true;
 			}
+
+			// execute the emulation loop
+			EmulationLoop();
 
 			// update the surface
 			SDL_UpdateWindowSurface(window);

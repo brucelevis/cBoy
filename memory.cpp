@@ -4,7 +4,7 @@
 	File: memory.cpp
 */
 
-// Includes
+// includes
 #include "include/memory.h"
 #include "include/log.h"
 
