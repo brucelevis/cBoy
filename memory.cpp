@@ -12,20 +12,21 @@
 typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
-typedef signed short SIGNED_WORD; 
+typedef signed short SIGNED_WORD;
+
+// initialize vars
+BYTE Memory::mem[0x10000] = {0};
 
 // Read memory
-int Memory::Read()
+int Memory::Read(WORD address)
 {
-	return 0;
+	return Memory::mem[address];
 }
 
 // Write memory
-int Memory::Write()
+int Memory::Write(WORD address, BYTE data)
 {
-	Log::Normal("This is a normal log");
-	Log::Warning("This is a warning log");
-	Log::Critical("This is a critical log");
-	Log::Error("This is a warning log");
+	Memory::mem[address] = data;
+
 	return 0;
 }

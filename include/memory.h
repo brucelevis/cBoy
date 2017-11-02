@@ -17,8 +17,11 @@ typedef signed short SIGNED_WORD;
 class Memory 
 {
 	public:
-		static int Read();
-		static int Write();
+		static int Read(WORD address);
+		static int Write(WORD address, BYTE data);
+
+	private:
+		static BYTE mem[0x10000];
 };
 
 #endif

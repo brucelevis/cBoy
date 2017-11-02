@@ -79,7 +79,7 @@ static void EmulationLoop()
 		cyclesThisUpdate += cycles;
 
 		// update timers; 
-		// update graphics; 
+		// update graphics;
 		// do interupts;
 	}
 	
