@@ -13,7 +13,7 @@
 typedef unsigned char BYTE;
 
 // normal/standard log output
-void Log::Normal(char* fmt, ...)
+void Log::Normal(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -23,7 +23,7 @@ void Log::Normal(char* fmt, ...)
 }
 
 // warning log output
-void Log::Warning(char* fmt, ...)
+void Log::Warning(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -34,7 +34,7 @@ void Log::Warning(char* fmt, ...)
 }
 
 // error log output
-void Log::Error(char* fmt, ...)
+void Log::Error(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -45,7 +45,7 @@ void Log::Error(char* fmt, ...)
 }
 
 // critical log output
-void Log::Critical(char* fmt, ...)
+void Log::Critical(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);

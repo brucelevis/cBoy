@@ -14,10 +14,10 @@ typedef unsigned char BYTE;
 class Log
 {
 	public:
-		static void Normal(char* fmt, ...);
-		static void Warning(char* fmt, ...);
-		static void Error(char* fmt, ...);
-		static void Critical(char* fmt, ...);
+		static void Normal(const char *fmt, ...);
+		static void Warning(const char *fmt, ...);
+		static void Error(const char *fmt, ...);
+		static void Critical(const char *fmt, ...);
 		static void UnimplementedOpcode(BYTE opcode);
 };
 

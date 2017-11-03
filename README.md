@@ -19,3 +19,4 @@ Linux, Windows & Mac OS.
 - [Gameboy Opcodes](http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
 - [Pandocs](http://bgb.bircd.org/pandocs.htm)
 - [Imran Nazar](http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-Memory)
+- [Devrs](http://www.devrs.com/gb/files/opcodes.html)
