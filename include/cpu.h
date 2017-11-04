@@ -36,6 +36,11 @@ class Cpu
 		static Register regBC;
 		static Register regDE;
 		static Register regHL;
+		static bool flagZero;
+		static bool flagSub;
+		static bool flagHalfCarry;
+		static bool flagCarry;
+		static bool interuptsEnabled;
 };
 
 #endif

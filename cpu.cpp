@@ -22,19 +22,30 @@ Cpu::Register Cpu::regAF = {};
 Cpu::Register Cpu::regBC = {};
 Cpu::Register Cpu::regDE = {};
 Cpu::Register Cpu::regHL = {};
+bool Cpu::flagZero = false;
+bool Cpu::flagSub = false;
+bool Cpu::flagHalfCarry = false;
+bool Cpu::flagCarry = false;
+bool Cpu::interuptsEnabled = false;
 
 // init cpu
 int Cpu::Init()
 {
 	// init registers
-	Cpu::regAF.reg = 0x01B0;
-	Cpu::regBC.reg = 0x0013;
-	Cpu::regDE.reg = 0x00D8;
-	Cpu::regHL.reg = 0x014D;
+	regAF.reg = 0x01B0;
+	regBC.reg = 0x0013;
+	regDE.reg = 0x00D8;
+	regHL.reg = 0x014D;
 	// init program counter
-	Cpu::pc = 0x00;
+	pc = 0x00;
 	// init stack pointer
-	Cpu::sp.reg = 0xFFFE;
+	sp.reg = 0xFFFE;
+	// reset flags
+	flagZero = false;
+	flagSub = false;
+	flagHalfCarry = false;
+	flagCarry = false;
+	interuptsEnabled = false;
 	// init memory
 	Memory::Write(0xFF05, 0x00);
 	Memory::Write(0xFF06, 0x00);
@@ -75,9 +86,9 @@ int Cpu::Init()
 int Cpu::ExecuteOpcode()
 {
 	// get the current opcode
-	BYTE opcode = Memory::Read(Cpu::pc);
+	BYTE opcode = Memory::ReadByte(pc);
 	// increment the program counter
-	Cpu::pc++;
+	pc++;
 
 	// handle the opcode
 	switch(opcode)
@@ -274,13 +285,19 @@ int Cpu::ExecuteOpcode()
 
 		case 0x20: // JR NZ,r8
 		{
+			if (!flagZero)
+			{
+				BYTE jumpAddr = (Memory::ReadByte(pc + 1));
+				pc += jumpAddr;
+			}
 			Log::UnimplementedOpcode(opcode);
 		}
 		break;
 
 		case 0x21: // LD HL,d16
 		{
-			Log::UnimplementedOpcode(opcode);
+			regHL.reg = Memory::ReadWord(pc);
+			//Log::UnimplementedOpcode(opcode);
 		}
 		break;
 
@@ -310,6 +327,7 @@ int Cpu::ExecuteOpcode()
 
 		case 0x26: // LD H,d8
 		{
+			regHL.hi = Memory::ReadByte(pc + 1);
 			Log::UnimplementedOpcode(opcode);
 		}
 		break;
@@ -378,25 +396,16 @@ int Cpu::ExecuteOpcode()
 		{
 			Log::UnimplementedOpcode(opcode);
 
-			Log::Warning("value of memory at pc: %#04x", opcode);
-
-			WORD res = Memory::Read(Cpu::pc + 1);
-
-			Log::Warning("value of memory at pc + 1: %#04x", res);
-
-			res = res << 8;
-
-			Log::Warning("value of memory at pc + 1 after << 8: %#04x", res);
-
-			res |= Memory::Read(Cpu::pc);
-
-			Log::Warning("value of memory afer |= : %#04x", res);
-			Cpu::pc += 2;
+			//Log::Warning("value of memory at pc: %#04x", opcode);
+			sp.reg = Memory::ReadWord(pc);
 		}
 		break;
 
 		case 0x32: // LD (HL-),A
 		{
+			Memory::Write(regHL.reg, regAF.hi);
+			regHL.reg--;
+
 			Log::UnimplementedOpcode(opcode);
 		}
 		break;
@@ -841,6 +850,8 @@ int Cpu::ExecuteOpcode()
 
 		case 0x7C: // LD A,H
 		{
+			regAF.hi = regHL.hi;
+
 			Log::UnimplementedOpcode(opcode);
 		}
 		break;
@@ -1051,6 +1062,14 @@ int Cpu::ExecuteOpcode()
 
 		case 0x9F: // SBC A,A
 		{
+			regAF.hi -= regAF.hi;
+			if (flagCarry) regAF.hi --;
+
+			flagZero = (regAF.hi == 0);
+			flagSub = true;
+			//flagHalfCarry = ;
+			//flagCarry = ;
+
 			Log::UnimplementedOpcode(opcode);
 		}
 		break;
@@ -1147,7 +1166,14 @@ int Cpu::ExecuteOpcode()
 
 		case 0xAF: // XOR A
 		{
-			Log::UnimplementedOpcode(opcode);
+			BYTE result = regAF.hi ^= Memory::ReadByte(opcode);
+
+			regAF.hi = result;
+			flagZero = (result == 0);
+			flagCarry = false;
+			flagSub = false;
+			flagHalfCarry = false;
+			//Log::UnimplementedOpcode(opcode);
 		}
 		break;
 
@@ -1315,7 +1341,7 @@ int Cpu::ExecuteOpcode()
 
 		case 0xCB: // PREFIX CB
 		{
-			Cpu::ExecuteExtendedOpcode();
+			ExecuteExtendedOpcode();
 		}
 		break;
 
@@ -1603,6 +1629,7 @@ int Cpu::ExecuteOpcode()
 
 		case 0xFB: // EI
 		{
+			interuptsEnabled = true; // note: enabled on the next instruction
 			Log::UnimplementedOpcode(opcode);
 		}
 		break;
@@ -1619,15 +1646,28 @@ int Cpu::ExecuteOpcode()
 		}
 		break;
 
-		case 0xFE: // ??
+		case 0xFE: // CP #
 		{
-			Log::UnimplementedOpcode(opcode);
+			// Subtract n from reg A
+			regAF.hi -= (Memory::ReadByte(opcode));
+
+			// Check for zero
+			flagZero = (regAF.hi == (Memory::ReadByte(opcode)));
+			// Sub
+			flagSub = true;
+			// Carry
+			flagCarry = (regAF.hi < (Memory::ReadByte(opcode)));
+			//Log::UnimplementedOpcode(opcode);
 		}
 		break;
 
 		case 0xFF: // RST 38H
 		{
-			Log::UnimplementedOpcode(opcode);
+			sp.reg -= 2;
+			sp.reg = opcode;
+			pc = 0x38;
+
+			//Log::UnimplementedOpcode(opcode);
 		}
 		break;
 	}
@@ -1636,8 +1676,8 @@ int Cpu::ExecuteOpcode()
 // execute extended opcode
 int Cpu::ExecuteExtendedOpcode()
 {
-	BYTE opcode = Memory::Read(Cpu::pc);
-	Cpu::pc++;
+	BYTE opcode = Memory::ReadByte(pc);
+	pc++;
 
 	// handle the extended opcode
 	switch(opcode)
@@ -2862,7 +2902,7 @@ int Cpu::ExecuteExtendedOpcode()
 
 		case 0xCB: // SET 1,E
 		{
-			Cpu::ExecuteExtendedOpcode();
+			Log::UnimplementedOpcode(opcode);
 		}
 		break;
 
@@ -3184,7 +3224,7 @@ int Cpu::ExecuteExtendedOpcode()
 int Cpu::ExecuteNextOpcode()
 {
 	// Execute the next opcode
-	Cpu::ExecuteOpcode();
+	ExecuteOpcode();
 
 	return 0;
 }

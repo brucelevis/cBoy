@@ -25,7 +25,7 @@ bool Rom::Load(const char *fileName)
 	// the result of the load
 	bool loadResult = true;
 	// set the cartridge memory
-	memset(Rom::cartridgeMem, 0, sizeof(Rom::cartridgeMem));
+	memset(cartridgeMem, 0, sizeof(cartridgeMem));
 
 	// open the gb rom
 	FILE *gbRom = fopen(fileName, "rb");
@@ -37,10 +37,10 @@ bool Rom::Load(const char *fileName)
 		// the rom was loaded successfully
 		loadResult = true;
 		// read the rom into memory
-		fread(Rom::cartridgeMem, 1, 0x3FFF, gbRom);
+		fread(cartridgeMem, 1, 0x3FFF, gbRom);
 
 		// Set the current rom name
-		Rom::currentRomFileName = fileName;
+		currentRomFileName = fileName;
 	}
 
 	// close the rom
@@ -49,9 +49,9 @@ bool Rom::Load(const char *fileName)
 	// load the rom into memory
 	for (int i = 0; i < 0x3FFF; i++)
 	{
-		//Log::Error("rom[i] = %#04x", Rom::cartridgeMem[i]);
+		//Log::Error("rom[i] = %#04x", cartridgeMem[i]);
 		// load the rom into memory
-		Memory::Write(0x00 + i, Rom::cartridgeMem[i]);
+		Memory::Write(0x00 + i, cartridgeMem[i]);
 	}	
 	
 	return loadResult;

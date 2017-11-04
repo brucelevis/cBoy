@@ -179,7 +179,7 @@ int main(int argc, char* args[])
 		Bios::Load("bios.bin");
 		// init Lcd
 		Lcd::Init();
-		Log::Critical("Data at memory location 0x00 = %#04x", Memory::Read(0x00));
+		Log::Critical("Data at memory location 0x00 = %#04x", Memory::ReadByte(0x00));
 		// execute the main loop
 		StartMainLoop();
 	}

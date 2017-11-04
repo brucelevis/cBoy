@@ -25,7 +25,7 @@ bool Bios::Load(const char *fileName)
 	// the result of the load
 	bool loadResult = true;
 	// set the cartridge memory
-	memset(Bios::biosMem, 0, sizeof(Bios::biosMem));
+	memset(biosMem, 0, sizeof(biosMem));
 
 	// open the gb bios
 	FILE *gbBios = fopen(fileName, "rb");
@@ -37,7 +37,7 @@ bool Bios::Load(const char *fileName)
 		// the bios was loaded successfully
 		loadResult = true;
 		// read the bios into memory
-		fread(Bios::biosMem, 1, 0x100, gbBios);
+		fread(biosMem, 1, 0x100, gbBios);
 	}
 
 	// close the bios
@@ -46,9 +46,9 @@ bool Bios::Load(const char *fileName)
 	// Load the bios into memory
 	for (int i = 0; i < 0x100; i++)
 	{
-		Log::Error("bios[i] = %#04x", Bios::biosMem[i]);
+		Log::Error("bios[i] = %#04x", biosMem[i]);
 		// load the bios into memory
-		Memory::Write(0x00 + i, Bios::biosMem[i]);
+		Memory::Write(0x00 + i, biosMem[i]);
 	}
 	
 	return loadResult;

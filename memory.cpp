@@ -17,16 +17,20 @@ typedef signed short SIGNED_WORD;
 // initialize vars
 BYTE Memory::mem[0x10000] = {0};
 
-// Read memory
-BYTE Memory::Read(WORD address)
+// read memory
+BYTE Memory::ReadByte(WORD address)
 {
-	return Memory::mem[address];
+	return mem[address];
 }
 
-// Write memory
-BYTE Memory::Write(WORD address, BYTE data)
+// read word
+WORD Memory::ReadWord(WORD address)
 {
-	Memory::mem[address] = data;
+	return (ReadByte(address)) | (ReadByte(address + 1) << 8);
+}
 
-	return 0;
+// write memory
+void Memory::Write(WORD address, BYTE data)
+{
+	mem[address] = data;
 }

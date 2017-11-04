@@ -28,7 +28,7 @@ void Lcd::Init()
 		{
 			for (int c = 0; c < 3; c ++)
 			{
-				Lcd::screen[x][y][c] = 255;
+				screen[x][y][c] = 255;
 			}
 		}
 	}
@@ -41,9 +41,9 @@ void Lcd::Reset()
 	{
 		for (int y = 0; y < 144; y++)
 		{
-			Lcd::screen[x][y][0] = 255;
-			Lcd::screen[x][y][1] = 255;
-			Lcd::screen[x][y][2] = 255;
+			screen[x][y][0] = 255;
+			screen[x][y][1] = 255;
+			screen[x][y][2] = 255;
 		}
 	}
 }
@@ -55,6 +55,6 @@ void Lcd::Render(SDL_Window *window)
  	glLoadIdentity();
  	glRasterPos2i(-1, 1);
 	glPixelZoom(1, -1);
- 	glDrawPixels(160, 144, GL_RGB, GL_UNSIGNED_BYTE, Lcd::screen);
+ 	glDrawPixels(160, 144, GL_RGB, GL_UNSIGNED_BYTE, screen);
 	SDL_GL_SwapWindow(window);
 }
