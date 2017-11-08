@@ -171,12 +171,13 @@ int main(int argc, char* args[])
 	// init SDL
 	if (InitSDL())
 	{
-		
-
 		// init the Cpu
 		Cpu::Init();
 		// load bios
-		Bios::Load("bios.bin");
+		//Bios::Load("bios.bin");
+		// load rom
+		//Rom::Load("roms/tetris.gb");
+		Rom::Load("roms/tests/cpu_instrs.gb");
 		// init Lcd
 		Lcd::Init();
 		Log::Critical("Data at memory location 0x00 = %#04x", Memory::ReadByte(0x00));

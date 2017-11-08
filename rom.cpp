@@ -13,11 +13,11 @@
 #include "include/log.h"
 
 // definitions
-typedef unsigned char BYTE;
+//typedef unsigned char BYTE;
 
 // The current rom name
 const char *Rom::currentRomFileName = NULL;
-BYTE Rom::cartridgeMem[0x200000] = {0}; 
+//BYTE Rom::cartridgeMem[0x200000] = {0}; 
 
 // load a rom
 bool Rom::Load(const char *fileName)
@@ -25,7 +25,7 @@ bool Rom::Load(const char *fileName)
 	// the result of the load
 	bool loadResult = true;
 	// set the cartridge memory
-	memset(cartridgeMem, 0, sizeof(cartridgeMem));
+	//memset(cartridgeMem, 0, sizeof(cartridgeMem));
 
 	// open the gb rom
 	FILE *gbRom = fopen(fileName, "rb");
@@ -37,7 +37,7 @@ bool Rom::Load(const char *fileName)
 		// the rom was loaded successfully
 		loadResult = true;
 		// read the rom into memory
-		fread(cartridgeMem, 1, 0x3FFF, gbRom);
+		fread(&Memory::Get()[0x00], 1, 0x3FFF, gbRom);
 
 		// Set the current rom name
 		currentRomFileName = fileName;
@@ -46,13 +46,14 @@ bool Rom::Load(const char *fileName)
 	// close the rom
 	fclose(gbRom);
 
+	/*
 	// load the rom into memory
 	for (int i = 0; i < 0x3FFF; i++)
 	{
 		//Log::Error("rom[i] = %#04x", cartridgeMem[i]);
 		// load the rom into memory
 		Memory::Write(0x00 + i, cartridgeMem[i]);
-	}	
+	}*/	
 	
 	return loadResult;
 }

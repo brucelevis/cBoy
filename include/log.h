@@ -18,6 +18,7 @@ class Log
 		static void Warning(const char *fmt, ...);
 		static void Error(const char *fmt, ...);
 		static void Critical(const char *fmt, ...);
+		static void ExecutedOpcode(BYTE opcode);
 		static void UnimplementedOpcode(BYTE opcode);
 };
 

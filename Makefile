@@ -2,7 +2,7 @@
 OBJS = main.cpp bios.cpp cpu.cpp lcd.cpp log.cpp memory.cpp rom.cpp
 
 #CC specifies which compiler we're using
-CC = g++
+CC = g++ --std=c++11
 
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -w suppresses all warnings
@@ -20,3 +20,5 @@ OBJ_NAME = cBoy
 #This is the target that compiles our executable
 all : $(OBJS)
 	$(CC) $(OBJS) $(COMPILER_FLAGS) $(LINKER_FLAGS) -o $(OBJ_NAME)
+
+clean : rm -f *.o rm $(BIN)

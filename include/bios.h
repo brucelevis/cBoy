@@ -18,7 +18,7 @@ class Bios
 		static void Remove();
 
 	public:
-		static BYTE biosMem[0x100];
+		//static BYTE biosMem[0x100];
 
 	private:
 		static const char *biosFileName;

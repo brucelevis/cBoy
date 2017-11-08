@@ -20,6 +20,7 @@ class Memory
 		static BYTE ReadByte(WORD address);
 		static WORD ReadWord(WORD address);
 		static void Write(WORD address, BYTE data);
+		static BYTE * Get();
 
 	private:
 		static BYTE mem[0x10000];

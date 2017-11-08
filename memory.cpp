@@ -26,11 +26,17 @@ BYTE Memory::ReadByte(WORD address)
 // read word
 WORD Memory::ReadWord(WORD address)
 {
-	return (ReadByte(address)) | (ReadByte(address + 1) << 8);
+	return (ReadByte(address + 1) << 8) | (ReadByte(address));
 }
 
 // write memory
 void Memory::Write(WORD address, BYTE data)
 {
 	mem[address] = data;
+}
+
+// get memory
+BYTE * Memory::Get()
+{
+	return mem;
 }

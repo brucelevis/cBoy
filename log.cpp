@@ -55,6 +55,12 @@ void Log::Critical(const char *fmt, ...)
 	va_end(args);
 }
 
+// log executed opcode
+void Log::ExecutedOpcode(BYTE opcode)
+{
+	printf("WARNING: executed opcode %#04x \n", opcode);
+}
+
 // log unimplemented opcode
 void Log::UnimplementedOpcode(BYTE opcode)
 {
