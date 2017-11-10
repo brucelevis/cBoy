@@ -7,10 +7,6 @@
 #ifndef CPU_H
 #define CPU_H
 
-#include <cstdarg>
-#include <iostream>
-#include <initializer_list>
-
 // definitions
 typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
@@ -57,12 +53,6 @@ class Cpu
 				BYTE hi;
 			};
 		};
-		struct Flags {
-			BYTE Z;
-			BYTE N;
-			BYTE H;
-			BYTE C;
-		};
 		struct Operations {
 			bool EnableInterrupts;
 			bool Stop;
@@ -73,7 +63,6 @@ class Cpu
 		static Registers BC;
 		static Registers DE;
 		static Registers HL;
-		static Flags Flag;
 		static Operations Operation;
 };
 

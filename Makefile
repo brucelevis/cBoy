@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = main.cpp bios.cpp cpu.cpp lcd.cpp log.cpp memory.cpp rom.cpp
+OBJS = main.cpp bit.cpp bios.cpp cpu.cpp lcd.cpp log.cpp memory.cpp rom.cpp
 
 #CC specifies which compiler we're using
 CC = g++ --std=c++11

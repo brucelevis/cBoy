@@ -32,6 +32,16 @@ WORD Memory::ReadWord(WORD address)
 // write memory
 void Memory::Write(WORD address, BYTE data)
 {
+	if (address == 0xFF02)
+	{
+		Log::Critical("Writing to serial port");
+
+		if (data == 0x81)
+		{
+			Log::Critical("Result of test > %s", ReadWord(0xFF01));
+		}
+	}
+
 	mem[address] = data;
 }
 

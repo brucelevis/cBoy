@@ -165,6 +165,10 @@ static void StartMainLoop()
 	}
 }
 
+bool halfcarry(BYTE a, BYTE b) {
+	return (((a & 0xF) + (b & 0xF)) & 0x10) == 0x10;
+}
+
 // main
 int main(int argc, char* args[])
 {
@@ -176,11 +180,15 @@ int main(int argc, char* args[])
 		// load bios
 		//Bios::Load("bios.bin");
 		// load rom
-		//Rom::Load("roms/tetris.gb");
-		Rom::Load("roms/tests/cpu_instrs.gb");
+		Rom::Load("roms/Tetris.gb");
+		//Rom::Load("roms/tests/cpu_instrs.gb");
 		// init Lcd
 		Lcd::Init();
-		Log::Critical("Data at memory location 0x00 = %#04x", Memory::ReadByte(0x00));
+		Log::Critical("Data at memory location 0x100 = %#02x", Memory::ReadByte(0x100));
+		Log::Critical("Data at memory location 0x101 = %#04x", Memory::ReadByte(0x101));
+		Log::Critical("Data at memory location 0x102 = %#04x", Memory::ReadByte(0x102));
+		Log::Critical("Data at memory location 0x103 = %#04x", Memory::ReadByte(0x103));
+		Log::Critical("Data at memory location 0x104 = %#04x", Memory::ReadByte(0x104));
 		// execute the main loop
 		StartMainLoop();
 	}

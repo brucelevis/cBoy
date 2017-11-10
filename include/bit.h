@@ -1,11 +1,11 @@
 /*
 	Project: cBoy: A Gameboy emulator written in C++
 	Author: Danny Glover - https://github.com/DannyGlover
-	File: memory.h
+	File: bit.h
 */
 
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef BIT_H
+#define BIT_H
 
 // definitions
 typedef unsigned char BYTE;
@@ -13,17 +13,15 @@ typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD; 
 
-// memory class
-class Memory 
+// bit class
+class Bit 
 {
 	public:
-		static BYTE ReadByte(WORD address);
-		static WORD ReadWord(WORD address);
-		static void Write(WORD address, BYTE data);
-		static BYTE * Get();
-
-	private:
-		static BYTE mem[0x10000];
+		static void Set(BYTE &val, BYTE bit);
+		static void Reset(BYTE &val, BYTE bit);
+		static BYTE Get(BYTE val, BYTE bit);
+		static BYTE DidHalfCarry(BYTE val, BYTE val2);
+		static BYTE DidCarry(BYTE val);
 };
 
 #endif
