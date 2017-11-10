@@ -244,15 +244,18 @@ void Cpu::JUMP_Immediate()
 // jump (two byte immediate value)
 void Cpu::JUMP()
 {
-	PC = Memory::ReadWord(PC);
+	WORD nn = Memory::ReadWord(PC);
+	PC += 2;
+	PC = nn;
 }
 
 // call
 void Cpu::CALL()
 {
-	PC += 2;
+	WORD nn = Memory::ReadWord(PC);
+	PC += 2;	
 	PUSH_Word_Onto_Stack(PC);
-	PC = Memory::ReadWord(PC);
+	PC = nn;
 }
 
 // return
@@ -405,13 +408,13 @@ int Cpu::ExecuteOpcode()
 		case 0xC6: ADD_8Bit(AF.hi, Memory::ReadByte(PC)); PC++; break; // ADD A,d8
 		// 8-bit add + carry
 		case 0x89: ADD_8Bit(AF.hi, BC.lo, true); break; // ADC A,C
-		case 0x8A: ADD_8Bit(AF.hi, DE.hi, true); // ADC A,D
+		case 0x8A: ADD_8Bit(AF.hi, DE.hi, true); break; // ADC A,D
 		case 0x8B: ADD_8Bit(AF.hi, DE.lo, true); break; // ADC A,E
 		case 0x8C: ADD_8Bit(AF.hi, HL.hi, true); break; // ADC A,H
 		case 0x8D: ADD_8Bit(AF.hi, HL.lo, true); break; // ADC A,L
 		case 0x8E: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), true); break; // ADC A,(HL)
 		case 0x8F: ADD_8Bit(AF.hi, AF.hi, true); break; // ADC A,A
-		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC), true); break; // ADC A,d8ADD
+		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC), true); PC++; break; // ADC A,d8ADD
 		// 16-bit add
 		case 0x09: ADD_16Bit(HL.reg, BC.reg); break; // ADD HL,BC
 		case 0x19: ADD_16Bit(HL.reg, DE.reg); break; // ADD HL,DE
@@ -436,7 +439,7 @@ int Cpu::ExecuteOpcode()
 		case 0x95: SUB_8Bit(AF.hi, HL.lo); break; // SUB L
 		case 0x96: SUB_8Bit(AF.hi, Memory::ReadByte(HL.reg)); break; // SUB (HL)
 		case 0x97: SUB_8Bit(AF.hi, AF.hi); break; // SUB A
-		case 0xD6: SUB_8Bit(AF.hi, Memory::ReadByte(PC)); break; // SUB d8
+		case 0xD6: SUB_8Bit(AF.hi, Memory::ReadByte(PC)); PC++; break; // SUB d8
 		// 8-bit sub + carry
 		case 0x98: SUB_8Bit(AF.hi, BC.hi, true); break; // SBC A,B
 		case 0x99: SUB_8Bit(AF.hi, BC.lo, true); break; // SBC A,C
@@ -605,10 +608,11 @@ int Cpu::ExecuteOpcode()
 			Memory::Write(nn, SP.lo);
 			PC += 2;
 		}
+		break;
 		// 8-bit write
 		case 0x02: WRITE_8Bit(BC.reg, AF.hi); break; // LD (BC),A
 		case 0x12: WRITE_8Bit(DE.reg, AF.hi); break; // LD (DE),A
-		case 0x22: WRITE_8Bit(HL.reg, AF.hi); break; INC_16Bit(HL.reg); // LD (HL+),A
+		case 0x22: WRITE_8Bit(HL.reg, AF.hi); INC_16Bit(HL.reg); break; // LD (HL+),A
 		case 0x32: WRITE_8Bit(HL.reg, AF.hi); DEC_16Bit(HL.reg); break; // LD (HL-),A
 		case 0x36: WRITE_8Bit(HL.reg, Memory::ReadByte(PC)); PC++; break; // LD (HL),d8
 		case 0x70: WRITE_8Bit(HL.reg, BC.hi); break; // LD (HL),B
