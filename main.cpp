@@ -26,7 +26,7 @@
 // emulator settings
 #define MAX_CYCLES 69905
 // should we step through instructions?
-int stepThrough = false;
+int stepThrough = true;
 // has the user requested to quit the emulator?
 bool shouldQuit = false;
 // the SDL window

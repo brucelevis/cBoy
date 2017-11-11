@@ -837,6 +837,20 @@ int Cpu::ExecuteOpcode()
 		default: Log::UnimplementedOpcode(Opcode); break;
 	}
 
+	// enable interrupts if requested
+	if (Operation.PendingInterruptEnabled)
+	{
+		Interrupt::MasterSwitch = true;
+		Operation.PendingInterruptEnabled = false;
+	}
+
+	// disable interrupts if requested
+	if (Operation.PendingInterruptDisabled)
+	{
+		Interrupt::MasterSwitch = false;
+		Operation.PendingInterruptDisabled = false;
+	}
+
 	return Cycles;
 }
 
