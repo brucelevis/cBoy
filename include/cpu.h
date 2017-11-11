@@ -19,8 +19,11 @@ class Cpu
 	public:
 		static int Init();
 		static int ExecuteOpcode();
-		static int ExecuteExtendedOpcode();
+		static void ExecuteExtendedOpcode();
 		static int ExecuteNextOpcode();
+		static WORD GetPC();
+		static WORD SetPC(WORD val);
+		static void PUSH_Word_Onto_Stack(WORD data);
 
 	private:
 		static void ADD_8Bit(BYTE &val, BYTE val2, bool addCarry = false);
@@ -42,8 +45,16 @@ class Cpu
 		static void CALL();
 		static void RETURN();
 		static void RESTART(BYTE address);
-		static void PUSH_Word_Onto_Stack(WORD data);
 		static WORD POP_Word_Off_Stack(WORD address);
+
+	public:
+		struct Operations {
+			bool PendingInterruptDisabled;
+			bool PendingInterruptEnabled;
+			bool Stop;
+		};
+		static Operations Operation;
+		static int Cycles;
 
 	private:
 		union Registers {
@@ -53,17 +64,12 @@ class Cpu
 				BYTE hi;
 			};
 		};
-		struct Operations {
-			bool EnableInterrupts;
-			bool Stop;
-		};
 		static WORD PC;
 		static Registers SP;
 		static Registers AF;
 		static Registers BC;
 		static Registers DE;
 		static Registers HL;
-		static Operations Operation;
 };
 
 #endif

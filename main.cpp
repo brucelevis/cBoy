@@ -10,6 +10,7 @@
 #include <SDL2/SDL_opengl.h>
 #include "include/bios.h"
 #include "include/cpu.h"
+#include "include/interrupt.h"
 #include "include/lcd.h"
 #include "include/memory.h"
 #include "include/log.h"
@@ -18,18 +19,21 @@
 // screen dimensions
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 144
+#define TARGET_FPS 59.73
+#define INTERVAL 1000
 // emulator name
 #define EMULATOR_NAME "cBoy: GameBoy Emulator"
 // emulator settings
 #define MAX_CYCLES 69905
 // should we step through instructions?
-int stepThrough = true;
+int stepThrough = false;
 // has the user requested to quit the emulator?
 bool shouldQuit = false;
 // the SDL window
 SDL_Window* window = NULL;
-// Cycles executed
-int cyclesThisUpdate = 0;
+// set the interval
+int interval = (INTERVAL / TARGET_FPS);
+unsigned int initialTime = SDL_GetTicks();
 
 // init SDL
 static bool InitSDL()
@@ -100,15 +104,49 @@ static void Close()
 // emulation loop
 static void EmulationLoop()
 {
-	// execute if within the max cycles for this update
-	if (cyclesThisUpdate < MAX_CYCLES)
+	// Cycles executed
+	int cyclesThisUpdate = 0;
+	// reset Cpu cycles
+	Cpu::Cycles = 0;
+
+	if (stepThrough)
 	{
+		// execute the next opcode
 		int cycles = Cpu::ExecuteNextOpcode(); 
 		cyclesThisUpdate += cycles;
 
-		// update timers; 
-		// update graphics;
-		// do interupts;
+		// update timers
+
+		// update graphics
+		Lcd::Render(window);
+		// service interupts
+		Interrupt::Service();
+	}
+	else
+	{
+		// get the current time
+		unsigned int timeNow = SDL_GetTicks();
+
+		// limit to TARGET_FPS
+		if ((initialTime + interval) < timeNow)
+		{
+			// execute if within the max cycles for this update
+			while (cyclesThisUpdate < MAX_CYCLES)
+			{
+				// execute the next opcode
+				int cycles = Cpu::ExecuteNextOpcode(); 
+				cyclesThisUpdate += cycles;
+
+				// update timers
+
+				// update graphics
+				Lcd::Render(window);
+				// service interupts
+				Interrupt::Service();
+				// update the time
+				initialTime = timeNow;
+			}
+		}
 	}
 }
 
@@ -146,6 +184,11 @@ static void StartMainLoop()
 
 						case SDLK_LEFT:
 							stepThrough = !stepThrough;
+						break;
+
+						case SDLK_ESCAPE:
+							shouldQuit = true;
+						break;
 
 						default:
 						break;
@@ -159,14 +202,7 @@ static void StartMainLoop()
 		{
 			EmulationLoop();
 		}
-
-		// render the Lcd
-		Lcd::Render(window);
 	}
-}
-
-bool halfcarry(BYTE a, BYTE b) {
-	return (((a & 0xF) + (b & 0xF)) & 0x10) == 0x10;
 }
 
 // main
@@ -180,8 +216,8 @@ int main(int argc, char* args[])
 		// load bios
 		//Bios::Load("bios.bin");
 		// load rom
-		Rom::Load("roms/Tetris.gb");
-		//Rom::Load("roms/tests/cpu_instrs.gb");
+		//Rom::Load("roms/Tetris.gb");
+		Rom::Load("roms/tests/cpu_instrs.gb");
 		// init Lcd
 		Lcd::Init();
 		Log::Critical("Data at memory location 0x100 = %#02x", Memory::ReadByte(0x100));
