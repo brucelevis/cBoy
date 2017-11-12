@@ -24,6 +24,7 @@ class Cpu
 		static WORD GetPC();
 		static WORD SetPC(WORD val);
 		static void PUSH_Word_Onto_Stack(WORD data);
+		static void Debugger();
 
 	private:
 		static void ADD_8Bit(BYTE &val, BYTE val2, bool addCarry = false);

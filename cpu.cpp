@@ -6,6 +6,8 @@
 
 // includes
 #include <cstddef>
+#include "imgui/imgui.h"
+#include "imgui/imgui_memory_editor.h"
 #include "include/bit.h"
 #include "include/cpu.h"
 #include "include/interrupt.h"
@@ -27,6 +29,8 @@ Cpu::Registers Cpu::DE = {};
 Cpu::Registers Cpu::HL = {};
 Cpu::Operations Cpu::Operation = {};
 int Cpu::Cycles = 0;
+// debug memory viewer
+static MemoryEditor memoryViewer;
 // set flag
 #define FLAG_Z 7
 #define FLAG_N 6
@@ -364,25 +368,13 @@ int Cpu::ExecuteOpcode()
 	// get the current Opcode
 	BYTE Opcode = Memory::ReadByte(PC);
 
-	Log::Normal("PC: %#04x || SP: %#04x FZ: %d, FN: %d, FH: %d, FC: %d || Opcode Executed: %#04x", PC, SP.reg, Bit::Get(AF.lo, FLAG_Z), Bit::Get(AF.lo, FLAG_N), Bit::Get(AF.lo, FLAG_H), Bit::Get(AF.lo, FLAG_C), Opcode);
-
-	if (PC == 0x456)
-	{
-		Log::Error(">>> FIRST DIVERGENCE AFTER THIS OPCODE (fixed?) <<<<");
-	}
-
-	if (PC == 0x483)
-	{
-		Log::Error(">>> SECOND DIVERGENCE AFTER THIS OPCODE <<<<");
-	}
-
 	// increment the program counter
 	if (!Operation.Stop)
 	{
 		PC++;
 	}
 
-	//Log::ExecutedOpcode(Opcode);
+	Log::ExecutedOpcode(Opcode);
 
 	// handle the Opcode
 	switch(Opcode)
@@ -840,15 +832,23 @@ int Cpu::ExecuteOpcode()
 	// enable interrupts if requested
 	if (Operation.PendingInterruptEnabled)
 	{
-		Interrupt::MasterSwitch = true;
-		Operation.PendingInterruptEnabled = false;
+		// If the last instruction was to enable interrupts
+		if (Memory::ReadByte(PC - 1) == 0xFB)
+		{
+			Interrupt::MasterSwitch = true;
+			Operation.PendingInterruptEnabled = false;
+		}
 	}
 
 	// disable interrupts if requested
 	if (Operation.PendingInterruptDisabled)
 	{
-		Interrupt::MasterSwitch = false;
-		Operation.PendingInterruptDisabled = false;
+		// If the last instruction was to enable interrupts
+		if (Memory::ReadByte(PC - 1) == 0xF3)
+		{
+			Interrupt::MasterSwitch = false;
+			Operation.PendingInterruptDisabled = false;
+		}
 	}
 
 	return Cycles;
@@ -1130,4 +1130,34 @@ int Cpu::ExecuteNextOpcode()
 	int cycles = ExecuteOpcode();
 
 	return cycles;
+}
+
+
+// debugger
+void Cpu::Debugger()
+{
+	bool FlagZ = Bit::Get(AF.lo, FLAG_Z) == 0;
+	bool FlagN = Bit::Get(AF.lo, FLAG_N) == 0;
+	bool FlagH = Bit::Get(AF.lo, FLAG_H) == 0;
+	bool FlagC = Bit::Get(AF.lo, FLAG_C) == 0;
+
+	// var viewer window
+	ImGui::Begin("Vars");
+	ImGui::SetWindowSize("Vars", ImVec2(180, 145));
+	ImGui::Text("PC: %#02x", PC); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("SP: %#02x", SP.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("AF: %#02x", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("BC: %#02x", BC.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("DE: %#02x", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("HL: %#02x", HL.reg); ImGui::SameLine(); ImGui::Unindent(80.f);
+	ImGui::Spacing();
+	ImGui::Checkbox("Z:", &FlagZ); ImGui::SameLine();
+	ImGui::Checkbox("N:", &FlagN); ImGui::SameLine();
+	ImGui::Checkbox("H:", &FlagH);
+	ImGui::Checkbox("C:", &FlagC);
+	ImGui::End();
+
+	// memory viewer window
+	memoryViewer.DrawWindow("Memory Editor", Memory::Get(), 0x10000, 0x0000);
+	memoryViewer.GotoAddrAndHighlight(PC, PC);
 }

@@ -45,14 +45,6 @@ bool Rom::Load(const char *fileName)
 
 	// close the rom
 	fclose(gbRom);
-
-	// load the rom into memory
-	for (int i = 0; i < 20; i++)
-	{
-		//Log::Normal("rom[i] = %#02x", Memory::ReadByte(0x100 + i));
-		// load the rom into memory
-		//Memory::Write(0x00 + i, cartridgeMem[i]);
-	}
 	
 	return loadResult;
 }

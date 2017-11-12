@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl.h"
 #include "include/bios.h"
 #include "include/cpu.h"
 #include "include/interrupt.h"
@@ -17,20 +19,24 @@
 #include "include/rom.h"
 
 // screen dimensions
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 144
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
 #define TARGET_FPS 59.73
 #define INTERVAL 1000
 // emulator name
 #define EMULATOR_NAME "cBoy: GameBoy Emulator"
 // emulator settings
 #define MAX_CYCLES 69905
+// are we in release mode?
+const bool RELEASE_MODE = false; 
 // should we step through instructions?
 int stepThrough = true;
 // has the user requested to quit the emulator?
 bool shouldQuit = false;
 // the SDL window
 SDL_Window* window = NULL;
+// the SDL GL context
+SDL_GLContext glContext = NULL;
 // set the interval
 int interval = (INTERVAL / TARGET_FPS);
 unsigned int initialTime = SDL_GetTicks();
@@ -39,24 +45,36 @@ unsigned int initialTime = SDL_GetTicks();
 static bool InitSDL()
 {
 	// if SDL initialized successfully
-	if (SDL_Init(SDL_INIT_VIDEO) >= 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) >= 0)
 	{
 		// set the Open GL version
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+		SDL_DisplayMode current;
+		SDL_GetCurrentDisplayMode(0, &current);
 
 		// create the window
-		window = SDL_CreateWindow(EMULATOR_NAME, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-		
+		window = SDL_CreateWindow(EMULATOR_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+
 		// if creating the window was successful
 		if (window)
 		{
 			// create glContext
-			SDL_GLContext glContext = SDL_GL_CreateContext(window);
+			glContext = SDL_GL_CreateContext(window);
          
-         	// if the glContext is valid   
+         	// if the glContext is valid
             if (glContext)
 			{
+				// setup imgui binding
+				ImGui_ImplSdlGL2_Init(window);
+
+				// set the imgui font
+				ImGuiIO& io = ImGui::GetIO();
+				io.Fonts->AddFontFromFileTTF("imgui/extra_fonts/Roboto-Medium.ttf", 16.0f);
+
 				// initialize and setup Open GL
 				glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 				glMatrixMode(GL_MODELVIEW);
@@ -94,8 +112,13 @@ static bool InitSDL()
 // close
 static void Close()
 {
+	// shutdown imgui
+	ImGui_ImplSdlGL2_Shutdown();
+
 	// destroy the window
 	SDL_DestroyWindow(window);
+	// delete the gl context
+	SDL_GL_DeleteContext(glContext);
 
 	// quit SDL subsystems
 	SDL_Quit();
@@ -117,8 +140,6 @@ static void EmulationLoop()
 
 		// update timers
 
-		// update graphics
-		Lcd::Render(window);
 		// service interupts
 		Interrupt::Service();
 	}
@@ -139,10 +160,10 @@ static void EmulationLoop()
 
 				// update timers
 
-				// update graphics
-				Lcd::Render(window);
 				// service interupts
 				Interrupt::Service();
+				// update graphics
+				Lcd::Render(window);
 				// update the time
 				initialTime = timeNow;
 			}
@@ -162,6 +183,9 @@ static void StartMainLoop()
 		// handle events
 		while (SDL_PollEvent(&event) != 0)
 		{
+			// pass events to imgui
+			ImGui_ImplSdlGL2_ProcessEvent(&event);
+
 			// check events
 			switch(event.type)
 			{
@@ -202,6 +226,43 @@ static void StartMainLoop()
 		{
 			EmulationLoop();
 		}
+
+		if (stepThrough)
+		{
+			// update graphics
+			Lcd::Render(window);
+		}
+
+		// don't show the imgui stuff in release mode
+		if (!RELEASE_MODE)
+		{
+			// Use ImGui functions between here and Render()
+			ImGui_ImplSdlGL2_NewFrame(window);
+			
+			// var viewer window
+			ImGui::Begin("Debugger");
+			ImGui::SetWindowSize("Debugger", ImVec2(180, 145));
+			// step button
+			ImGui::Button("step");
+
+			// see if the step button is clicked
+			if (ImGui::IsItemClicked())
+			{
+				Log::Normal("Pressed step button");
+				EmulationLoop();
+			}
+			// end window
+			ImGui::End();
+
+			// show the debugger
+			Cpu::Debugger();
+
+			// ImGui functions end here
+			ImGui::Render();
+		}
+
+		// flip buffers
+		SDL_GL_SwapWindow(window);
 	}
 }
 
@@ -220,11 +281,6 @@ int main(int argc, char* args[])
 		Rom::Load("roms/tests/cpu_instrs.gb");
 		// init Lcd
 		Lcd::Init();
-		Log::Critical("Data at memory location 0x100 = %#02x", Memory::ReadByte(0x100));
-		Log::Critical("Data at memory location 0x101 = %#04x", Memory::ReadByte(0x101));
-		Log::Critical("Data at memory location 0x102 = %#04x", Memory::ReadByte(0x102));
-		Log::Critical("Data at memory location 0x103 = %#04x", Memory::ReadByte(0x103));
-		Log::Critical("Data at memory location 0x104 = %#04x", Memory::ReadByte(0x104));
 		// execute the main loop
 		StartMainLoop();
 	}
