@@ -50,17 +50,24 @@ int Interrupt::ShouldService()
 	// If interrupts are enabled
 	if (MasterSwitch)
 	{
+		// get the request interrupt value
 		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_REG_ADDRESS);
+		// get the interrupts enabled value
 		BYTE interruptsEnabled = Memory::ReadByte(INT_ENABLED_REG_ADDRESS);
 
+		// if the requested interupt isn't zero
 		if (requestedInterrupt != 0)
 		{
+			// loop through the interrupts
 			for (int i = 0; i < 5; i++)
 			{
+				// if the requested interrupt is on
 				if (Bit::Get(requestedInterrupt, i))
 				{
+					// if interrupts are enabled
 					if (Bit::Get(interruptsEnabled, i))
 					{
+						// return the bit of the interrupt
 						return i;
 					}
 				}

@@ -17,6 +17,7 @@
 #include "include/memory.h"
 #include "include/log.h"
 #include "include/rom.h"
+#include "include/timer.h"
 
 // screen dimensions
 #define SCREEN_WIDTH 640
@@ -139,7 +140,7 @@ static void EmulationLoop()
 		cyclesThisUpdate += cycles;
 
 		// update timers
-
+		Timer::Update(cycles);
 		// service interupts
 		Interrupt::Service();
 	}
@@ -159,7 +160,7 @@ static void EmulationLoop()
 				cyclesThisUpdate += cycles;
 
 				// update timers
-
+				Timer::Update(cycles);
 				// service interupts
 				Interrupt::Service();
 				// update graphics
@@ -243,14 +244,33 @@ static void StartMainLoop()
 			ImGui::Begin("Debugger");
 			ImGui::SetWindowSize("Debugger", ImVec2(180, 145));
 			// step button
-			ImGui::Button("step");
+			ImGui::Button("Step forward");
 
 			// see if the step button is clicked
 			if (ImGui::IsItemClicked())
 			{
-				Log::Normal("Pressed step button");
 				EmulationLoop();
 			}
+
+			// run button
+			ImGui::Button("Run");
+
+			// see if the run button is clicked
+			if (ImGui::IsItemClicked())
+			{
+				stepThrough = false;
+			}
+
+			// stop button
+			ImGui::Button("Stop");
+
+			// see if the stop button is clicked
+			if (ImGui::IsItemClicked())
+			{
+				stepThrough = true;
+				EmulationLoop();
+			}
+
 			// end window
 			ImGui::End();
 
@@ -274,11 +294,11 @@ int main(int argc, char* args[])
 	{
 		// init the Cpu
 		Cpu::Init();
-		// load bios
-		//Bios::Load("bios.bin");
 		// load rom
 		//Rom::Load("roms/Tetris.gb");
 		Rom::Load("roms/tests/cpu_instrs.gb");
+		// load bios
+		//Bios::Load("bios.bin");
 		// init Lcd
 		Lcd::Init();
 		// execute the main loop

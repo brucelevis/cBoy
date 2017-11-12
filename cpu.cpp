@@ -69,7 +69,7 @@ void Cpu::ADD_8Bit(BYTE &val, BYTE val2, bool addCarry)
 	}
 
 	if (Bit::DidCarry(result)) Bit::Set(AF.lo, FLAG_C); else Bit::Reset(AF.lo, FLAG_C);
- 	val = result; 
+ 	val = result;
 }
 
 // add 16-bit
@@ -129,7 +129,7 @@ void Cpu::AND_8Bit(BYTE &val, BYTE val2)
 	Bit::Set(AF.lo, FLAG_H);
 	Bit::Reset(AF.lo, FLAG_C);
 
-	val &= val2;
+	val = result;
 }
 
 // or 8-bit
@@ -142,7 +142,7 @@ void Cpu::OR_8Bit(BYTE &val, BYTE val2)
 	Bit::Reset(AF.lo, FLAG_H);
 	Bit::Reset(AF.lo, FLAG_C);
 
-	val |= val2;
+	val = result;
 }
 
 // xor 8-bit
@@ -155,7 +155,7 @@ void Cpu::XOR_8Bit(BYTE &val, BYTE val2)
 	Bit::Reset(AF.lo, FLAG_H);
 	Bit::Reset(AF.lo, FLAG_C);
 
-	val ^= val2;
+	val = result;
 }
 
 // dec 8-bit
@@ -219,7 +219,7 @@ void Cpu::LOAD_8Bit(BYTE &val, BYTE val2)
 // ld 16-bit
 void Cpu::LOAD_16Bit(WORD &val, WORD val2)
 {
-	val = (val2 != 0) ? (val = val2) : Memory::ReadWord(PC);
+	val = val2;
 }
 
 // write 8-bit
@@ -236,8 +236,8 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2)
 	if (result == 0) Bit::Set(AF.lo, FLAG_Z); else Bit::Reset(AF.lo, FLAG_Z);
 	Bit::Set(AF.lo, FLAG_N);
 
-	if (Bit::DidHalfCarry(val, 1)) Bit::Reset(AF.lo, FLAG_H); else Bit::Set(AF.lo, FLAG_H);
-	if (Bit::DidCarry(result)) Bit::Reset(AF.lo, FLAG_C); else Bit::Set(AF.lo, FLAG_C);
+	if (Bit::DidHalfCarry(val, -1)) Bit::Reset(AF.lo, FLAG_H); else Bit::Set(AF.lo, FLAG_H);
+	if (val < result) Bit::Set(AF.lo, FLAG_C); else Bit::Reset(AF.lo, FLAG_C);
 }
 
 // jump (one byte signed immediate value)
@@ -374,7 +374,7 @@ int Cpu::ExecuteOpcode()
 		PC++;
 	}
 
-	Log::ExecutedOpcode(Opcode);
+	//Log::ExecutedOpcode(Opcode);
 
 	// handle the Opcode
 	switch(Opcode)
@@ -438,7 +438,7 @@ int Cpu::ExecuteOpcode()
 			Bit::Reset(AF.lo, FLAG_N);
 			Bit::Reset(AF.lo, FLAG_H);
 			Bit::Reset(AF.lo, FLAG_C);
-			SP.reg += Memory::ReadByte(PC);
+			SP.reg += (SIGNED_BYTE)Memory::ReadByte(PC);
 			PC++;
 			Cycles += 16;
 		}
@@ -528,7 +528,7 @@ int Cpu::ExecuteOpcode()
 		case 0xBD: COMPARE_8Bit(AF.hi, HL.lo); Cycles += 4; break; // CP L
 		case 0xBE: COMPARE_8Bit(AF.hi, Memory::ReadByte(HL.reg)); Cycles += 8; break; // CP (HL)
 		case 0xBF: COMPARE_8Bit(AF.hi, AF.hi); Cycles += 4; break; // CP A
-		case 0xFE: COMPARE_8Bit(AF.hi, Memory::ReadByte(PC)); PC++; Cycles += 8; break; // CP #		
+		case 0xFE: COMPARE_8Bit(AF.hi, Memory::ReadByte(PC)); PC++; Cycles += 8; break; // CP,d8		
 		// 8-bit load
 		case 0x06: LOAD_8Bit(BC.hi, Memory::ReadByte(PC)); PC++; Cycles += 8; break; // LD B,d8
 		case 0x0A: LOAD_8Bit(AF.hi, Memory::ReadByte(BC.reg)); Cycles += 8; break; // LD A,(BC)
@@ -598,17 +598,36 @@ int Cpu::ExecuteOpcode()
 		case 0x7E: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg)); Cycles += 8; break; // LD A,(HL)
 		case 0x7F: LOAD_8Bit(AF.hi, AF.hi); Cycles += 4; break; // LD A,A
 		// 16-bit load
-		case 0x01: LOAD_16Bit(BC.reg); PC += 2; Cycles += 12; break; // LD BC,d16
-		case 0x11: LOAD_16Bit(DE.reg); PC += 2; Cycles += 12; break; // LD DE,d16
-		case 0x21: LOAD_16Bit(HL.reg); PC += 2; Cycles += 12; break;// LD HL,d16
-		case 0x31: LOAD_16Bit(SP.reg); PC += 2; Cycles += 12; break;// LD SP,d16
+		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC)); PC += 2; Cycles += 12; break; // LD BC,d16
+		case 0x11: LOAD_16Bit(DE.reg, Memory::ReadWord(PC)); PC += 2; Cycles += 12; break; // LD DE,d16
+		case 0x21: LOAD_16Bit(HL.reg, Memory::ReadWord(PC)); PC += 2; Cycles += 12; break;// LD HL,d16
+		case 0x31: LOAD_16Bit(SP.reg, Memory::ReadWord(PC)); PC += 2; Cycles += 12; break;// LD SP,d16
 		case 0xF8: // LD HL,SP+r8
 		{
 			Bit::Reset(AF.lo, FLAG_Z);
 			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-			Bit::Reset(AF.lo, FLAG_C);
-			LOAD_16Bit(HL.reg, SP.reg + Memory::ReadByte(PC));
+
+			WORD nn = SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC);
+
+			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF)
+			{
+				Bit::Set(AF.lo, FLAG_H);
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_H);
+			}
+
+			if (((HL.reg & 0xFF) + (nn)) > 0xFF)
+			{
+				Bit::Set(AF.lo, FLAG_C);
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_C);
+			}
+			
+			LOAD_16Bit(HL.reg, nn);
 			PC++;
 			Cycles += 12;
 		}
@@ -655,7 +674,7 @@ int Cpu::ExecuteOpcode()
 		case 0xCA: if (Bit::Get(AF.lo, FLAG_Z)) JUMP(); Cycles += 12; break; // JP Z,a16
 		case 0xD2: if (!Bit::Get(AF.lo, FLAG_C)) JUMP(); Cycles += 12; break; // JP NC,a16
 		case 0xDA: if (Bit::Get(AF.lo, FLAG_C)) JUMP(); Cycles += 12; break; // JP C,a16
-		case 0xE9: PC = HL.reg; Cycles += 4; break; // JP (HL)
+		case 0xE9: PC = HL.reg; Cycles += 4; break; // JP,HL
 		// calls
 		case 0xCD: CALL(); Cycles += 24; break; // CALL a16
 		case 0xC4: if (!Bit::Get(AF.lo, FLAG_Z)) CALL(); Cycles += 12; break; // CALL NZ,a16
@@ -1132,7 +1151,6 @@ int Cpu::ExecuteNextOpcode()
 	return cycles;
 }
 
-
 // debugger
 void Cpu::Debugger()
 {
@@ -1151,10 +1169,10 @@ void Cpu::Debugger()
 	ImGui::Text("DE: %#02x", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("HL: %#02x", HL.reg); ImGui::SameLine(); ImGui::Unindent(80.f);
 	ImGui::Spacing();
-	ImGui::Checkbox("Z:", &FlagZ); ImGui::SameLine();
-	ImGui::Checkbox("N:", &FlagN); ImGui::SameLine();
-	ImGui::Checkbox("H:", &FlagH);
-	ImGui::Checkbox("C:", &FlagC);
+	ImGui::Checkbox(":Z", &FlagZ); ImGui::SameLine();
+	ImGui::Checkbox(":N", &FlagN); ImGui::SameLine();
+	ImGui::Checkbox(":H", &FlagH);
+	ImGui::Checkbox(":C", &FlagC);
 	ImGui::End();
 
 	// memory viewer window
