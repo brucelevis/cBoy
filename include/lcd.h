@@ -12,6 +12,9 @@
 
 // definitions
 typedef unsigned char BYTE;
+typedef signed char SIGNED_BYTE;
+typedef unsigned short WORD;
+typedef signed short SIGNED_WORD;
 
 // lcd class
 class Lcd
@@ -20,6 +23,10 @@ class Lcd
 		static void Init();
 		static void Reset();
 		static void Render(SDL_Window *window);
+
+	public:
+		static const WORD LY_ADDRESS;
+		static const WORD STAT_ADDRESS;
 
 	private:
 		static BYTE screen[160][144][3];

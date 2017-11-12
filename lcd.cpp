@@ -15,6 +15,9 @@ typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
+// vars
+const WORD Lcd::LY_ADDRESS = 0xFF44;
+const WORD Lcd::STAT_ADDRESS = 0xFF41;
 
 // init vars
 BYTE Lcd::screen[160][144][3] = {};
@@ -37,15 +40,7 @@ void Lcd::Init()
 // reset the lcd
 void Lcd::Reset()
 {
-	for (int x = 0; x < 160; x ++)
-	{
-		for (int y = 0; y < 144; y++)
-		{
-			screen[x][y][0] = 255;
-			screen[x][y][1] = 255;
-			screen[x][y][2] = 255;
-		}
-	}
+	Init();
 }
 
 // render the lcd
@@ -56,5 +51,28 @@ void Lcd::Render(SDL_Window *window)
  	glRasterPos2i(-1, 1);
 	glPixelZoom(1, -1);
  	glDrawPixels(160, 144, GL_RGB, GL_UNSIGNED_BYTE, screen);
-	SDL_GL_SwapWindow(window);
+	//SDL_GL_SwapWindow(window);
+
+	/*
+	// Set viewport
+	glViewport(0, 0, 640, 480);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+	// Send texture to GPU
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 640, 480, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)screen);
+
+	// Render the texture
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2f(-1.0f, -1.0f);
+
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2f(1.0f, -1.0f);
+
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2f(1.0f, 1.0f);
+
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(-1.0f, 1.0f);
+	glEnd();*/
 }

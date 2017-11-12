@@ -11,6 +11,7 @@
 #include "include/bit.h"
 #include "include/cpu.h"
 #include "include/interrupt.h"
+#include "include/lcd.h"
 #include "include/log.h"
 #include "include/memory.h"
 
@@ -1160,19 +1161,26 @@ void Cpu::Debugger()
 	bool FlagC = Bit::Get(AF.lo, FLAG_C) == 0;
 
 	// var viewer window
-	ImGui::Begin("Vars");
-	ImGui::SetWindowSize("Vars", ImVec2(180, 145));
-	ImGui::Text("PC: %#02x", PC); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("SP: %#02x", SP.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("AF: %#02x", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("BC: %#02x", BC.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("DE: %#02x", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("HL: %#02x", HL.reg); ImGui::SameLine(); ImGui::Unindent(80.f);
+	ImGui::Begin("Register Viewer");
+	ImGui::SetWindowSize("Register Viewer", ImVec2(180, 210));
+	ImGui::SetWindowPos("Register Viewer", ImVec2(640 - 180, 5));
+	ImGui::Text("PC: %04x", PC); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("SP: %04x", SP.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("AF: %04x", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("BC: %04x", BC.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("DE: %04x", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("HL: %04x", HL.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("LY: %02x", Memory::ReadByte(Lcd::LY_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("STAT: %02x", Memory::ReadByte(Lcd::STAT_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("IE: %02x", Memory::ReadByte(Interrupt::ENABLED_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("IR: %02x", Memory::ReadByte(Interrupt::REQUEST_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("IME: %d", Interrupt::MasterSwitch); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("LCDC: %02x", 0); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Spacing();
-	ImGui::Checkbox(":Z", &FlagZ); ImGui::SameLine();
-	ImGui::Checkbox(":N", &FlagN); ImGui::SameLine();
-	ImGui::Checkbox(":H", &FlagH);
-	ImGui::Checkbox(":C", &FlagC);
+	ImGui::Checkbox("Z", &FlagZ); ImGui::SameLine();
+	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();
+	ImGui::Checkbox("H", &FlagH);
+	ImGui::Checkbox("C", &FlagC);
 	ImGui::End();
 
 	// memory viewer window

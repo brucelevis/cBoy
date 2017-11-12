@@ -58,11 +58,11 @@ void Log::Critical(const char *fmt, ...)
 // log executed opcode
 void Log::ExecutedOpcode(BYTE opcode)
 {
-	printf("WARNING: executed opcode %#04x \n", opcode);
+	printf("WARNING: executed opcode 0x%04x \n", opcode);
 }
 
 // log unimplemented opcode
 void Log::UnimplementedOpcode(BYTE opcode)
 {
-	printf("WARNING: opcode %#04x not implemented\n", opcode);
+	printf("WARNING: opcode 0x%04x not implemented\n", opcode);
 }

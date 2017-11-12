@@ -28,6 +28,8 @@ class Interrupt
 			VBLANK, LCD, TIMER, JOYPAD
 		};
 		static bool MasterSwitch;
+		static const WORD ENABLED_ADDRESS;
+		static const WORD REQUEST_ADDRESS; 
 
 	private:
 		union Type
@@ -42,8 +44,6 @@ class Interrupt
 		static Type Lcd;
 		static Type Timer;
 		static Type Joypad;
-		static const BYTE RequestAddress;
-		static const BYTE EnabledAddress;
 };
 
 #endif

@@ -241,10 +241,11 @@ static void StartMainLoop()
 			ImGui_ImplSdlGL2_NewFrame(window);
 			
 			// var viewer window
-			ImGui::Begin("Debugger");
-			ImGui::SetWindowSize("Debugger", ImVec2(180, 145));
+			ImGui::Begin("Controls");
+			ImGui::SetWindowSize("Controls", ImVec2(180, 145));
+			ImGui::SetWindowPos("Controls", ImVec2((640 - 380), 5));
 			// step button
-			ImGui::Button("Step forward");
+			ImGui::Button("Step Forward");
 
 			// see if the step button is clicked
 			if (ImGui::IsItemClicked())
