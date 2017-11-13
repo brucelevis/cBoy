@@ -4,6 +4,7 @@ OBJS = main.cpp bit.cpp bios.cpp cpu.cpp interrupt.cpp lcd.cpp log.cpp memory.cp
 #CC specifies which compiler we're using
 CC = g++ --std=c++11
 
+#-O3
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -w suppresses all warnings
 #COMPILER_FLAGS = 

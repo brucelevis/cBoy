@@ -44,10 +44,11 @@ WORD Memory::ReadWord(WORD address)
 // write memory
 void Memory::Write(WORD address, BYTE data)
 {
-	if (address >= 0xFF00)
+	/*
+	if (address >= 0xFF10 && address <= 0xFF26)
 	{
-		//Log::Critical("Writing %#02x to address 0x%04x", data, address);
-	}
+		Log::Critical("Writing sound data: %#02x to address 0x%04x", data, address);
+	}*/
 
 	// Get serial port output
 	if (address == 0xFF02)

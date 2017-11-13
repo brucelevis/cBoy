@@ -27,25 +27,25 @@ class Cpu
 		static void Debugger();
 
 	private:
-		static void ADD_8Bit(BYTE &val, BYTE val2, bool addCarry = false);
-		static void ADD_16Bit(WORD &val, WORD val2);
-		static void SUB_8Bit(BYTE &val, BYTE val2, bool addCarry = false);
-		static void AND_8Bit(BYTE &val, BYTE val2);
-		static void OR_8Bit(BYTE &val, BYTE val2);
-		static void XOR_8Bit(BYTE &val, BYTE val2);
-		static void DEC_8Bit(BYTE &val, BYTE bitMask = 0);
-		static void DEC_16Bit(WORD &val);
-		static void INC_8Bit(BYTE &val, BYTE bitMask = 0);
-		static void INC_16Bit(WORD &val);
-		static void LOAD_8Bit(BYTE &val, BYTE val2);
-		static void LOAD_16Bit(WORD &val, WORD val2 = 0);
-		static void WRITE_8Bit(WORD address, BYTE val);
-		static void COMPARE_8Bit(BYTE val, BYTE val2);
-		static int JUMP_Immediate(bool condition);
-		static int JUMP(bool condition);
-		static int CALL(bool condition);
-		static void RETURN();
-		static void RESTART(BYTE address);
+		static void ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry = false);
+		static void ADD_16Bit(WORD &val, WORD val2, int cycles);
+		static void SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry = false);
+		static void AND_8Bit(BYTE &val, BYTE val2, int cycles);
+		static void OR_8Bit(BYTE &val, BYTE val2, int cycles);
+		static void XOR_8Bit(BYTE &val, BYTE val2, int cycles);
+		static void DEC_8Bit(BYTE &val, int cycles);
+		static void DEC_16Bit(WORD &val, int cycles);
+		static void INC_8Bit(BYTE &val, int cycles);
+		static void INC_16Bit(WORD &val, int cycles);
+		static void LOAD_8Bit(BYTE &val, BYTE val2, int cycles);
+		static void LOAD_16Bit(WORD &val, WORD val2, int cycles);
+		static void WRITE_8Bit(WORD address, BYTE val, int cycles);
+		static void COMPARE_8Bit(BYTE val, BYTE val2, int cycles);
+		static int JUMP_Immediate(bool condition, int cycles);
+		static int JUMP(bool condition, int cycles);
+		static int CALL(bool condition, int cycles);
+		static void RETURN(bool condition, int cycles);
+		static void RESTART(BYTE address, int cycles);
 		static WORD POP_Word_Off_Stack(WORD address);
 
 	public:

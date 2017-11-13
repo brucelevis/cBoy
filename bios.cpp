@@ -10,6 +10,7 @@
 #include <cstring>
 #include "include/memory.h"
 #include "include/bios.h"
+#include "include/cpu.h"
 #include "include/log.h"
 
 // definitions
@@ -39,6 +40,8 @@ bool Bios::Load(const char *fileName)
 
 	// close the bios
 	fclose(gbBios);
+
+	Cpu::SetPC(0x00);
 	
 	return loadResult;
 }
