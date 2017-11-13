@@ -1070,33 +1070,6 @@ int Cpu::ExecuteOpcode()
 
 		case 0x07: // RLCA
 		{
-			BYTE result = AF.hi << 1;
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-			if (Bit::DidCarry(result)) Bit::Set(AF.lo, FLAG_C); else Bit::Reset(AF.lo, FLAG_C);
-			
-			AF.hi <<= 1;
-			Cycles += 4;
-			//Log::UnimplementedOpcode(Opcode);
-		}
-		break;
-
-		case 0x0F: // RRCA
-		{
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-			if ((AF.hi & 0x01) == 1) Bit::Set(AF.lo, FLAG_C); else Bit::Reset(AF.lo, FLAG_C);
-
-			AF.hi >>= 1;
-			Cycles += 4;
-			//Log::UnimplementedOpcode(Opcode);
-		}
-		break;
-
-		case 0x17: // RLA
-		{
 			/*	
 				explanation 1:
 					You essentially act like Register A is a 9-bit register, 
@@ -1109,26 +1082,81 @@ int Cpu::ExecuteOpcode()
 				then put the old, stored carry flag back into the LSB of the A register
 			*/
 
+			// get the carry flag value
 			BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+
+			// reset the Z, H & N flags
 			Bit::Reset(AF.lo, FLAG_Z);
 			Bit::Reset(AF.lo, FLAG_N);
 			Bit::Reset(AF.lo, FLAG_H);
-			if (((AF.hi & 0x80)) != 0) Bit::Set(AF.lo, FLAG_C); else Bit::Reset(AF.lo, FLAG_C);
 
+			// set the carry flag
+			if ((AF.hi & 0x80) != 0)
+			{
+				Bit::Set(AF.lo, FLAG_C);
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_C);
+			}
+
+			// rotate A left and put the old carry flag bit back into it
 			AF.hi = ((AF.hi << 1) | carryFlag);
+			Cycles += 4;			
+		}
+		break;
+
+		case 0x0F: // RRCA
+		{
+			// get the carry flag value
+			BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+
+			// reset the Z, H & N flags
+			Bit::Reset(AF.lo, FLAG_Z);
+			Bit::Reset(AF.lo, FLAG_N);
+			Bit::Reset(AF.lo, FLAG_H);
+
+			// set the carry flag
+			if ((AF.hi & 0x80) != 0)
+			{
+				Bit::Set(AF.lo, FLAG_C);
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_C);
+			}
+
+			// rotate A right and put the old carry flag bit back into it
+			AF.hi = ((AF.hi >> 1) | carryFlag);
+			Cycles += 4;			
+		}
+		break;
+
+		case 0x17: // RLA
+		{
+			// store the result of the calculation
+			BYTE result = (AF.hi << 1);
+
+			// reset the Z, N & H flags
+			Bit::Reset(AF.lo, FLAG_Z);
+			Bit::Reset(AF.lo, FLAG_N);
+			Bit::Reset(AF.lo, FLAG_H);
+
+			// rotate A left and put the carry flag bit back into it			
+			AF.hi = ((AF.hi << 1) | Bit::Get(AF.lo, FLAG_Z));
 			Cycles += 4;
 		}
 		break;
 
 		case 0x1F: // RRA
 		{
-			BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+			// reset the Z, N & H flags
 			Bit::Reset(AF.lo, FLAG_Z);
 			Bit::Reset(AF.lo, FLAG_N);
 			Bit::Reset(AF.lo, FLAG_H);
-			if (((AF.hi & 0x80)) != 0) Bit::Set(AF.lo, FLAG_C); else Bit::Reset(AF.lo, FLAG_C);
 
-			AF.hi = ((AF.hi >> 1) | carryFlag);
+			// rotate A right and put the carry flag bit back into it			
+			AF.hi = ((AF.hi >> 1) | Bit::Get(AF.lo, FLAG_Z));
 			Cycles += 4;
 		}
 		break;
