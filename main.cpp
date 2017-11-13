@@ -159,6 +159,12 @@ static void EmulationLoop()
 				int cycles = Cpu::ExecuteNextOpcode(); 
 				cyclesThisUpdate += cycles;
 
+				/*
+				if (Cpu::GetPC() == 0x0218)
+				{
+					stepThrough = true;
+				}*/
+
 				// update timers
 				Timer::Update(cycles);
 				// service interupts
@@ -227,8 +233,7 @@ static void StartMainLoop()
 		{
 			EmulationLoop();
 		}
-
-		if (stepThrough)
+		else
 		{
 			// update graphics
 			Lcd::Render(window);
@@ -296,8 +301,22 @@ int main(int argc, char* args[])
 		// init the Cpu
 		Cpu::Init();
 		// load rom
-		//Rom::Load("roms/Tetris.gb");
-		Rom::Load("roms/tests/cpu_instrs.gb");
+		Rom::Load("roms/Tetris.gb");
+		//Rom::Load("roms/tests/cpu_instrs.gb");
+
+		// individual cpu instruction tests
+		//Rom::Load("roms/tests/cpu_instrs/01-special.gb");         
+		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb");               
+		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb");       
+		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb");
+		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb");
+		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb");
+		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb");
+		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb");
+		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb");
+		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb");
+		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb");
+
 		// load bios
 		//Bios::Load("bios.bin");
 		// init Lcd

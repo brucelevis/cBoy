@@ -41,9 +41,9 @@ class Cpu
 		static void LOAD_16Bit(WORD &val, WORD val2 = 0);
 		static void WRITE_8Bit(WORD address, BYTE val);
 		static void COMPARE_8Bit(BYTE val, BYTE val2);
-		static void JUMP_Immediate();
-		static void JUMP();
-		static void CALL();
+		static int JUMP_Immediate(bool condition);
+		static int JUMP(bool condition);
+		static int CALL(bool condition);
 		static void RETURN();
 		static void RESTART(BYTE address);
 		static WORD POP_Word_Off_Stack(WORD address);

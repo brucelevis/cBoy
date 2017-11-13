@@ -242,27 +242,43 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2)
 }
 
 // jump (one byte signed immediate value)
-void Cpu::JUMP_Immediate()
+int Cpu::JUMP_Immediate(bool condition)
 {
-	PC += (SIGNED_BYTE)Memory::ReadByte(PC);
+	if (condition)
+	{
+		PC += (SIGNED_BYTE)Memory::ReadByte(PC);	
+	}
+	
 	PC++;
 }
 
 // jump (two byte immediate value)
-void Cpu::JUMP()
+int Cpu::JUMP(bool condition)
 {
-	WORD nn = Memory::ReadWord(PC);
+	if (condition)
+	{
+		WORD nn = Memory::ReadWord(PC);
+		PC += 2;
+		PC = nn;
+		return 0;
+	}
+
 	PC += 2;
-	PC = nn;
 }
 
 // call
-void Cpu::CALL()
+int Cpu::CALL(bool condition)
 {
-	WORD nn = Memory::ReadWord(PC);
-	PC += 2;	
-	PUSH_Word_Onto_Stack(PC);
-	PC = nn;
+	if (condition)
+	{
+		WORD nn = Memory::ReadWord(PC);
+		PC += 2;
+		PUSH_Word_Onto_Stack(PC);
+		PC = nn;
+		return 0;
+	}
+
+	PC += 2;
 }
 
 // return
@@ -323,6 +339,11 @@ int Cpu::Init()
 	SP.reg = 0xFFFE;
 	// reset cycles
 	Cycles = 0;
+	// reset flags
+	Bit::Reset(AF.lo, FLAG_Z);
+	Bit::Reset(AF.lo, FLAG_H);
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_C);
 	// reset operations
 	Operation.PendingInterruptDisabled = false;
 	Operation.PendingInterruptEnabled = false;
@@ -664,24 +685,24 @@ int Cpu::ExecuteOpcode()
 		case 0xF0: WRITE_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC)); PC++; Cycles += 12; break; // LDH A,(a8)
 		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi); PC++; Cycles += 12; break; // LDH (a8),A
 		// immediate jumps
-		case 0x18: JUMP_Immediate(); Cycles += 12; break; // JR r8
-		case 0x20: if (!Bit::Get(AF.lo, FLAG_Z)) JUMP_Immediate(); Cycles += 8; break; // JR NZ,r8
-		case 0x28: if (Bit::Get(AF.lo, FLAG_Z)) JUMP_Immediate(); Cycles += 8; break; // JR Z,r8
-		case 0x30: if (!Bit::Get(AF.lo, FLAG_C)) JUMP_Immediate(); Cycles += 8; break; // JR NC,r8
-		case 0x38: if (Bit::Get(AF.lo, FLAG_C)) JUMP_Immediate(); Cycles += 8; break; // JR C,r8
+		case 0x18: JUMP_Immediate(true); Cycles += 12; break; // JR r8
+		case 0x20: JUMP_Immediate(!Bit::Get(AF.lo, FLAG_Z)); Cycles += 8; break; // JR NZ,r8
+		case 0x28: JUMP_Immediate(Bit::Get(AF.lo, FLAG_Z)); Cycles += 8; break; // JR Z,r8
+		case 0x30: JUMP_Immediate(!Bit::Get(AF.lo, FLAG_C)); Cycles += 8; break; // JR NC,r8
+		case 0x38: JUMP_Immediate(Bit::Get(AF.lo, FLAG_C)); Cycles += 8; break; // JR C,r8
 		// jumps
-		case 0xC3: JUMP(); Cycles += 16; break; // JP a16
-		case 0xC2: if (!Bit::Get(AF.lo, FLAG_Z)) JUMP(); Cycles += 12; break; // JP NZ,a16
-		case 0xCA: if (Bit::Get(AF.lo, FLAG_Z)) JUMP(); Cycles += 12; break; // JP Z,a16
-		case 0xD2: if (!Bit::Get(AF.lo, FLAG_C)) JUMP(); Cycles += 12; break; // JP NC,a16
-		case 0xDA: if (Bit::Get(AF.lo, FLAG_C)) JUMP(); Cycles += 12; break; // JP C,a16
+		case 0xC3: JUMP(true); Cycles += 16; break; // JP a16
+		case 0xC2: JUMP(!Bit::Get(AF.lo, FLAG_Z)); Cycles += 12; break; // JP NZ,a16
+		case 0xCA: JUMP(Bit::Get(AF.lo, FLAG_Z)); Cycles += 12; break; // JP Z,a16
+		case 0xD2: JUMP(!Bit::Get(AF.lo, FLAG_C)); Cycles += 12; break; // JP NC,a16
+		case 0xDA: JUMP(Bit::Get(AF.lo, FLAG_C)); Cycles += 12; break; // JP C,a16
 		case 0xE9: PC = HL.reg; Cycles += 4; break; // JP,HL
 		// calls
-		case 0xCD: CALL(); Cycles += 24; break; // CALL a16
-		case 0xC4: if (!Bit::Get(AF.lo, FLAG_Z)) CALL(); Cycles += 12; break; // CALL NZ,a16
-		case 0xCC: if (Bit::Get(AF.lo, FLAG_Z)) CALL(); Cycles += 12; break; // CALL Z,a16
-		case 0xD4: if (!Bit::Get(AF.lo, FLAG_C)) CALL(); Cycles += 12; break; // CALL NC,a16
-		case 0xDC: if (Bit::Get(AF.lo, FLAG_C)) CALL(); Cycles += 12; break; // CALL C,a16
+		case 0xCD: CALL(true); Cycles += 24; break; // CALL a16
+		case 0xC4: CALL(!Bit::Get(AF.lo, FLAG_Z)); Cycles += 12; break; // CALL NZ,a16
+		case 0xCC: CALL(Bit::Get(AF.lo, FLAG_Z)); Cycles += 12; break; // CALL Z,a16
+		case 0xD4: CALL(!Bit::Get(AF.lo, FLAG_C)); Cycles += 12; break; // CALL NC,a16
+		case 0xDC: CALL(Bit::Get(AF.lo, FLAG_C)); Cycles += 12; break; // CALL C,a16
 		// returns
 		case 0xC9: RETURN(); Cycles += 16; break; // RET
 		case 0xC0: if (!Bit::Get(AF.lo, FLAG_Z)) RETURN(); Cycles += 8; break; // RET NZ
@@ -1155,10 +1176,10 @@ int Cpu::ExecuteNextOpcode()
 // debugger
 void Cpu::Debugger()
 {
-	bool FlagZ = Bit::Get(AF.lo, FLAG_Z) == 0;
-	bool FlagN = Bit::Get(AF.lo, FLAG_N) == 0;
-	bool FlagH = Bit::Get(AF.lo, FLAG_H) == 0;
-	bool FlagC = Bit::Get(AF.lo, FLAG_C) == 0;
+	bool FlagZ = Bit::Get(AF.lo, FLAG_Z);
+	bool FlagN = Bit::Get(AF.lo, FLAG_N);
+	bool FlagH = Bit::Get(AF.lo, FLAG_H);
+	bool FlagC = Bit::Get(AF.lo, FLAG_C);
 
 	// var viewer window
 	ImGui::Begin("Register Viewer");
