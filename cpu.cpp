@@ -516,9 +516,6 @@ void Cpu::PUSH_Word_Onto_Stack(WORD data)
 	Memory::Write(SP.reg, hi);
 	SP.reg--;
 	Memory::Write(SP.reg, lo);
-
-	// add the cycles
-	Cycles += cycles;
 }
 
 // pop word off stack
@@ -655,7 +652,7 @@ int Cpu::ExecuteOpcode()
 			// set the carry flag
 			Bit::Set(AF.lo, FLAG_C); 
 			Cycles += 4;
-			break;
+		break;
 		case 0x3F: // CCF
 			// reset the N & H flags
 			Bit::Reset(AF.lo, FLAG_N); 
@@ -668,7 +665,7 @@ int Cpu::ExecuteOpcode()
 			}
 			else
 			{
-				Bit::Reset(AF.lo, FLAG_C);
+				Bit::Set(AF.lo, FLAG_C);
 			}
 
 			Cycles += 4;
