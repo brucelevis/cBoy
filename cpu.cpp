@@ -680,9 +680,9 @@ int Cpu::ExecuteOpcode()
 		case 0x85: ADD_8Bit(AF.hi, HL.lo, 4); break; // ADD A,L
 		case 0x86: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // ADD A,(HL)
 		case 0x87: ADD_8Bit(AF.hi, AF.hi, 4); break; // ADD A,A
-		case 0x88: ADD_8Bit(AF.hi, BC.hi, 4, true); break; // ADC A,B
 		case 0xC6: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 4); PC++; break; // ADD A,d8
 		// 8-bit add + carry
+		case 0x88: ADD_8Bit(AF.hi, BC.hi, 4, true); break; // ADC A,B
 		case 0x89: ADD_8Bit(AF.hi, BC.lo, 4, true); break; // ADC A,C
 		case 0x8A: ADD_8Bit(AF.hi, DE.hi, 4, true); break; // ADC A,D
 		case 0x8B: ADD_8Bit(AF.hi, DE.lo, 4, true); break; // ADC A,E
@@ -690,7 +690,7 @@ int Cpu::ExecuteOpcode()
 		case 0x8D: ADD_8Bit(AF.hi, HL.lo, 4, true); break; // ADC A,L
 		case 0x8E: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8, true); break; // ADC A,(HL)
 		case 0x8F: ADD_8Bit(AF.hi, AF.hi, 4, true); break; // ADC A,A
-		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // ADC A,d8ADD
+		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // ADC A,d8
 		// 16-bit add
 		case 0x09: ADD_16Bit(HL.reg, BC.reg, 8); break; // ADD HL,BC
 		case 0x19: ADD_16Bit(HL.reg, DE.reg, 8); break; // ADD HL,DE
@@ -698,11 +698,28 @@ int Cpu::ExecuteOpcode()
 		case 0x39: ADD_16Bit(HL.reg, SP.reg, 8); break; // ADD HL,SP
 		case 0xE8: // ADD SP,r8
 		{
+			// reset flag Z & N
 			Bit::Reset(AF.lo, FLAG_Z);
 			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-			Bit::Reset(AF.lo, FLAG_C);
-			SP.reg += (SIGNED_BYTE)Memory::ReadByte(PC);
+
+			// The value (r8)
+			SIGNED_BYTE nn = (SIGNED_BYTE)Memory::ReadByte(PC);
+
+			// determine if we half carried
+			if ((SP.reg & 0xF) + (nn & 0xF) > 0xF)
+			{
+				Bit::Set(AF.lo, FLAG_H);
+			}
+
+			// determine if we carried
+			if ((SP.reg & 0xFF) + nn > 0xFF)
+			{ 
+				Bit::Set(AF.lo, FLAG_C);
+			}	
+
+			// add nn to SP
+			SP.reg += nn;
+			// increment PC
 			PC++;
 			Cycles += 16;
 		}
@@ -795,16 +812,16 @@ int Cpu::ExecuteOpcode()
 		case 0xFE: COMPARE_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // CP,d8		
 		// 8-bit load
 		case 0x06: LOAD_8Bit(BC.hi, Memory::ReadByte(PC), 8); PC++; break; // LD B,d8
-		case 0x0A: LOAD_8Bit(AF.hi, Memory::ReadByte(BC.reg), 8); break; // LD A,(BC)
 		case 0x0E: LOAD_8Bit(BC.lo, Memory::ReadByte(PC), 8); PC++; break; // LD C,d8
-		case 0x1A: LOAD_8Bit(AF.hi, Memory::ReadByte(DE.reg), 8); break; // LD A,(DE)
 		case 0x16: LOAD_8Bit(DE.hi, Memory::ReadByte(PC), 8); PC++; break; // LD D,d8
 		case 0x1E: LOAD_8Bit(DE.lo, Memory::ReadByte(PC), 8); PC++; break; // LD E,d8
 		case 0x26: LOAD_8Bit(HL.hi, Memory::ReadByte(PC), 8); PC++; break; // LD H,d8
+		case 0x2E: LOAD_8Bit(HL.lo, Memory::ReadByte(PC), 8); PC++; break; // LD L,d8
+		case 0x3E: LOAD_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // LD A,d8 
+		case 0x0A: LOAD_8Bit(AF.hi, Memory::ReadByte(BC.reg), 8); break; // LD A,(BC)
+		case 0x1A: LOAD_8Bit(AF.hi, Memory::ReadByte(DE.reg), 8); break; // LD A,(DE)
 		case 0x2A: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg++; break; // LD A,(HL+)
-		case 0x2E: LOAD_8Bit(HL.lo, Memory::ReadByte(PC), 8); PC++; break; // LD L,d8 
 		case 0x3A: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg--; break; // LD A,(HL-)
-		case 0x3E: LOAD_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // LD A,d8
 		case 0x40: LOAD_8Bit(BC.hi, BC.hi, 4); break; // LD B,B
 		case 0x41: LOAD_8Bit(BC.hi, BC.lo, 4); break; // LD B,C
 		case 0x42: LOAD_8Bit(BC.hi, DE.hi, 4); break; // LD B,D
@@ -861,6 +878,7 @@ int Cpu::ExecuteOpcode()
 		case 0x7D: LOAD_8Bit(AF.hi, HL.lo, 4); break; // LD A,L 
 		case 0x7E: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // LD A,(HL)
 		case 0x7F: LOAD_8Bit(AF.hi, AF.hi, 4); break; // LD A,A
+		case 0xFA: LOAD_8Bit(AF.hi, Memory::ReadByte(Memory::ReadWord(PC)), 16); PC += 2; break; // LD A,(a16)
 		// 16-bit load
 		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
 		case 0x11: LOAD_16Bit(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
@@ -868,11 +886,14 @@ int Cpu::ExecuteOpcode()
 		case 0x31: LOAD_16Bit(SP.reg, Memory::ReadWord(PC), 12); PC += 2; break;// LD SP,d16
 		case 0xF8: // LD HL,SP+r8
 		{
+			// reset the Z & N flags
 			Bit::Reset(AF.lo, FLAG_Z);
 			Bit::Reset(AF.lo, FLAG_N);
 
-			WORD nn = SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC);
+			// SP + r8
+			WORD nn = (SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC));
 
+			// determine if we half carried
 			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF)
 			{
 				Bit::Set(AF.lo, FLAG_H);
@@ -882,6 +903,7 @@ int Cpu::ExecuteOpcode()
 				Bit::Reset(AF.lo, FLAG_H);
 			}
 
+			// determine if we carried
 			if (((HL.reg & 0xFF) + (nn)) > 0xFF)
 			{
 				Bit::Set(AF.lo, FLAG_C);
@@ -891,18 +913,23 @@ int Cpu::ExecuteOpcode()
 				Bit::Reset(AF.lo, FLAG_C);
 			}
 			
+			// load nn into HL
 			LOAD_16Bit(HL.reg, nn, 12);
+
+			// increment PC
 			PC++;
 		}
 		break;
 		case 0xF9: LOAD_16Bit(SP.reg, HL.reg, 8); break; // LD SP,HL
-		case 0xFA: LOAD_16Bit(AF.reg, Memory::ReadWord(PC), 16); PC += 2; break; // LD A,(a16)
 		case 0x08: // LD (a16),SP
 		{
+			// get the value of a16
 			WORD nn = Memory::ReadWord(PC);
+			// write SP to memory
 			Memory::Write(nn, SP.hi);
 			nn++;
 			Memory::Write(nn, SP.lo);
+			// increment PC
 			PC += 2;
 			Cycles += 20;
 		}
@@ -975,10 +1002,23 @@ int Cpu::ExecuteOpcode()
 
 		case 0x34: // INC (HL)
 		{
-			WORD result = (Memory::ReadByte(HL.reg) + 1);
-			if (result == 0) Bit::Set(AF.lo, FLAG_Z); else Bit::Reset(AF.lo, FLAG_Z);
+			// store the result of the calculation
+			BYTE result = (Memory::ReadByte(HL.reg) + 1);
+
+			// reset the N flag
 			Bit::Reset(AF.lo, FLAG_N);
 			
+			// set/unset the Z flag
+			if (result == 0)
+			{
+				Bit::Set(AF.lo, FLAG_Z); 
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_Z);
+			}
+
+			// determine if we half carried
 			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), 1))
 			{
 				Bit::Set(AF.lo, FLAG_H);
@@ -988,19 +1028,31 @@ int Cpu::ExecuteOpcode()
 				Bit::Reset(AF.lo, FLAG_H);
 			}
 
+			// write the result back to memory
 			Memory::Write(HL.reg, result);
 			Cycles += 12;
-			//Log::UnimplementedOpcode(Opcode);
 		}
 		break;
 
 		case 0x35: // DEC (HL)
 		{
-			WORD result = (Memory::ReadByte(HL.reg) - 1);
-			if (result == 0) Bit::Set(AF.lo, FLAG_Z); else Bit::Reset(AF.lo, FLAG_Z);
+			// store the result of the calculation
+			BYTE result = (Memory::ReadByte(HL.reg) - 1);
+			// set the N flag
 			Bit::Set(AF.lo, FLAG_N);
 			
-			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), 1))
+			// set/unset the Z flag
+			if (result == 0)
+			{
+				Bit::Set(AF.lo, FLAG_Z); 
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_Z);
+			}
+
+			// determine if we half carried
+			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), -1))
 			{
 				Bit::Set(AF.lo, FLAG_H);
 			}
@@ -1009,6 +1061,7 @@ int Cpu::ExecuteOpcode()
 				Bit::Reset(AF.lo, FLAG_H);
 			}
 
+			// write the result back to memory
 			Memory::Write(HL.reg, result);
 			Cycles += 12;
 			//Log::UnimplementedOpcode(Opcode);
