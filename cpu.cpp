@@ -962,6 +962,87 @@ void Cpu::SWAP_8Bit(BYTE &val, int cycles)
 	val = result;
 }
 
+// test if a bit is off
+void Cpu::BIT_Test(BYTE &val, BYTE bit, int cycles)
+{
+	// reset the N flag
+	Bit::Reset(AF.lo, FLAG_N);
+	// set the H flag
+	Bit::Set(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (Bit::Get(val, bit))
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// add the cycles
+	Cycles += cycles;
+}
+
+// reset a bit
+void Cpu::BIT_Test_Memory(WORD address, BYTE bit, int cycles)
+{
+	// get the data
+	BYTE val = Memory::ReadByte(address);
+	// reset the N flag
+	Bit::Reset(AF.lo, FLAG_N);
+	// set the H flag
+	Bit::Set(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (Bit::Get(val, bit))
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+	// add the cycles
+	Cycles += cycles;
+}
+
+// set a bit
+void Cpu::BIT_Set(BYTE &val, BYTE bit, int cycles)
+{
+	// add the cycles
+	Cycles += cycles;
+	// set the bit
+	Bit::Set(val, bit);
+}
+
+// set a bit
+void Cpu::BIT_Set_Memory(WORD address, BYTE bit, int cycles)
+{
+	// get the data
+	BYTE val = Memory::ReadByte(address);
+	// set the bit
+	Bit::Set(val, bit);
+	// write the data back to memory
+	Memory::Write(address, val);
+	// add the cycles
+	Cycles += cycles;
+}
+
+// reset a bit
+void Cpu::BIT_Reset(BYTE &val, BYTE bit, int cycles)
+{
+	// add the cycles
+	Cycles += cycles;
+	// reset the bit
+	Bit::Reset(val, bit);
+}
+
+// reset a bit
+void Cpu::BIT_Reset_Memory(WORD address, BYTE bit, int cycles)
+{
+	// get the data
+	BYTE val = Memory::ReadByte(address);
+	// reset the bit
+	Bit::Reset(val, bit);
+	// write the data back to memory
+	Memory::Write(address, val);
+	// add the cycles
+	Cycles += cycles;
+}
+
 // jump (one byte signed immediate value)
 int Cpu::JUMP_Immediate(bool condition, int cycles)
 {
@@ -1795,227 +1876,227 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x1E: RR_Write(HL.reg, true, 16); break; // RR (HL)
 		case 0x1F: RR(AF.hi, true, 8); break; // RR A
 		// shift left
-		case 0x20: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA B
-		case 0x21: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA C
-		case 0x22: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA D
-		case 0x23: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA E
-		case 0x24: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA H
-		case 0x25: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA L
-		case 0x26: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SLA (HL)
-		case 0x27: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA A
+		case 0x20: SLA(BC.hi, 8); break; // SLA B
+		case 0x21: SLA(BC.lo, 8); break; // SLA C
+		case 0x22: SLA(DE.hi, 8); break; // SLA D
+		case 0x23: SLA(DE.lo, 8); break; // SLA E
+		case 0x24: SLA(HL.hi, 8); break; // SLA H
+		case 0x25: SLA(HL.lo, 8); break; // SLA L
+		case 0x26: SLA_Write(HL.reg, 16); break; // SLA (HL)
+		case 0x27: SLA(AF.hi, 8); break; // SLA A
 		// shift right
-		case 0x28: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA B
-		case 0x29: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA C
-		case 0x2A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA D
-		case 0x2B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA E
-		case 0x2C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA H
-		case 0x2D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA L
-		case 0x2E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SRA (HL)
-		case 0x2F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA A
+		case 0x28: SRA(BC.hi, 8); break; // SRA B
+		case 0x29: SRA(BC.lo, 8); break; // SRA C
+		case 0x2A: SRA(DE.hi, 8); break; // SRA D
+		case 0x2B: SRA(DE.lo, 8); break; // SRA E
+		case 0x2C: SRA(HL.hi, 8); break; // SRA H
+		case 0x2D: SRA(HL.lo, 8); break; // SRA L
+		case 0x2E: SRA_Write(HL.reg, 16); break; // SRA (HL)
+		case 0x2F: SRA(AF.hi, 8); break; // SRA A
 		// shift right
-		case 0x38: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL B
-		case 0x39: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL C
-		case 0x3A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL D
-		case 0x3B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL E
-		case 0x3C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL H
-		case 0x3D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL L 
-		case 0x3E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SRL (HL)
-		case 0x3F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL A
+		case 0x38: SRL(BC.hi, 8); break; // SRL B
+		case 0x39: SRL(BC.lo, 8); break; // SRL C
+		case 0x3A: SRL(DE.hi, 8); break; // SRL D
+		case 0x3B: SRL(DE.lo, 8); break; // SRL E
+		case 0x3C: SRL(HL.hi, 8); break; // SRL H
+		case 0x3D: SRL(HL.lo, 8); break; // SRL L 
+		case 0x3E: SRL_Write(HL.reg, 16); break; // SRL (HL)
+		case 0x3F: SRL(AF.hi, 8); break; // SRL A
 		// test bit
-		case 0x40: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,B 
-		case 0x41: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,C
-		case 0x42: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,D
-		case 0x43: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,E
-		case 0x44: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,H
-		case 0x45: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,L
-		case 0x46: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 0,(HL)
-		case 0x47: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,A
-		case 0x48: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 1,B
-		case 0x49: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 1,C
-		case 0x4A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 1,D
-		case 0x4B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 1,E
-		case 0x4C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 1,H
-		case 0x4D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 1,L
-		case 0x4E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 1,(HL)
-		case 0x4F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 1,A
-		case 0x50: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 2,B
-		case 0x51: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 2,C
-		case 0x52: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 2,D
-		case 0x53: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 2,E
-		case 0x54: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 2,H
-		case 0x55: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 2,L
-		case 0x56: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 2,(HL)
-		case 0x57: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 2,A
-		case 0x58: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 3,B
-		case 0x59: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 3,C 
-		case 0x5A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 3,D
-		case 0x5B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 3,E
-		case 0x5C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 3,H
-		case 0x5D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 3,L
-		case 0x5E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 3,(HL)
-		case 0x5F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 3,A
-		case 0x60: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 4,B
-		case 0x61: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 4,C
-		case 0x62: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 4,D
-		case 0x63: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 4,E
-		case 0x64: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 4,H
-		case 0x65: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 4,L 
-		case 0x66: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 4,(HL)
-		case 0x67: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 4,A
-		case 0x68: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 5,B
-		case 0x69: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 5,C 
-		case 0x6A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 5,D
-		case 0x6B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 5,E
-		case 0x6C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 5,H
-		case 0x6D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 5,L
-		case 0x6E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 5,(HL)
-		case 0x6F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 5,A
-		case 0x70: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 6,B 
-		case 0x71: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 6,C
-		case 0x72: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 6,D
-		case 0x73: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 6,E
-		case 0x74: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 6,H
-		case 0x75: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 6,L 
-		case 0x76: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 6,(HL) 
-		case 0x77: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 6,A
-		case 0x78: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,B
-		case 0x79: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,C
-		case 0x7A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,D
-		case 0x7B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,E
-		case 0x7C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,H
-		case 0x7D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,L
-		case 0x7E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 7,(HL)
-		case 0x7F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,A
+		case 0x40: BIT_Test(BC.hi, 0, 8); break; // BIT 0,B 
+		case 0x41: BIT_Test(BC.lo, 0, 8); break; // BIT 0,C
+		case 0x42: BIT_Test(DE.hi, 0, 8); break; // BIT 0,D
+		case 0x43: BIT_Test(DE.lo, 0, 8); break; // BIT 0,E
+		case 0x44: BIT_Test(HL.hi, 0, 8); break; // BIT 0,H
+		case 0x45: BIT_Test(HL.lo, 0, 8); break; // BIT 0,L
+		case 0x46: BIT_Test_Memory(HL.reg, 0, 16); break; // BIT 0,(HL)
+		case 0x47: BIT_Test(AF.hi, 0, 8); break; // BIT 0,A
+		case 0x48: BIT_Test(BC.hi, 1, 8); break; // BIT 1,B
+		case 0x49: BIT_Test(BC.lo, 1, 8); break; // BIT 1,C
+		case 0x4A: BIT_Test(DE.hi, 1, 8); break; // BIT 1,D
+		case 0x4B: BIT_Test(DE.lo, 1, 8); break; // BIT 1,E
+		case 0x4C: BIT_Test(HL.hi, 1, 8); break; // BIT 1,H
+		case 0x4D: BIT_Test(HL.lo, 1, 8); break; // BIT 1,L
+		case 0x4E: BIT_Test_Memory(HL.reg, 1, 16); break; // BIT 1,(HL)
+		case 0x4F: BIT_Test(AF.hi, 1, 8); break; // BIT 1,A
+		case 0x50: BIT_Test(BC.hi, 2, 8); break; // BIT 2,B
+		case 0x51: BIT_Test(BC.lo, 2, 8); break; // BIT 2,C
+		case 0x52: BIT_Test(DE.hi, 2, 8); break; // BIT 2,D
+		case 0x53: BIT_Test(DE.lo, 2, 8); break; // BIT 2,E
+		case 0x54: BIT_Test(HL.hi, 2, 8); break; // BIT 2,H
+		case 0x55: BIT_Test(HL.lo, 2, 8); break; // BIT 2,L
+		case 0x56: BIT_Test_Memory(HL.reg, 2, 16); break; // BIT 2,(HL)
+		case 0x57: BIT_Test(AF.hi, 2, 8); break; // BIT 2,A
+		case 0x58: BIT_Test(BC.hi, 3, 8); break; // BIT 3,B
+		case 0x59: BIT_Test(BC.lo, 3, 8); break; // BIT 3,C 
+		case 0x5A: BIT_Test(DE.hi, 3, 8); break; // BIT 3,D
+		case 0x5B: BIT_Test(DE.lo, 3, 8); break; // BIT 3,E
+		case 0x5C: BIT_Test(HL.hi, 3, 8); break; // BIT 3,H
+		case 0x5D: BIT_Test(HL.lo, 3, 8); break; // BIT 3,L
+		case 0x5E: BIT_Test_Memory(HL.reg, 3, 16); break; // BIT 3,(HL)
+		case 0x5F: BIT_Test(AF.hi, 3, 8); break; // BIT 3,A
+		case 0x60: BIT_Test(BC.hi, 4, 8); break; // BIT 4,B
+		case 0x61: BIT_Test(BC.lo, 4, 8); break; // BIT 4,C
+		case 0x62: BIT_Test(DE.hi, 4, 8); break; // BIT 4,D
+		case 0x63: BIT_Test(DE.lo, 4, 8); break; // BIT 4,E
+		case 0x64: BIT_Test(HL.hi, 4, 8); break; // BIT 4,H
+		case 0x65: BIT_Test(HL.lo, 4, 8); break; // BIT 4,L 
+		case 0x66: BIT_Test_Memory(HL.reg, 4, 16); break; // BIT 4,(HL)
+		case 0x67: BIT_Test(AF.hi, 4, 8); break; // BIT 4,A
+		case 0x68: BIT_Test(BC.hi, 5, 8); break; // BIT 5,B
+		case 0x69: BIT_Test(BC.lo, 5, 8); break; // BIT 5,C 
+		case 0x6A: BIT_Test(DE.hi, 5, 8); break; // BIT 5,D
+		case 0x6B: BIT_Test(DE.lo, 5, 8); break; // BIT 5,E
+		case 0x6C: BIT_Test(HL.hi, 5, 8); break; // BIT 5,H
+		case 0x6D: BIT_Test(HL.lo, 5, 8); break; // BIT 5,L
+		case 0x6E: BIT_Test_Memory(HL.reg, 5, 16); break; // BIT 5,(HL)
+		case 0x6F: BIT_Test(AF.hi, 5, 8); break; // BIT 5,A
+		case 0x70: BIT_Test(BC.hi, 6, 8); break; // BIT 6,B 
+		case 0x71: BIT_Test(BC.lo, 6, 8); break; // BIT 6,C
+		case 0x72: BIT_Test(DE.hi, 6, 8); break; // BIT 6,D
+		case 0x73: BIT_Test(DE.lo, 6, 8); break; // BIT 6,E
+		case 0x74: BIT_Test(HL.hi, 6, 8); break; // BIT 6,H
+		case 0x75: BIT_Test(HL.lo, 6, 8); break; // BIT 6,L 
+		case 0x76: BIT_Test_Memory(HL.reg, 6, 16); break; // BIT 6,(HL) 
+		case 0x77: BIT_Test(AF.hi, 6, 8); break; // BIT 6,A
+		case 0x78: BIT_Test(BC.hi, 7, 8); break; // BIT 7,B
+		case 0x79: BIT_Test(BC.lo, 7, 8); break; // BIT 7,C
+		case 0x7A: BIT_Test(DE.hi, 7, 8); break; // BIT 7,D
+		case 0x7B: BIT_Test(DE.lo, 7, 8); break; // BIT 7,E
+		case 0x7C: BIT_Test(HL.hi, 7, 8); break; // BIT 7,H
+		case 0x7D: BIT_Test(HL.lo, 7, 8); break; // BIT 7,L
+		case 0x7E: BIT_Test_Memory(HL.reg, 7, 16); break; // BIT 7,(HL)
+		case 0x7F: BIT_Test(AF.hi, 7, 8); break; // BIT 7,A
 		// reset bit
-		case 0x80: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,B
-		case 0x81: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,C
-		case 0x82: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,D
-		case 0x83: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,E
-		case 0x84: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,H
-		case 0x85: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,L
-		case 0x86: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 0,(HL
-		case 0x87: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,A
-		case 0x88: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 1,B
-		case 0x89: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 1,C
-		case 0x8A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 1,D
-		case 0x8B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 1,E
-		case 0x8C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 1,H 
-		case 0x8D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 1,L
-		case 0x8E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 1,(HL)
-		case 0x8F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 1,A
-		case 0x90: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 2,B
-		case 0x91: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 2,C
-		case 0x92: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 2,D
-		case 0x93: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 2,E
-		case 0x94: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 2,H
-		case 0x95: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 2,L
-		case 0x96: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 2,(HL)
-		case 0x97: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 2,A
-		case 0x98: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 3,B
-		case 0x99: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 3,C
-		case 0x9A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 3,D
-		case 0x9B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 3,E
-		case 0x9C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 3,H
-		case 0x9D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 3,L
-		case 0x9E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 3,(HL)
-		case 0x9F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 3,A
-		case 0xA0: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 4,B
-		case 0xA1: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 4,C
-		case 0xA2: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 4,D
-		case 0xA3: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 4,E
-		case 0xA4: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 4,H
-		case 0xA5: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 4,L
-		case 0xA6: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 4,(HL)
-		case 0xA7: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 4,A
-		case 0xA8: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 5,B
-		case 0xA9: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 5,C
-		case 0xAA: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 5,D
-		case 0xAB: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 5,E
-		case 0xAC: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 5,H
-		case 0xAD: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 5,L 
-		case 0xAE: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 5,(HL) 
-		case 0xAF: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 5,A
-		case 0xB0: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 6,B
-		case 0xB1: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 6,C
-		case 0xB2: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 6,D
-		case 0xB3: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 6,E
-		case 0xB4: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 6,H
-		case 0xB5: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 6,L
-		case 0xB6: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 6,(HL)
-		case 0xB7: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 6,A
-		case 0xB8: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,B
-		case 0xB9: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,C 
-		case 0xBA: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,D
-		case 0xBB: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,E
-		case 0xBC: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,H 
-		case 0xBD: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,L
-		case 0xBE: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 7,(HL)
-		case 0xBF: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,A
+		case 0x80: BIT_Reset(BC.hi, 0, 8); break; // RES 0,B
+		case 0x81: BIT_Reset(BC.lo, 0, 8); break; // RES 0,C
+		case 0x82: BIT_Reset(DE.hi, 0, 8); break; // RES 0,D
+		case 0x83: BIT_Reset(DE.lo, 0, 8); break; // RES 0,E
+		case 0x84: BIT_Reset(HL.hi, 0, 8); break; // RES 0,H
+		case 0x85: BIT_Reset(HL.lo, 0, 8); break; // RES 0,L
+		case 0x86: BIT_Reset_Memory(HL.reg, 0, 16); break; // RES 0,(HL)
+		case 0x87: BIT_Reset(AF.hi, 0, 8); break; // RES 0,A
+		case 0x88: BIT_Reset(BC.hi, 1, 8); break; // RES 1,B
+		case 0x89: BIT_Reset(BC.lo, 1, 8); break; // RES 1,C
+		case 0x8A: BIT_Reset(DE.hi, 1, 8); break; // RES 1,D
+		case 0x8B: BIT_Reset(DE.lo, 1, 8); break; // RES 1,E
+		case 0x8C: BIT_Reset(HL.hi, 1, 8); break; // RES 1,H 
+		case 0x8D: BIT_Reset(HL.lo, 1, 8); break; // RES 1,L
+		case 0x8E: BIT_Reset_Memory(HL.reg, 1, 16); break; // RES 1,(HL)
+		case 0x8F: BIT_Reset(AF.hi, 1, 8); break; // RES 1,A
+		case 0x90: BIT_Reset(BC.hi, 2, 8); break; // RES 2,B
+		case 0x91: BIT_Reset(BC.lo, 2, 8); break; // RES 2,C
+		case 0x92: BIT_Reset(DE.hi, 2, 8); break; // RES 2,D
+		case 0x93: BIT_Reset(DE.lo, 2, 8); break; // RES 2,E
+		case 0x94: BIT_Reset(HL.hi, 2, 8); break; // RES 2,H
+		case 0x95: BIT_Reset(HL.lo, 2, 8); break; // RES 2,L
+		case 0x96: BIT_Reset_Memory(HL.reg, 2, 16); break; // RES 2,(HL)
+		case 0x97: BIT_Reset(AF.hi, 2, 8); break; // RES 2,A
+		case 0x98: BIT_Reset(BC.hi, 3, 8); break; // RES 3,B
+		case 0x99: BIT_Reset(BC.lo, 3, 8); break; // RES 3,C
+		case 0x9A: BIT_Reset(DE.hi, 3, 8); break; // RES 3,D
+		case 0x9B: BIT_Reset(DE.lo, 3, 8); break; // RES 3,E
+		case 0x9C: BIT_Reset(HL.hi, 3, 8); break; // RES 3,H
+		case 0x9D: BIT_Reset(HL.lo, 3, 8); break; // RES 3,L
+		case 0x9E: BIT_Reset_Memory(HL.reg, 3, 16); break; // RES 3,(HL)
+		case 0x9F: BIT_Reset(AF.hi, 3, 8); break; // RES 3,A
+		case 0xA0: BIT_Reset(AF.hi, 4, 8); break; // RES 4,B
+		case 0xA1: BIT_Reset(BC.hi, 4, 8); break; // RES 4,C
+		case 0xA2: BIT_Reset(DE.lo, 4, 8); break; // RES 4,D
+		case 0xA3: BIT_Reset(DE.lo, 4, 8); break; // RES 4,E
+		case 0xA4: BIT_Reset(HL.hi, 4, 8); break; // RES 4,H
+		case 0xA5: BIT_Reset(HL.lo, 4, 8); break; // RES 4,L
+		case 0xA6: BIT_Reset_Memory(HL.reg, 4, 16); break; // RES 4,(HL)
+		case 0xA7: BIT_Reset(AF.hi, 4, 8); break; // RES 4,A
+		case 0xA8: BIT_Reset(BC.hi, 5, 8); break; // RES 5,B
+		case 0xA9: BIT_Reset(BC.lo, 5, 8); break; // RES 5,C
+		case 0xAA: BIT_Reset(DE.hi, 5, 8); break; // RES 5,D
+		case 0xAB: BIT_Reset(DE.lo, 5, 8); break; // RES 5,E
+		case 0xAC: BIT_Reset(HL.hi, 5, 8); break; // RES 5,H
+		case 0xAD: BIT_Reset(HL.lo, 5, 8); break; // RES 5,L 
+		case 0xAE: BIT_Reset_Memory(HL.reg, 5, 16); break; // RES 5,(HL) 
+		case 0xAF: BIT_Reset(AF.hi, 5, 8); break; // RES 5,A
+		case 0xB0: BIT_Reset(BC.hi, 6, 8); break; // RES 6,B
+		case 0xB1: BIT_Reset(BC.lo, 6, 8); break; // RES 6,C
+		case 0xB2: BIT_Reset(DE.hi, 6, 8); break; // RES 6,D
+		case 0xB3: BIT_Reset(DE.lo, 6, 8); break; // RES 6,E
+		case 0xB4: BIT_Reset(HL.hi, 6, 8); break; // RES 6,H
+		case 0xB5: BIT_Reset(HL.lo, 6, 8); break; // RES 6,L
+		case 0xB6: BIT_Reset_Memory(HL.reg, 6, 16); break; // RES 6,(HL)
+		case 0xB7: BIT_Reset(AF.hi, 6, 8); break; // RES 6,A
+		case 0xB8: BIT_Reset(BC.hi, 7, 8); break; // RES 7,B
+		case 0xB9: BIT_Reset(BC.lo, 7, 8); break; // RES 7,C 
+		case 0xBA: BIT_Reset(DE.hi, 7, 8); break; // RES 7,D
+		case 0xBB: BIT_Reset(DE.lo, 7, 8); break; // RES 7,E
+		case 0xBC: BIT_Reset(HL.hi, 7, 8); break; // RES 7,H 
+		case 0xBD: BIT_Reset(HL.lo, 7, 8); break; // RES 7,L
+		case 0xBE: BIT_Reset_Memory(HL.reg, 7, 16); break; // RES 7,(HL)
+		case 0xBF: BIT_Reset(AF.hi, 7, 8); break; // RES 7,A
 		// set bit
-		case 0xC0: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,B
-		case 0xC1: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,C
-		case 0xC2: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,D
-		case 0xC3: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,E
-		case 0xC4: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,H
-		case 0xC5: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,L
-		case 0xC6: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 0,(HL)
-		case 0xC7: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,A
-		case 0xC8: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 1,B
-		case 0xC9: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 1,C
-		case 0xCA: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 1,D
-		case 0xCB: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 1,E
-		case 0xCC: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 1,H
-		case 0xCD: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 1,L
-		case 0xCE: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 1,(HL)
-		case 0xCF: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 1,A
-		case 0xD0: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 2,B
-		case 0xD1: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 2,C
-		case 0xD2: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 2,D
-		case 0xD3: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 2,E
-		case 0xD4: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 2,H
-		case 0xD5: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 2,L
-		case 0xD6: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 2,(HL)
-		case 0xD7: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 2,A
-		case 0xD8: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 3,B
-		case 0xD9: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 3,C
-		case 0xDA: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 3,D
-		case 0xDB: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 3,E
-		case 0xDC: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 3,H
-		case 0xDD: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 3,L
-		case 0xDE: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 3,(HL)
-		case 0xDF: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 3,A
-		case 0xE0: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 4,B
-		case 0xE1: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 4,C
-		case 0xE2: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 4,D 
-		case 0xE3: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 4,E
-		case 0xE4: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 4,H
-		case 0xE5: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 4,L
-		case 0xE6: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 4,(HL)
-		case 0xE7: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 4,A
-		case 0xE8: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 5,B
-		case 0xE9: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 5,C
-		case 0xEA: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 5,D
-		case 0xEB: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 5,E
-		case 0xEC: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 5,H
-		case 0xED: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 5,L
-		case 0xEE: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 5,(HL)
-		case 0xEF: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 5,A
-		case 0xF0: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 6,B
-		case 0xF1: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 6,C
-		case 0xF2: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 6,D
-		case 0xF3: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 6,E
-		case 0xF4: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 6,H
-		case 0xF5: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 6,L
-		case 0xF6: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 6,(HL)
-		case 0xF7: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 6,A
-		case 0xF8: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 7,B
-		case 0xF9: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 7,C 
-		case 0xFA: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 7,D
-		case 0xFB: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 7,E
-		case 0xFC: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 7,H
-		case 0xFD: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 7,L
-		case 0xFE: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SET 7,(HL) 
-		case 0xFF: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 7,A
+		case 0xC0: BIT_Set(BC.hi, 0, 8); break; // SET 0,B
+		case 0xC1: BIT_Set(BC.lo, 0, 8); break; // SET 0,C
+		case 0xC2: BIT_Set(DE.hi, 0, 8); break; // SET 0,D
+		case 0xC3: BIT_Set(DE.lo, 0, 8); break; // SET 0,E
+		case 0xC4: BIT_Set(HL.hi, 0, 8); break; // SET 0,H
+		case 0xC5: BIT_Set(HL.lo, 0, 8); break; // SET 0,L
+		case 0xC6: BIT_Set_Memory(HL.reg, 0, 16); break; // SET 0,(HL)
+		case 0xC7: BIT_Set(AF.hi, 0, 8); break; // SET 0,A
+		case 0xC8: BIT_Set(BC.hi, 1, 8); break; // SET 1,B
+		case 0xC9: BIT_Set(BC.lo, 1, 8); break; // SET 1,C
+		case 0xCA: BIT_Set(DE.hi, 1, 8); break; // SET 1,D
+		case 0xCB: BIT_Set(DE.lo, 1, 8); break; // SET 1,E
+		case 0xCC: BIT_Set(HL.hi, 1, 8); break; // SET 1,H
+		case 0xCD: BIT_Set(HL.hi, 1, 8); break; // SET 1,L
+		case 0xCE: BIT_Set_Memory(HL.reg, 1, 16); break; // SET 1,(HL)
+		case 0xCF: BIT_Set(AF.hi, 1, 8); break; // SET 1,A
+		case 0xD0: BIT_Set(BC.hi, 2, 8); break; // SET 2,B
+		case 0xD1: BIT_Set(BC.lo, 2, 8); break; // SET 2,C
+		case 0xD2: BIT_Set(DE.hi, 2, 8); break; // SET 2,D
+		case 0xD3: BIT_Set(DE.lo, 2, 8); break; // SET 2,E
+		case 0xD4: BIT_Set(HL.hi, 2, 8); break; // SET 2,H
+		case 0xD5: BIT_Set(HL.lo, 2, 8); break; // SET 2,L
+		case 0xD6: BIT_Set_Memory(HL.reg, 2, 16); break; // SET 2,(HL)
+		case 0xD7: BIT_Set(AF.hi, 2, 8); break; // SET 2,A
+		case 0xD8: BIT_Set(BC.hi, 3, 8); break; // SET 3,B
+		case 0xD9: BIT_Set(BC.lo, 3, 8); break; // SET 3,C
+		case 0xDA: BIT_Set(DE.hi, 3, 8); break; // SET 3,D
+		case 0xDB: BIT_Set(DE.lo, 3, 8); break; // SET 3,E
+		case 0xDC: BIT_Set(HL.hi, 3, 8); break; // SET 3,H
+		case 0xDD: BIT_Set(HL.lo, 3, 8); break; // SET 3,L
+		case 0xDE: BIT_Set_Memory(HL.reg, 3, 16); break; // SET 3,(HL)
+		case 0xDF: BIT_Set(AF.hi, 3, 8); break; // SET 3,A
+		case 0xE0: BIT_Set(BC.hi, 4, 8); break; // SET 4,B
+		case 0xE1: BIT_Set(BC.lo, 4, 8); break; // SET 4,C
+		case 0xE2: BIT_Set(DE.hi, 4, 8); break; // SET 4,D 
+		case 0xE3: BIT_Set(DE.lo, 4, 8); break; // SET 4,E
+		case 0xE4: BIT_Set(HL.hi, 4, 8); break; // SET 4,H
+		case 0xE5: BIT_Set(HL.lo, 4, 8); break; // SET 4,L
+		case 0xE6: BIT_Set_Memory(HL.reg, 4, 16); break; // SET 4,(HL)
+		case 0xE7: BIT_Set(AF.hi, 4, 8); break; // SET 4,A
+		case 0xE8: BIT_Set(BC.hi, 5, 8); break; // SET 5,B
+		case 0xE9: BIT_Set(BC.lo, 5, 8); break; // SET 5,C
+		case 0xEA: BIT_Set(DE.hi, 5, 8); break; // SET 5,D
+		case 0xEB: BIT_Set(DE.lo, 5, 8); break; // SET 5,E
+		case 0xEC: BIT_Set(HL.hi, 5, 8); break; // SET 5,H
+		case 0xED: BIT_Set(HL.lo, 5, 8); break; // SET 5,L
+		case 0xEE: BIT_Set_Memory(HL.reg, 5, 16); break; // SET 5,(HL)
+		case 0xEF: BIT_Set(AF.hi, 5, 8); break; // SET 5,A
+		case 0xF0: BIT_Set(BC.hi, 6, 8); break; // SET 6,B
+		case 0xF1: BIT_Set(BC.lo, 6, 8); break; // SET 6,C
+		case 0xF2: BIT_Set(DE.hi, 6, 8); break; // SET 6,D
+		case 0xF3: BIT_Set(DE.lo, 6, 8); break; // SET 6,E
+		case 0xF4: BIT_Set(HL.hi, 6, 8); break; // SET 6,H
+		case 0xF5: BIT_Set(HL.lo, 6, 8); break; // SET 6,L
+		case 0xF6: BIT_Set_Memory(HL.reg, 6, 16); break; // SET 6,(HL)
+		case 0xF7: BIT_Set(AF.hi, 6, 8); break; // SET 6,A
+		case 0xF8: BIT_Set(BC.hi, 7, 8); break; // SET 7,B
+		case 0xF9: BIT_Set(BC.lo, 7, 8); break; // SET 7,C 
+		case 0xFA: BIT_Set(DE.hi, 7, 8); break; // SET 7,D
+		case 0xFB: BIT_Set(DE.lo, 7, 8); break; // SET 7,E
+		case 0xFC: BIT_Set(HL.hi, 7, 8); break; // SET 7,H
+		case 0xFD: BIT_Set(HL.lo, 7, 8); break; // SET 7,L
+		case 0xFE: BIT_Set_Memory(HL.reg, 7, 16); break; // SET 7,(HL) 
+		case 0xFF: BIT_Set(AF.hi, 7, 8); break; // SET 7,A
 		default: Log::UnimplementedOpcode(Opcode); break;
 	}
 }
