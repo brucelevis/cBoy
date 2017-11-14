@@ -1066,6 +1066,35 @@ int Cpu::ExecuteOpcode()
 
 		case 0x07: // RLCA
 		{
+			// store the result of the calculation
+			BYTE result = (AF.hi << 1);
+
+			// reset the Z, N & H flags
+			Bit::Reset(AF.lo, FLAG_Z);
+			Bit::Reset(AF.lo, FLAG_N);
+			Bit::Reset(AF.lo, FLAG_H);
+
+			// rotate A left and put the carry flag bit back into it			
+			AF.hi = ((AF.hi << 1) | Bit::Get(AF.lo, FLAG_Z));
+			Cycles += 4;			
+		}
+		break;
+
+		case 0x0F: // RRCA
+		{
+			// reset the Z, N & H flags
+			Bit::Reset(AF.lo, FLAG_Z);
+			Bit::Reset(AF.lo, FLAG_N);
+			Bit::Reset(AF.lo, FLAG_H);
+
+			// rotate A right and put the carry flag bit back into it			
+			AF.hi = ((AF.hi >> 1) | Bit::Get(AF.lo, FLAG_Z));
+			Cycles += 4;			
+		}
+		break;
+
+		case 0x17: // RLA
+		{
 			/*	
 				explanation 1:
 					You essentially act like Register A is a 9-bit register, 
@@ -1098,11 +1127,11 @@ int Cpu::ExecuteOpcode()
 
 			// rotate A left and put the old carry flag bit back into it
 			AF.hi = ((AF.hi << 1) | carryFlag);
-			Cycles += 4;			
+			Cycles += 4;
 		}
 		break;
 
-		case 0x0F: // RRCA
+		case 0x1F: // RRA
 		{
 			// get the carry flag value
 			BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
@@ -1124,35 +1153,6 @@ int Cpu::ExecuteOpcode()
 
 			// rotate A right and put the old carry flag bit back into it
 			AF.hi = ((AF.hi >> 1) | carryFlag);
-			Cycles += 4;			
-		}
-		break;
-
-		case 0x17: // RLA
-		{
-			// store the result of the calculation
-			BYTE result = (AF.hi << 1);
-
-			// reset the Z, N & H flags
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-
-			// rotate A left and put the carry flag bit back into it			
-			AF.hi = ((AF.hi << 1) | Bit::Get(AF.lo, FLAG_Z));
-			Cycles += 4;
-		}
-		break;
-
-		case 0x1F: // RRA
-		{
-			// reset the Z, N & H flags
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-
-			// rotate A right and put the carry flag bit back into it			
-			AF.hi = ((AF.hi >> 1) | Bit::Get(AF.lo, FLAG_Z));
 			Cycles += 4;
 		}
 		break;
