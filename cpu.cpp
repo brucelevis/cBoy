@@ -416,6 +416,552 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 	Cycles += cycles;
 }
 
+// rotate left (through carry)
+void Cpu::RL(BYTE &val, bool checkForZero, int cycles)
+{
+	// get the carry flag value
+	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	// calculate the result
+	BYTE result = (val << 1);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0)
+		{
+			Bit::Set(AF.lo, FLAG_Z);
+		}
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 7) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// rotate A left and put the old carry flag bit back into it
+	val = (result | carryFlag);
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate left (write to mem) (through carry)
+void Cpu::RL_Write(WORD address, bool checkForZero, int cycles)
+{
+	// get the carry flag value
+	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	// calculate the result
+	BYTE result = (Memory::ReadByte(address) << 1);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0)
+		{
+			Bit::Set(AF.lo, FLAG_Z);
+		}
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(result, 7) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// write the result + carry flag back to memory
+	Memory::Write(address, (result | carryFlag));
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate right (through carry)
+void Cpu::RR(BYTE &val, bool checkForZero, int cycles)
+{
+	// get the carry flag value
+	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	// calculate the result
+	BYTE result = (val >> 1);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0)
+		{
+			Bit::Set(AF.lo, FLAG_Z);
+		}
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 7) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// rotate A right and put the old carry flag bit back into it
+	val = (result | carryFlag);
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate right (write to mem) (through carry)
+void Cpu::RR_Write(WORD address, bool checkForZero, int cycles)
+{
+	// get the carry flag value
+	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	// calculate the result
+	BYTE result = (Memory::ReadByte(address) >> 1);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0)
+		{
+			Bit::Set(AF.lo, FLAG_Z);
+		}
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(result, 7) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// write the result + carry flag back to memory
+	Memory::Write(address, (result | carryFlag));
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate left (circular)
+void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
+{
+	// store the result of the calculation
+	BYTE result = (val << 1);
+
+	// reset the N & H flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0)
+		{
+			Bit::Set(AF.lo, FLAG_Z);
+		}
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_Z);
+	}
+
+	// rotate A left and put the carry flag bit back into it			
+	val = ((val << 1) | Bit::Get(AF.lo, FLAG_C));
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate right (write to mem) (circular)
+void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
+{
+	// store the result of the calculation
+	BYTE result = (Memory::ReadByte(address) << 1);
+
+	// reset the N & H flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set/unset Z flag
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// rotate A left and put the carry flag bit back into it			
+	Memory::Write(address, result | Bit::Get(AF.lo, FLAG_C));
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate right (circular)
+void Cpu::RRC(BYTE &val, bool checkForZero, int cycles)
+{
+	// store the result of the calculation
+	BYTE result = (val >> 1);
+
+	// reset the N & H flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set carry flag
+	if (Bit::Get(val, 0))
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C);
+	}
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0)
+		{
+			Bit::Set(AF.lo, FLAG_Z);
+		}
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_Z);
+	}
+
+	// rotate A right and put the carry flag bit back into it			
+	val = ((val >> 1) | Bit::Get(AF.lo, FLAG_C));
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate right (write to mem) (circular)
+void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
+{
+	// store the result of the calculation
+	BYTE result = (Memory::ReadByte(address) >> 1);
+
+	// reset the N & H flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set/unset Z flag
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// rotate A left and put the carry flag bit back into it			
+	Memory::Write(address, result | Bit::Get(AF.lo, FLAG_C));
+	// add the cycles
+	Cycles += cycles;
+}
+
+// shift left (into carry) - LSB of n set to 0
+void Cpu::SLA(BYTE &val, int cycles)
+{
+	// calculate the result
+	BYTE result = (val << 1);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 7) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// shift A left
+	val = result;
+	// set LSB of val to 0
+	Bit::Reset(val, 0);
+	// add the cycles
+	Cycles += cycles;
+}
+
+// shift left (into carry) write to mem - LSB of n set to 0
+void Cpu::SLA_Write(WORD address, int cycles)
+{
+	// get the data
+	BYTE val = Memory::ReadByte(address);
+	// calculate the result
+	BYTE result = (val << 1);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 7) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// shift A left
+	val = result;
+	// set LSB of val to 0
+	Bit::Reset(val, 0);
+	// write the result back to memory
+	Memory::Write(address, val);
+	// add the cycles
+	Cycles += cycles;
+}
+
+// shift right (into carry) - MSB doesn't change
+void Cpu::SRA(BYTE &val, int cycles)
+{
+	// calculate the result
+	BYTE result = (val >> 1);
+	// get the old MSB data
+	BYTE oldMSB = Bit::Get(val, 7);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 0) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// shift A right
+	val = result;
+	// set MSB back to its original value
+	if (oldMSB)
+	{
+		Bit::Set(val, 7);
+	}
+	else
+	{
+		Bit::Reset(val, 7);
+	}
+	
+	// add the cycles
+	Cycles += cycles;
+}
+
+// shift right (into carry) write to mem - MSB doesn't change
+void Cpu::SRA_Write(WORD address, int cycles)
+{
+	// get the data
+	BYTE val = Memory::ReadByte(address);
+	// calculate the result
+	BYTE result = (val >> 1);
+	// get the old MSB data
+	BYTE oldMSB = Bit::Get(val, 7);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 0) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// shift A right
+	val = result;
+	// set MSB back to its original value
+	if (oldMSB)
+	{
+		Bit::Set(val, 7);
+	}
+	else
+	{
+		Bit::Reset(val, 7);
+	}
+
+	// write the result back to memory
+	Memory::Write(address, val);
+
+	// add the cycles
+	Cycles += cycles;
+}
+
+// shift right (into carry) - MSB set to 0
+void Cpu::SRL(BYTE &val, int cycles)
+{
+	// calculate the result
+	BYTE result = (val >> 1);
+	// get the old MSB data
+	BYTE oldMSB = Bit::Get(val, 7);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 0) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// shift A right
+	val = result;
+	// set MSB to zero
+	Bit::Reset(val, 7);
+	
+	// add the cycles
+	Cycles += cycles;
+}
+
+// shift right (into carry) write to mem - MSB set to 0
+void Cpu::SRL_Write(WORD address, int cycles)
+{
+	// get the data
+	BYTE val = (Memory::ReadByte(address));
+	// calculate the result
+	BYTE result = (val >> 1);
+	// get the old MSB data
+	BYTE oldMSB = Bit::Get(val, 7);
+
+	// reset the H & N flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+
+	// set the Z flag if applicable
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 0) != 0)
+	{
+		Bit::Set(AF.lo, FLAG_C);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
+	}
+
+	// shift A right
+	val = result;
+	// set MSB to zero
+	Bit::Reset(val, 7);
+	// write the data back to memory
+	Memory::Write(address, val);
+
+	// add the cycles
+	Cycles += cycles;
+}
+
+// 8 bit swap
+void Cpu::SWAP_8Bit(BYTE &val, int cycles)
+{
+	// calculate the result
+	BYTE result = ((val & 0xF0 >> 4) | (val & 0x0F << 4));
+
+	// reset the N, H & C flags
+	Bit::Reset(AF.lo, FLAG_N);
+	Bit::Reset(AF.lo, FLAG_H);
+	Bit::Reset(AF.lo, FLAG_C);
+
+	// set/unset the Z flag
+	if (result == 0)
+	{
+		Bit::Set(AF.lo, FLAG_Z);
+	}
+	else
+	{
+		Bit::Reset(AF.lo, FLAG_Z);
+	}
+
+	// add the cycles
+	Cycles += cycles;
+	// set val to the result
+	val = result;
+}
+
 // jump (one byte signed immediate value)
 int Cpu::JUMP_Immediate(bool condition, int cycles)
 {
@@ -715,8 +1261,7 @@ int Cpu::ExecuteOpcode()
 
 			// add nn to SP
 			SP.reg += nn;
-			// increment PC
-			//PC++;
+			// increment cycles
 			Cycles += 16;
 		}
 		break;
@@ -778,6 +1323,39 @@ int Cpu::ExecuteOpcode()
 		case 0x25: DEC_8Bit(HL.hi, 4); break; // DEC H
 		case 0x2D: DEC_8Bit(HL.lo, 4); break; // DEC L
 		case 0x3D: DEC_8Bit(AF.hi, 4); break; // DEC A
+		case 0x35: // DEC (HL)
+		{
+			// store the result of the calculation
+			BYTE result = (Memory::ReadByte(HL.reg) - 1);
+			// set the N flag
+			Bit::Set(AF.lo, FLAG_N);
+			
+			// set/unset the Z flag
+			if (result == 0)
+			{
+				Bit::Set(AF.lo, FLAG_Z); 
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_Z);
+			}
+
+			// determine if we half carried
+			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), -1))
+			{
+				Bit::Set(AF.lo, FLAG_H);
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_H);
+			}
+
+			// write the result back to memory
+			Memory::Write(HL.reg, result);
+			Cycles += 12;
+			//Log::UnimplementedOpcode(Opcode);
+		}
+		break;
 		// 16-bit dec
 		case 0x0B: DEC_16Bit(BC.reg, 8); break; // DEC BC
 		case 0x1B: DEC_16Bit(DE.reg, 8); break; // DEC DE
@@ -791,6 +1369,39 @@ int Cpu::ExecuteOpcode()
 		case 0x24: INC_8Bit(HL.hi, 4); break; // INC H
 		case 0x2C: INC_8Bit(HL.lo, 4); break; // INC L
 		case 0x3C: INC_8Bit(AF.hi, 4); break; // INC A
+		case 0x34: // INC (HL)
+		{
+			// store the result of the calculation
+			BYTE result = (Memory::ReadByte(HL.reg) + 1);
+
+			// reset the N flag
+			Bit::Reset(AF.lo, FLAG_N);
+			
+			// set/unset the Z flag
+			if (result == 0)
+			{
+				Bit::Set(AF.lo, FLAG_Z); 
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_Z);
+			}
+
+			// determine if we half carried
+			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), 1))
+			{
+				Bit::Set(AF.lo, FLAG_H);
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_H);
+			}
+
+			// write the result back to memory
+			Memory::Write(HL.reg, result);
+			Cycles += 12;
+		}
+		break;
 		// 16-bit inc
 		case 0x03: INC_16Bit(BC.reg, 8); break; // INC BC
 		case 0x13: INC_16Bit(DE.reg, 8); break; // INC DE
@@ -911,9 +1522,6 @@ int Cpu::ExecuteOpcode()
 			
 			// load nn into HL
 			LOAD_16Bit(HL.reg, nn, 12);
-
-			// increment PC
-			//PC++;
 		}
 		break;
 		case 0xF9: LOAD_16Bit(SP.reg, HL.reg, 8); break; // LD SP,HL
@@ -948,6 +1556,11 @@ int Cpu::ExecuteOpcode()
 		case 0xF2: WRITE_8Bit(0xFF00 + AF.hi, Memory::ReadByte(BC.lo), 8); PC++; break; // LD A,(C)
 		case 0xF0: WRITE_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC++), 12); break; // LDH A,(a8)
 		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC++), AF.hi, 12); break; // LDH (a8),A
+		// rotates
+		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
+		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
+		case 0x17: RL(AF.hi, false, 4); break; // RL, A
+		case 0x1F: RR(AF.hi, false, 4); break; // RR, A
 		// immediate jumps
 		case 0x18: JUMP_Immediate(true, 12); break; // JR r8
 		case 0x20: JUMP_Immediate(!Bit::Get(AF.lo, FLAG_Z), 8); break; // JR NZ,r8
@@ -993,170 +1606,7 @@ int Cpu::ExecuteOpcode()
 		case 0xD1: DE.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP DE
 		case 0xE1: HL.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP HL
 		case 0xF1: AF.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP AF
-
-
-
-		case 0x34: // INC (HL)
-		{
-			// store the result of the calculation
-			BYTE result = (Memory::ReadByte(HL.reg) + 1);
-
-			// reset the N flag
-			Bit::Reset(AF.lo, FLAG_N);
-			
-			// set/unset the Z flag
-			if (result == 0)
-			{
-				Bit::Set(AF.lo, FLAG_Z); 
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_Z);
-			}
-
-			// determine if we half carried
-			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), 1))
-			{
-				Bit::Set(AF.lo, FLAG_H);
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_H);
-			}
-
-			// write the result back to memory
-			Memory::Write(HL.reg, result);
-			Cycles += 12;
-		}
-		break;
-
-		case 0x35: // DEC (HL)
-		{
-			// store the result of the calculation
-			BYTE result = (Memory::ReadByte(HL.reg) - 1);
-			// set the N flag
-			Bit::Set(AF.lo, FLAG_N);
-			
-			// set/unset the Z flag
-			if (result == 0)
-			{
-				Bit::Set(AF.lo, FLAG_Z); 
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_Z);
-			}
-
-			// determine if we half carried
-			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), -1))
-			{
-				Bit::Set(AF.lo, FLAG_H);
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_H);
-			}
-
-			// write the result back to memory
-			Memory::Write(HL.reg, result);
-			Cycles += 12;
-			//Log::UnimplementedOpcode(Opcode);
-		}
-		break;
-
-		case 0x07: // RLCA
-		{
-			// store the result of the calculation
-			BYTE result = (AF.hi << 1);
-
-			// reset the Z, N & H flags
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-
-			// rotate A left and put the carry flag bit back into it			
-			AF.hi = ((AF.hi << 1) | Bit::Get(AF.lo, FLAG_Z));
-			Cycles += 4;			
-		}
-		break;
-
-		case 0x0F: // RRCA
-		{
-			// reset the Z, N & H flags
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-
-			// rotate A right and put the carry flag bit back into it			
-			AF.hi = ((AF.hi >> 1) | Bit::Get(AF.lo, FLAG_Z));
-			Cycles += 4;			
-		}
-		break;
-
-		case 0x17: // RLA
-		{
-			/*	
-				explanation 1:
-					You essentially act like Register A is a 9-bit register, 
-			where the most significant bit is the C flag
-
-				explanation 2:
-
-				essentially, it means you store the current carry flag
-				rotate the MSB of the A register into the carry flag
-				then put the old, stored carry flag back into the LSB of the A register
-			*/
-
-			// get the carry flag value
-			BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
-
-			// reset the Z, H & N flags
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-
-			// set the carry flag
-			if ((AF.hi & 0x80) != 0)
-			{
-				Bit::Set(AF.lo, FLAG_C);
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_C);
-			}
-
-			// rotate A left and put the old carry flag bit back into it
-			AF.hi = ((AF.hi << 1) | carryFlag);
-			Cycles += 4;
-		}
-		break;
-
-		case 0x1F: // RRA
-		{
-			// get the carry flag value
-			BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
-
-			// reset the Z, H & N flags
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-
-			// set the carry flag
-			if ((AF.hi & 0x80) != 0)
-			{
-				Bit::Set(AF.lo, FLAG_C);
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_C);
-			}
-
-			// rotate A right and put the old carry flag bit back into it
-			AF.hi = ((AF.hi >> 1) | carryFlag);
-			Cycles += 4;
-		}
-		break;
-
+		// special instructions
 		case 0x27: // DAA
 		{
 			/*
@@ -1164,10 +1614,62 @@ int Cpu::ExecuteOpcode()
 				This instruction adjusts register A so that the
 				correct representation of Binary Coded Decimal (BCD)
 				is obtained.
-			*/
+
+				When this instruction is executed, the A register is BCD corrected using 
+				the contents of the flags. The exact process is the following: 
+					if the least significant four bits of A contain a non-BCD digit 
+					(i. e. it is greater than 9) or the H flag is set, 
+					then $06 is added to the register. 
+					Then the four most significant bits are checked. 
+					If this more significant digit also happens to be greater than 9
+					or the C flag is set, then $60 is added.
+
+				NOTES:
+					sadly the gameboy throws additional spanners
+					oh, it's not check your 0xF0  0x09, you're checking the wrong nibble
+					and the > 0x90/>0x09 checks only happen on the gameboy when N is not set
+					if I rememeber correctly
+
+					Note that *both* the H and C flags can be set, yours would overwrite the result
+
+					or they can both be over 9, think of 0x99 + 0x11, before adjustment it's 0xAA, 
+					needs to be adjusted to 0x10 and the carry set
+				*/
+
+			BYTE result = 0;
+			bool wasSet = false;
+
+			if (!Bit::Get(AF.lo, FLAG_N))
+			{
+				if (((AF.hi & 0x0F) > 0x9) || Bit::Get(AF.lo, FLAG_H))
+				{
+					result = (AF.hi + 0x6);
+					wasSet = true;
+				}
+
+				if (((AF.hi & 0xF0) > 0x9) || Bit::Get(AF.lo, FLAG_C))
+				{
+					result = (AF.hi + 0x60);
+					wasSet = true;
+				}
+			}
+
+			if (wasSet)
+			{
+				if (result == 0)
+				{
+					Bit::Set(AF.lo, FLAG_Z);
+				}
+				else
+				{
+					Bit::Reset(AF.lo, FLAG_Z);
+				}
+
+				AF.hi = result;
+			}
+
 			Cycles += 4;
-			// Hmmmm....
-			printf("WARNING: DAA instruction not implemented\n");
+			//printf("WARNING: DAA instruction not implemented\n");
 		}
 		break;
 
@@ -1222,38 +1724,77 @@ void Cpu::ExecuteExtendedOpcode()
 	// handle the extended Opcode
 	switch(Opcode)
 	{
-		case 0x00: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RLC B
-		case 0x01: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RLC C
-		case 0x02: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RLC D
-		case 0x03: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RLC E
-		case 0x04: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RLC H
-		case 0x05: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RLC L
-		case 0x06: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RLC (HL)
-		case 0x07: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RLC A
-		case 0x08: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RRC B
-		case 0x09: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RRC C
-		case 0x0A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RRC D
-		case 0x0B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RRC E
-		case 0x0C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RRC H
-		case 0x0D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RRC L
-		case 0x0E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RRC (HL)
-		case 0x0F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RRC A
-		case 0x10: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RL B
-		case 0x11: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RL C
-		case 0x12: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RL D
-		case 0x13: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RL E
-		case 0x14: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RL H
-		case 0x15: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RL L
-		case 0x16: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RL (HL)
-		case 0x17: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RL A
-		case 0x18: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RR B
-		case 0x19: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RR C
-		case 0x1A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RR D
-		case 0x1B: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RR E
-		case 0x1C: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RR H
-		case 0x1D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RR L
-		case 0x1E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RR (HL)
-		case 0x1F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RR A
+		// 8-bit swap
+		case 0x30: SWAP_8Bit(BC.hi, 8); break; // SWAP B
+		case 0x31: SWAP_8Bit(BC.lo, 8); break; // SWAP C
+		case 0x32: SWAP_8Bit(DE.hi, 8); break; // SWAP D
+		case 0x33: SWAP_8Bit(DE.lo, 8); break; // SWAP E
+		case 0x34: SWAP_8Bit(HL.hi, 8); break; // SWAP H
+		case 0x35: SWAP_8Bit(HL.lo, 8); break; // SWAP L
+		case 0x37: SWAP_8Bit(AF.hi, 8); break; // SWAP A
+		case 0x36: // SWAP (HL)
+		{
+			// get the value
+			BYTE val = Memory::ReadByte(HL.reg);
+			// calculate the result
+			BYTE result = ((val & 0x0F << 4) | (val & 0xF0 >> 4));
+
+			// reset the N, H & C flags
+			Bit::Reset(AF.lo, FLAG_N);
+			Bit::Reset(AF.lo, FLAG_H);
+			Bit::Reset(AF.lo, FLAG_C);
+
+			// set/unset the Z flag
+			if (result == 0)
+			{
+				Bit::Set(AF.lo, FLAG_Z);
+			}
+			else
+			{
+				Bit::Reset(AF.lo, FLAG_Z);
+			}
+
+			// write the new value to memory
+			WRITE_8Bit(HL.reg, result, 16);
+		}
+		break;
+		// rotate left circular
+		case 0x00: RLC(BC.hi, 8, true); break; // RLC B
+		case 0x01: RLC(BC.lo, 8, true); break; // RLC C
+		case 0x02: RLC(DE.hi, 8, true); break; // RLC D
+		case 0x03: RLC(DE.lo, 8, true); break; // RLC E
+		case 0x04: RLC(HL.hi, 8, true); break; // RLC H
+		case 0x05: RLC(HL.lo, 8, true); break; // RLC L
+		case 0x07: RLC(AF.hi, 8, true); break; // RLC A
+		case 0x06: RLC_Write(HL.reg, 16, true); break; // RLC (HL)
+		// rotate right circular
+		case 0x08: RRC(BC.hi, true, 8); break; // RRC B
+		case 0x09: RRC(BC.lo, true, 8); break; // RRC C
+		case 0x0A: RRC(DE.hi, true, 8); break; // RRC D
+		case 0x0B: RRC(DE.lo, true, 8); break; // RRC E
+		case 0x0C: RRC(HL.hi, true, 8); break; // RRC H
+		case 0x0D: RRC(HL.lo, true, 8); break; // RRC L
+		case 0x0E: RRC_Write(HL.reg, 16, true); break; // RRC (HL)
+		case 0x0F: RRC(AF.hi, true, 8); break; // RRC A
+		// rotate left
+		case 0x10: RL(BC.hi, true, 8); break; // RL B
+		case 0x11: RL(BC.lo, true, 8); break; // RL C
+		case 0x12: RL(DE.hi, true, 8); break; // RL D
+		case 0x13: RL(DE.lo, true, 8); break; // RL E
+		case 0x14: RL(HL.hi, true, 8); break; // RL H
+		case 0x15: RL(HL.lo, true, 8); break; // RL L
+		case 0x16: RL_Write(HL.reg, true, 16); break; // RL (HL)
+		case 0x17: RL(AF.hi, true, 8); break; // RL A
+		// rotate right
+		case 0x18: RR(BC.hi, true, 8); break; // RR B
+		case 0x19: RR(BC.lo, true, 8); break; // RR C
+		case 0x1A: RR(DE.hi, true, 8); break; // RR D
+		case 0x1B: RR(DE.lo, true, 8); break; // RR E
+		case 0x1C: RR(HL.hi, true, 8); break; // RR H
+		case 0x1D: RR(HL.lo, true, 8); break; // RR L
+		case 0x1E: RR_Write(HL.reg, true, 16); break; // RR (HL)
+		case 0x1F: RR(AF.hi, true, 8); break; // RR A
+		// shift left
 		case 0x20: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA B
 		case 0x21: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA C
 		case 0x22: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA D
@@ -1262,6 +1803,7 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x25: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA L
 		case 0x26: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SLA (HL)
 		case 0x27: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SLA A
+		// shift right
 		case 0x28: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA B
 		case 0x29: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA C
 		case 0x2A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA D
@@ -1270,14 +1812,7 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x2D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA L
 		case 0x2E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SRA (HL)
 		case 0x2F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRA A
-		case 0x30: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SWAP B
-		case 0x31: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SWAP C
-		case 0x32: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SWAP D
-		case 0x33: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SWAP E
-		case 0x34: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SWAP H
-		case 0x35: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SWAP L
-		case 0x36: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SWAP (HL)
-		case 0x37: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SWAP A
+		// shift right
 		case 0x38: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL B
 		case 0x39: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL C
 		case 0x3A: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL D
@@ -1286,6 +1821,7 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x3D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL L 
 		case 0x3E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // SRL (HL)
 		case 0x3F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SRL A
+		// test bit
 		case 0x40: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,B 
 		case 0x41: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,C
 		case 0x42: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 0,D
@@ -1350,6 +1886,7 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x7D: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,L
 		case 0x7E: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // BIT 7,(HL)
 		case 0x7F: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // BIT 7,A
+		// reset bit
 		case 0x80: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,B
 		case 0x81: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,C
 		case 0x82: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 0,D
@@ -1414,6 +1951,7 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0xBD: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,L
 		case 0xBE: Log::UnimplementedOpcode(Opcode); Cycles += 16; break; // RES 7,(HL)
 		case 0xBF: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // RES 7,A
+		// set bit
 		case 0xC0: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,B
 		case 0xC1: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,C
 		case 0xC2: Log::UnimplementedOpcode(Opcode); Cycles += 8; break; // SET 0,D
