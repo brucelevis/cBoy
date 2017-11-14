@@ -22,7 +22,7 @@ const char *Rom::currentRomFileName = NULL;
 bool Rom::Load(const char *fileName)
 {
 	// the result of the load
-	bool loadResult = true;
+	bool loadResult = false;
 	// set the cartridge memory
 	//memset(cartridgeMem, 0, sizeof(cartridgeMem));
 
@@ -36,23 +36,29 @@ bool Rom::Load(const char *fileName)
 		// the rom was loaded successfully
 		loadResult = true;
 		// read the rom into memory
-		fread(&Memory::Get()[0x00], 1, 0x3FFF, gbRom);
+		//fread(&Memory::Get()[0x00], 1, 0x3FFF, gbRom);
+		fread(&Memory::Get()[0x00], 1, 0x8000, gbRom);
 
 		// Set the current rom name
 		currentRomFileName = fileName;
-	}
 
-	// print the rom name
-	printf("Rom Name: ");
-	for (unsigned short i = 0x0134; i < 0x0143; i++)
+		// print the rom name
+		printf("Rom Name: ");
+		for (unsigned short i = 0x0134; i < 0x0143; i++)
+		{
+			printf("%c", Memory::Get()[i]);
+		}
+		printf("\n");
+
+		// print the rom cartridge type
+		printf("Rom Cartridge Type: %02x | Rom-Size: %02x | Ram-Size: %02x\n", Memory::Get()[0x0147], Memory::Get()[0x0148], Memory::Get()[0x0149]);
+	}
+	else
 	{
-		printf("%c", Memory::Get()[i]);
+		Log::Critical("FAILED TO LOAD rom '%s'", fileName);
 	}
-	printf("\n");
 
-	// print the rom cartridge type
-	printf("Rom Cartridge Type: %02x | Rom-Size: %02x | Ram-Size: %02x\n", Memory::Get()[0x0147], Memory::Get()[0x0148], Memory::Get()[0x0149]);
-
+	
 	// close the rom
 	fclose(gbRom);
 	

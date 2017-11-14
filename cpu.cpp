@@ -369,7 +369,6 @@ void Cpu::WRITE_8Bit(WORD address, BYTE val, int cycles)
 {
 	// add the cycles
 	Cycles += cycles;
-	if (address == 0xC000) Log::Critical("WRITE_8Bit wrote to 0xC000. PC was: %04X opcode: %02X", PC);
 	// write val to address
 	Memory::Write(address, val);
 }
@@ -512,13 +511,10 @@ void Cpu::PUSH_Word_Onto_Stack(WORD data)
 {
 	BYTE hi = data >> 8;
 	BYTE lo = data & 0xFF;
-	if (SP.reg == 0xC000) Log::Critical("PUSH WORD wrote to 0xC000. PC was: %04X", PC);
 	SP.reg--;
 	Memory::Write(SP.reg, hi);
-	if (SP.reg == 0xC000) Log::Critical("PUSH WORD wrote to 0xC000. PC was: %04X", PC);
 	SP.reg--;
 	Memory::Write(SP.reg, lo);
-	if (SP.reg == 0xC000) Log::Critical("PUSH WORD wrote to 0xC000. PC was: %04X", PC);
 }
 
 // pop word off stack
@@ -927,10 +923,8 @@ int Cpu::ExecuteOpcode()
 			WORD nn = Memory::ReadWord(PC);
 			// write SP to memory
 			Memory::Write(nn, SP.hi);
-			if (nn == 0xC000) Log::Critical("LD (a16, SP) wrote to 0xC000. PC was: %04X", PC);
 			nn++;
 			Memory::Write(nn, SP.lo);
-			if (nn == 0xC000) Log::Critical("LD (a16, SP) wrote to 0xC000. PC was: %04X", PC);
 			// increment PC
 			PC += 2;
 			Cycles += 20;
@@ -1030,7 +1024,6 @@ int Cpu::ExecuteOpcode()
 				Bit::Reset(AF.lo, FLAG_H);
 			}
 
-			if (HL.reg == 0xC000) Log::Critical("INC (HL) wrote to 0xC000. PC was: %04X", PC);
 			// write the result back to memory
 			Memory::Write(HL.reg, result);
 			Cycles += 12;
@@ -1063,8 +1056,6 @@ int Cpu::ExecuteOpcode()
 			{
 				Bit::Reset(AF.lo, FLAG_H);
 			}
-
-			if (HL.reg == 0xC000) Log::Critical("DEC (HL) wrote to 0xC000. PC was: %04X", PC);
 
 			// write the result back to memory
 			Memory::Write(HL.reg, result);

@@ -160,7 +160,7 @@ static void EmulationLoop()
 				cyclesThisUpdate += cycles;
 
 				/*
-				if (Cpu::GetPC() == 0x0218)
+				if (Cpu::GetPC() == 0x0210)
 				{
 					stepThrough = true;
 				}*/
@@ -301,11 +301,11 @@ int main(int argc, char* args[])
 		// init the Cpu
 		Cpu::Init();
 		// load rom
-		Rom::Load("roms/Tetris.gb");
+		//Rom::Load("roms/Tetris.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 
 		// individual cpu instruction tests
-		//Rom::Load("roms/tests/cpu_instrs/01-special.gb");         
+		Rom::Load("roms/tests/cpu_instrs/01-special.gb");         
 		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb");               
 		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb");       
 		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb");

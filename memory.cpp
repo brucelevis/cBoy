@@ -44,12 +44,6 @@ WORD Memory::ReadWord(WORD address)
 // write memory
 void Memory::Write(WORD address, BYTE data)
 {
-	/*
-	if (address >= 0xFF10 && address <= 0xFF26)
-	{
-		Log::Critical("Writing sound data: %#02x to address 0x%04x", data, address);
-	}*/
-
 	// Get serial port output
 	if (address == 0xFF02)
 	{
@@ -86,7 +80,7 @@ void Memory::Write(WORD address, BYTE data)
 		// do nothing
 		Log::Critical("ATTEMPT TO WRITE TO PROTECTED MEMORY BLOCKED");
 	}
-	// allow writes
+	// write
 	else
 	{
 		mem[address] = data;

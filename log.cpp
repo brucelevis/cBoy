@@ -11,6 +11,9 @@
 
 // definitions
 typedef unsigned char BYTE;
+typedef unsigned short WORD;
+// open log output file
+FILE *logOutput = fopen("run.log","w");
 
 // normal/standard log output
 void Log::Normal(const char *fmt, ...)
@@ -58,11 +61,18 @@ void Log::Critical(const char *fmt, ...)
 // log executed opcode
 void Log::ExecutedOpcode(BYTE opcode)
 {
-	printf("WARNING: executed opcode 0x%02x \n", opcode);
+	printf("WARNING: executed opcode 0x%02X \n", opcode);
 }
 
 // log unimplemented opcode
 void Log::UnimplementedOpcode(BYTE opcode)
 {
-	printf("WARNING: opcode 0x%02x not implemented\n", opcode);
+	printf("WARNING: opcode 0x%02X not implemented\n", opcode);
+}
+
+// log to file
+void Log::ToFile(WORD pc, BYTE opcode)
+{
+	//fprintf(logOutput, "%04X: 0x%02X\n", pc, opcode);
+	fprintf(logOutput, "%04X:%04X\n", pc, opcode);
 }

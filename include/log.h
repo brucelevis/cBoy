@@ -9,6 +9,7 @@
 
 // definitions
 typedef unsigned char BYTE;
+typedef unsigned short WORD;
 
 // log class
 class Log
@@ -20,6 +21,7 @@ class Log
 		static void Critical(const char *fmt, ...);
 		static void ExecutedOpcode(BYTE opcode);
 		static void UnimplementedOpcode(BYTE opcode);
+		static void ToFile(WORD pc, BYTE opcode);
 };
 
 #endif
