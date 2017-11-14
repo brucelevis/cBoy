@@ -369,6 +369,7 @@ void Cpu::WRITE_8Bit(WORD address, BYTE val, int cycles)
 {
 	// add the cycles
 	Cycles += cycles;
+	if (address == 0xC000) Log::Critical("WRITE_8Bit wrote to 0xC000. PC was: %04X opcode: %02X", PC);
 	// write val to address
 	Memory::Write(address, val);
 }
@@ -448,17 +449,16 @@ int Cpu::JUMP_Immediate(bool condition, int cycles)
 // jump (two byte immediate value)
 int Cpu::JUMP(bool condition, int cycles)
 {
+	// add the cycles
+	Cycles += cycles;
+
 	// if the condition is true
 	if (condition)
 	{
 		WORD nn = Memory::ReadWord(PC);
-		PC += 2;
 		PC = nn;
 		return 0;
 	}
-
-	// add the cycles
-	Cycles += cycles;
 
 	// increment PC
 	PC += 2;
@@ -512,10 +512,13 @@ void Cpu::PUSH_Word_Onto_Stack(WORD data)
 {
 	BYTE hi = data >> 8;
 	BYTE lo = data & 0xFF;
+	if (SP.reg == 0xC000) Log::Critical("PUSH WORD wrote to 0xC000. PC was: %04X", PC);
 	SP.reg--;
 	Memory::Write(SP.reg, hi);
+	if (SP.reg == 0xC000) Log::Critical("PUSH WORD wrote to 0xC000. PC was: %04X", PC);
 	SP.reg--;
 	Memory::Write(SP.reg, lo);
+	if (SP.reg == 0xC000) Log::Critical("PUSH WORD wrote to 0xC000. PC was: %04X", PC);
 }
 
 // pop word off stack
@@ -552,11 +555,6 @@ int Cpu::Init()
 	SP.reg = 0xFFFE;
 	// reset cycles
 	Cycles = 0;
-	// reset flags
-	Bit::Reset(AF.lo, FLAG_Z);
-	Bit::Reset(AF.lo, FLAG_H);
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_C);
 	// reset operations
 	Operation.PendingInterruptDisabled = false;
 	Operation.PendingInterruptEnabled = false;
@@ -602,6 +600,8 @@ int Cpu::ExecuteOpcode()
 {
 	// get the current Opcode
 	BYTE Opcode = Memory::ReadByte(PC);
+
+	Log::ToFile(PC, Opcode);
 
 	// increment the program counter
 	if (!Operation.Stop)
@@ -680,7 +680,7 @@ int Cpu::ExecuteOpcode()
 		case 0x85: ADD_8Bit(AF.hi, HL.lo, 4); break; // ADD A,L
 		case 0x86: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // ADD A,(HL)
 		case 0x87: ADD_8Bit(AF.hi, AF.hi, 4); break; // ADD A,A
-		case 0xC6: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 4); PC++; break; // ADD A,d8
+		case 0xC6: ADD_8Bit(AF.hi, Memory::ReadByte(PC++), 4); break; // ADD A,d8
 		// 8-bit add + carry
 		case 0x88: ADD_8Bit(AF.hi, BC.hi, 4, true); break; // ADC A,B
 		case 0x89: ADD_8Bit(AF.hi, BC.lo, 4, true); break; // ADC A,C
@@ -690,7 +690,7 @@ int Cpu::ExecuteOpcode()
 		case 0x8D: ADD_8Bit(AF.hi, HL.lo, 4, true); break; // ADC A,L
 		case 0x8E: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8, true); break; // ADC A,(HL)
 		case 0x8F: ADD_8Bit(AF.hi, AF.hi, 4, true); break; // ADC A,A
-		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // ADC A,d8
+		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC++), 8, true); break; // ADC A,d8
 		// 16-bit add
 		case 0x09: ADD_16Bit(HL.reg, BC.reg, 8); break; // ADD HL,BC
 		case 0x19: ADD_16Bit(HL.reg, DE.reg, 8); break; // ADD HL,DE
@@ -703,7 +703,7 @@ int Cpu::ExecuteOpcode()
 			Bit::Reset(AF.lo, FLAG_N);
 
 			// The value (r8)
-			SIGNED_BYTE nn = (SIGNED_BYTE)Memory::ReadByte(PC);
+			SIGNED_BYTE nn = (SIGNED_BYTE)Memory::ReadByte(PC++);
 
 			// determine if we half carried
 			if ((SP.reg & 0xF) + (nn & 0xF) > 0xF)
@@ -720,7 +720,7 @@ int Cpu::ExecuteOpcode()
 			// add nn to SP
 			SP.reg += nn;
 			// increment PC
-			PC++;
+			//PC++;
 			Cycles += 16;
 		}
 		break;
@@ -733,7 +733,7 @@ int Cpu::ExecuteOpcode()
 		case 0x95: SUB_8Bit(AF.hi, HL.lo, 4); break; // SUB L
 		case 0x96: SUB_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // SUB (HL)
 		case 0x97: SUB_8Bit(AF.hi, AF.hi, 4); break; // SUB A
-		case 0xD6: SUB_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // SUB d8
+		case 0xD6: SUB_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // SUB d8
 		// 8-bit sub + carry
 		case 0x98: SUB_8Bit(AF.hi, BC.hi, 4, true); break; // SBC A,B
 		case 0x99: SUB_8Bit(AF.hi, BC.lo, 4, true); break; // SBC A,C
@@ -743,7 +743,7 @@ int Cpu::ExecuteOpcode()
 		case 0x9D: SUB_8Bit(AF.hi, HL.lo, 4, true); break; // SBC A,L
 		case 0x9E: SUB_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8, true); break; // SBC A,(HL)
 		case 0x9F: SUB_8Bit(AF.hi, AF.hi, 4, true); break; // SBC A,A
-		case 0xDE: SUB_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // SBC A,d8
+		case 0xDE: SUB_8Bit(AF.hi, Memory::ReadByte(PC++), 8, true); break; // SBC A,d8
 		// 8-bit and
 		case 0xA0: AND_8Bit(AF.hi, BC.hi, 4); break; // AND B
 		case 0xA1: AND_8Bit(AF.hi, BC.lo, 4); break; // AND C
@@ -753,7 +753,7 @@ int Cpu::ExecuteOpcode()
 		case 0xA5: AND_8Bit(AF.hi, HL.lo, 4); break; // AND L
 		case 0xA6: AND_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // AND (HL)
 		case 0xA7: AND_8Bit(AF.hi, AF.hi, 4); break; // AND A
-		case 0xE6: AND_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // AND d8		
+		case 0xE6: AND_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // AND d8		
 		// 8-bit or
 		case 0xB0: OR_8Bit(AF.hi, BC.hi, 4); break; // OR B
 		case 0xB1: OR_8Bit(AF.hi, BC.lo, 4); break; // OR C
@@ -763,7 +763,7 @@ int Cpu::ExecuteOpcode()
 		case 0xB5: OR_8Bit(AF.hi, HL.lo, 4); break; // OR L
 		case 0xB6: OR_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // OR (HL)
 		case 0xB7: OR_8Bit(AF.hi, AF.hi, 4); break; // OR A
-		case 0xF6: OR_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // OR d8
+		case 0xF6: OR_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // OR d8
 		// 8-bit xor
 		case 0xA8: XOR_8Bit(AF.hi, BC.hi, 4); break; // XOR B
 		case 0xA9: XOR_8Bit(AF.hi, BC.lo, 4); break; // XOR C
@@ -773,7 +773,7 @@ int Cpu::ExecuteOpcode()
 		case 0xAD: XOR_8Bit(AF.hi, HL.lo, 4); break; // XOR L
 		case 0xAE: XOR_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // XOR (HL)
 		case 0xAF: XOR_8Bit(AF.hi, AF.hi, 4); break; // XOR A
-		case 0xEE: XOR_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // XOR d8
+		case 0xEE: XOR_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // XOR d8
 		// 8-bit dec
 		case 0x05: DEC_8Bit(BC.hi, 4); break; // DEC B
 		case 0x0D: DEC_8Bit(BC.lo, 4); break; // DEC C
@@ -809,15 +809,15 @@ int Cpu::ExecuteOpcode()
 		case 0xBD: COMPARE_8Bit(AF.hi, HL.lo, 4); break; // CP L
 		case 0xBE: COMPARE_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // CP (HL)
 		case 0xBF: COMPARE_8Bit(AF.hi, AF.hi, 4); break; // CP A
-		case 0xFE: COMPARE_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // CP,d8		
+		case 0xFE: COMPARE_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // CP,d8		
 		// 8-bit load
-		case 0x06: LOAD_8Bit(BC.hi, Memory::ReadByte(PC), 8); PC++; break; // LD B,d8
-		case 0x0E: LOAD_8Bit(BC.lo, Memory::ReadByte(PC), 8); PC++; break; // LD C,d8
-		case 0x16: LOAD_8Bit(DE.hi, Memory::ReadByte(PC), 8); PC++; break; // LD D,d8
-		case 0x1E: LOAD_8Bit(DE.lo, Memory::ReadByte(PC), 8); PC++; break; // LD E,d8
-		case 0x26: LOAD_8Bit(HL.hi, Memory::ReadByte(PC), 8); PC++; break; // LD H,d8
-		case 0x2E: LOAD_8Bit(HL.lo, Memory::ReadByte(PC), 8); PC++; break; // LD L,d8
-		case 0x3E: LOAD_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // LD A,d8 
+		case 0x06: LOAD_8Bit(BC.hi, Memory::ReadByte(PC++), 8); break; // LD B,d8
+		case 0x0E: LOAD_8Bit(BC.lo, Memory::ReadByte(PC++), 8); break; // LD C,d8
+		case 0x16: LOAD_8Bit(DE.hi, Memory::ReadByte(PC++), 8); break; // LD D,d8
+		case 0x1E: LOAD_8Bit(DE.lo, Memory::ReadByte(PC++), 8); break; // LD E,d8
+		case 0x26: LOAD_8Bit(HL.hi, Memory::ReadByte(PC++), 8); break; // LD H,d8
+		case 0x2E: LOAD_8Bit(HL.lo, Memory::ReadByte(PC++), 8); break; // LD L,d8
+		case 0x3E: LOAD_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // LD A,d8 
 		case 0x0A: LOAD_8Bit(AF.hi, Memory::ReadByte(BC.reg), 8); break; // LD A,(BC)
 		case 0x1A: LOAD_8Bit(AF.hi, Memory::ReadByte(DE.reg), 8); break; // LD A,(DE)
 		case 0x2A: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg++; break; // LD A,(HL+)
@@ -882,8 +882,8 @@ int Cpu::ExecuteOpcode()
 		// 16-bit load
 		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
 		case 0x11: LOAD_16Bit(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
-		case 0x21: LOAD_16Bit(HL.reg, Memory::ReadWord(PC), 12); PC += 2; break;// LD HL,d16
-		case 0x31: LOAD_16Bit(SP.reg, Memory::ReadWord(PC), 12); PC += 2; break;// LD SP,d16
+		case 0x21: LOAD_16Bit(HL.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD HL,d16
+		case 0x31: LOAD_16Bit(SP.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD SP,d16
 		case 0xF8: // LD HL,SP+r8
 		{
 			// reset the Z & N flags
@@ -891,7 +891,7 @@ int Cpu::ExecuteOpcode()
 			Bit::Reset(AF.lo, FLAG_N);
 
 			// SP + r8
-			WORD nn = (SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC));
+			WORD nn = (SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC++));
 
 			// determine if we half carried
 			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF)
@@ -917,7 +917,7 @@ int Cpu::ExecuteOpcode()
 			LOAD_16Bit(HL.reg, nn, 12);
 
 			// increment PC
-			PC++;
+			//PC++;
 		}
 		break;
 		case 0xF9: LOAD_16Bit(SP.reg, HL.reg, 8); break; // LD SP,HL
@@ -927,8 +927,10 @@ int Cpu::ExecuteOpcode()
 			WORD nn = Memory::ReadWord(PC);
 			// write SP to memory
 			Memory::Write(nn, SP.hi);
+			if (nn == 0xC000) Log::Critical("LD (a16, SP) wrote to 0xC000. PC was: %04X", PC);
 			nn++;
 			Memory::Write(nn, SP.lo);
+			if (nn == 0xC000) Log::Critical("LD (a16, SP) wrote to 0xC000. PC was: %04X", PC);
 			// increment PC
 			PC += 2;
 			Cycles += 20;
@@ -939,7 +941,7 @@ int Cpu::ExecuteOpcode()
 		case 0x12: WRITE_8Bit(DE.reg, AF.hi, 8); break; // LD (DE),A
 		case 0x22: WRITE_8Bit(HL.reg, AF.hi, 12); HL.reg++; break; // LD (HL+),A
 		case 0x32: WRITE_8Bit(HL.reg, AF.hi, 12); HL.reg--; break; // LD (HL-),A
-		case 0x36: WRITE_8Bit(HL.reg, Memory::ReadByte(PC), 12); PC++; break; // LD (HL),d8
+		case 0x36: WRITE_8Bit(HL.reg, Memory::ReadByte(PC++), 12); break; // LD (HL),d8
 		case 0x70: WRITE_8Bit(HL.reg, BC.hi, 8); break; // LD (HL),B
 		case 0x71: WRITE_8Bit(HL.reg, BC.lo, 8); break; // LD (HL),C
 		case 0x72: WRITE_8Bit(HL.reg, DE.hi, 8); break; // LD (HL),D
@@ -950,8 +952,8 @@ int Cpu::ExecuteOpcode()
 		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); PC++; break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
 		case 0xF2: WRITE_8Bit(0xFF00 + AF.hi, Memory::ReadByte(BC.lo), 8); PC++; break; // LD A,(C)
-		case 0xF0: WRITE_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC), 12); PC++; break; // LDH A,(a8)
-		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC++; break; // LDH (a8),A
+		case 0xF0: WRITE_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC++), 12); break; // LDH A,(a8)
+		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC++), AF.hi, 12); break; // LDH (a8),A
 		// immediate jumps
 		case 0x18: JUMP_Immediate(true, 12); break; // JR r8
 		case 0x20: JUMP_Immediate(!Bit::Get(AF.lo, FLAG_Z), 8); break; // JR NZ,r8
@@ -1028,6 +1030,7 @@ int Cpu::ExecuteOpcode()
 				Bit::Reset(AF.lo, FLAG_H);
 			}
 
+			if (HL.reg == 0xC000) Log::Critical("INC (HL) wrote to 0xC000. PC was: %04X", PC);
 			// write the result back to memory
 			Memory::Write(HL.reg, result);
 			Cycles += 12;
@@ -1060,6 +1063,8 @@ int Cpu::ExecuteOpcode()
 			{
 				Bit::Reset(AF.lo, FLAG_H);
 			}
+
+			if (HL.reg == 0xC000) Log::Critical("DEC (HL) wrote to 0xC000. PC was: %04X", PC);
 
 			// write the result back to memory
 			Memory::Write(HL.reg, result);
@@ -1171,7 +1176,7 @@ int Cpu::ExecuteOpcode()
 			*/
 			Cycles += 4;
 			// Hmmmm....
-			Log::UnimplementedOpcode(Opcode);
+			printf("WARNING: DAA instruction not implemented\n");
 		}
 		break;
 
@@ -1189,7 +1194,7 @@ int Cpu::ExecuteOpcode()
 		}
 		break;
 
-		default: printf("op not implemented 0x%02x", Opcode); break;//Log::UnimplementedOpcode(Opcode); break;
+		default: printf("op not implemented 0x%02X", Opcode); break;//Log::UnimplementedOpcode(Opcode); break;
 	}
 
 	// enable interrupts if requested
@@ -1507,18 +1512,18 @@ void Cpu::Debugger()
 	ImGui::Begin("Register Viewer");
 	ImGui::SetWindowSize("Register Viewer", ImVec2(180, 210));
 	ImGui::SetWindowPos("Register Viewer", ImVec2(640 - 180, 5));
-	ImGui::Text("PC: %04x", PC); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("SP: %04x", SP.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("AF: %04x", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("BC: %04x", BC.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("DE: %04x", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("HL: %04x", HL.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("LY: %02x", Memory::ReadByte(Lcd::LY_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("STAT: %02x", Memory::ReadByte(Lcd::STAT_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("IE: %02x", Memory::ReadByte(Interrupt::ENABLED_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("IR: %02x", Memory::ReadByte(Interrupt::REQUEST_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("PC: %04X", PC); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("SP: %04X", SP.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("AF: %04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("BC: %04X", BC.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("DE: %04X", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("HL: %04X", HL.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("LY: %02X", Memory::ReadByte(Lcd::LY_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("STAT: %02X", Memory::ReadByte(Lcd::STAT_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("IE: %02X", Memory::ReadByte(Interrupt::ENABLED_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("IR: %02X", Memory::ReadByte(Interrupt::REQUEST_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Text("IME: %d", Interrupt::MasterSwitch); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("LCDC: %02x", 0); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("LCDC: %02X", 0); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Spacing();
 	ImGui::Checkbox("Z", &FlagZ); ImGui::SameLine();
 	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();
