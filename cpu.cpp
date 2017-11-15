@@ -448,11 +448,18 @@ void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
 	RESET_FLAG_N();
 	RESET_FLAG_H();
 
-	// set/unset Z flag
-	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	}
+	else
+	{
+		RESET_FLAG_Z();
+	}
 
 	// rotate A left and put the carry flag bit back into it			
-	Memory::Write(address, result | GET_FLAG_C());
+	Memory::Write(address, (result | GET_FLAG_C()));
 	// add the cycles
 	Cycles += cycles;
 }
@@ -496,8 +503,15 @@ void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 	RESET_FLAG_N();
 	RESET_FLAG_H();
 
-	// set/unset Z flag
-	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	}
+	else
+	{
+		RESET_FLAG_Z();
+	}
 
 	// rotate A left and put the carry flag bit back into it			
 	Memory::Write(address, result | GET_FLAG_C());
@@ -617,8 +631,6 @@ void Cpu::SRL(BYTE &val, int cycles)
 {
 	// calculate the result
 	BYTE result = (val >> 1);
-	// get the old MSB data
-	BYTE oldMSB = Bit::Get(val, 7);
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -645,8 +657,6 @@ void Cpu::SRL_Write(WORD address, int cycles)
 	BYTE val = (Memory::ReadByte(address));
 	// calculate the result
 	BYTE result = (val >> 1);
-	// get the old MSB data
-	BYTE oldMSB = Bit::Get(val, 7);
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -768,26 +778,15 @@ int Cpu::JUMP_Immediate(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
-		// get the value
-		BYTE val = Memory::ReadByte(PC);
-
-		// if the value is signed
-		if (val & 0x80)
-		{
-			val--;
-			val = ~val;
-			PC -= val;
-		}
-		else
-		{
-			PC += Memory::ReadByte(PC);	
-		}
+		PC += (SIGNED_BYTE)Memory::ReadByte(PC);
 	}
 	
 	// increment PC
 	PC++;
 	// add the cycles
 	Cycles += cycles;
+
+	return 0;
 }
 
 // jump (two byte immediate value)
@@ -806,6 +805,8 @@ int Cpu::JUMP(bool condition, int cycles)
 
 	// increment PC
 	PC += 2;
+
+	return 0;
 }
 
 // call
@@ -826,6 +827,8 @@ int Cpu::CALL(bool condition, int cycles)
 
 	// increment PC
 	PC += 2;
+
+	return 0;
 }
 
 // return
@@ -877,7 +880,7 @@ WORD Cpu::GetPC()
 }
 
 // set the program counter
-WORD Cpu::SetPC(WORD val)
+void Cpu::SetPC(WORD val)
 {
 	PC = val;
 }
@@ -1377,8 +1380,10 @@ int Cpu::ExecuteOpcode()
 		case 0xD1: DE.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP DE
 		case 0xE1: HL.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP HL
 		case 0xF1: // POP AF 
+		{
 			AF.reg = POP_Word_Off_Stack(SP.reg) & (~0xF);
 			Cycles += 12; 
+		}
 		break;
 		// special instructions
 		case 0x27: // DAA
@@ -1410,6 +1415,7 @@ int Cpu::ExecuteOpcode()
 					needs to be adjusted to 0x10 and the carry set
 				*/
 
+			/*
 			BYTE result = 0;
 			bool wasSet = false;
 
@@ -1433,7 +1439,7 @@ int Cpu::ExecuteOpcode()
 				if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 				AF.hi = result;
-			}
+			}*/
 
 			Cycles += 4;
 			//printf("WARNING: DAA instruction not implemented\n");

@@ -19,7 +19,7 @@ typedef signed short SIGNED_WORD;
 
 // vars
 int Timer::TimerCounter = 0;
-BYTE Timer::DividerCounter = 0;
+int Timer::DividerCounter = 0;
 const int FREQUENCIES[4] = {1024, 16, 64, 256};
 
 // init timer

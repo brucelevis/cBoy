@@ -32,7 +32,7 @@ class Timer
 
 	private:
 		static int TimerCounter;
-		static BYTE DividerCounter;
+		static int DividerCounter;
 };
 
 #endif

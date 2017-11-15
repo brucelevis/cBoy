@@ -22,7 +22,7 @@ class Cpu
 		static void ExecuteExtendedOpcode();
 		static int ExecuteNextOpcode();
 		static WORD GetPC();
-		static WORD SetPC(WORD val);
+		static void SetPC(WORD val);
 		static void PUSH_Word_Onto_Stack(WORD data);
 		static void Debugger();
 
