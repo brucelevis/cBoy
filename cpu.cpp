@@ -69,7 +69,7 @@ void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// determine if we half carried
 	if (Bit::DidHalfCarry(val, toAdd, 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result, 0xFF)) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::DidCarry((WORD)(val + toAdd), 0xFF)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
  	val = result;
@@ -89,7 +89,7 @@ void Cpu::ADD_16Bit(WORD &val, WORD val2, int cycles)
 	// determine if we half carried
 	if (Bit::DidHalfCarry(val, val2, 0x0FFF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result, 0xFFFF)) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::DidCarry((int)(val + val2), 0xFFFF)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
 	val = result;
@@ -111,9 +111,9 @@ void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, toSubtract, 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
+	if ((val & 0xF) < (val2 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
+	if (val < val2) RESET_FLAG_C(); else SET_FLAG_C();
 
 	// set val to the result
 	val = result;
@@ -195,7 +195,7 @@ void Cpu::DEC_8Bit(BYTE &val, int cycles)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried 
-	if (Bit::DidHalfCarry(val, -1, 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
+	if ((val & 0xF) < (1 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 
 	// set val to the result
 	val = result;
@@ -279,10 +279,10 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
-	// determine if we half carried (says from bit 4, so this should be 0x2F, right?)
-	if (Bit::DidHalfCarry(val, val2, 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
+	// determine if we half carried
+	if ((val & 0xF) < (val2 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
+	if (val < val2) RESET_FLAG_C(); else SET_FLAG_C();
 
 	// add the cycles
 	Cycles += cycles;
@@ -514,7 +514,7 @@ void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 	}
 
 	// rotate A left and put the carry flag bit back into it			
-	Memory::Write(address, result | GET_FLAG_C());
+	Memory::Write(address, (result | GET_FLAG_C()));
 	// add the cycles
 	Cycles += cycles;
 }
@@ -1128,16 +1128,18 @@ int Cpu::ExecuteOpcode()
 		case 0x3D: DEC_8Bit(AF.hi, 4); break; // DEC A
 		case 0x35: // DEC (HL)
 		{
+			// value of data
+			BYTE data = Memory::ReadByte(HL.reg);
 			// store the result of the calculation
-			BYTE result = (Memory::ReadByte(HL.reg) - 1);
+			BYTE result = (data - 1);
 			// set the N flag
 			SET_FLAG_N();
 			
 			// set/unset the Z flag
 			if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
-			// determine if we half carried (says from bit 4, so this should be 0x2F, right?)
-			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), -1, 0xF))
+			// determine if we half carried
+			if ((data & 0xF) < (1 & 0xF))
 			{
 				SET_FLAG_H();
 			}
@@ -1167,8 +1169,10 @@ int Cpu::ExecuteOpcode()
 		case 0x3C: INC_8Bit(AF.hi, 4); break; // INC A
 		case 0x34: // INC (HL)
 		{
+			// get the data
+			BYTE data = Memory::ReadByte(HL.reg);
 			// store the result of the calculation
-			BYTE result = (Memory::ReadByte(HL.reg) + 1);
+			BYTE result = (data + 1);
 
 			// reset the N flag
 			RESET_FLAG_N();
@@ -1177,7 +1181,7 @@ int Cpu::ExecuteOpcode()
 			if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 			// determine if we half carried
-			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), 1, 0xF))
+			if (Bit::DidHalfCarry(data, 1, 0xF))
 			{
 				SET_FLAG_H();
 			}

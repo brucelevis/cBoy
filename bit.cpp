@@ -37,23 +37,23 @@ BYTE Bit::Get(BYTE val, BYTE bit)
 // did we half carry
 BYTE Bit::DidHalfCarry(BYTE val, BYTE val2, BYTE mask)
 {
-	return ((val & mask) + (val2 & mask)) > mask; //0xF
+	return ((val & mask) + (val2 & mask)) > mask;
 }
 
 // did we half carry
-WORD Bit::DidHalfCarry(WORD val, WORD val2, WORD mask)
+BYTE Bit::DidHalfCarry(WORD val, WORD val2, WORD mask)
 {
-	return ((val & mask) + (val2 & mask)) > mask; //0xF
+	return ((val & mask) + (val2 & mask)) > mask;
 }
 
 // did we carry
-BYTE Bit::DidCarry(BYTE val, BYTE mask)
+BYTE Bit::DidCarry(WORD val, WORD mask)
 {
-	return val > mask; //0xFF
+	return val > mask;
 }
 
 // did we carry
-WORD Bit::DidCarry(WORD val, WORD mask)
+BYTE Bit::DidCarry(int val, WORD mask)
 {
 	return val > mask;
 }
