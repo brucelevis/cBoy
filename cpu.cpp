@@ -67,9 +67,9 @@ void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, toAdd)) SET_FLAG_H(); else RESET_FLAG_H();
+	if (Bit::DidHalfCarry(val, toAdd, 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result)) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::DidCarry(result, 0xFF)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
  	val = result;
@@ -87,9 +87,9 @@ void Cpu::ADD_16Bit(WORD &val, WORD val2, int cycles)
 	RESET_FLAG_N();
 
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, val2)) SET_FLAG_H(); else RESET_FLAG_H();
+	if (Bit::DidHalfCarry(val, val2, 0x0FFF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result)) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::DidCarry(result, 0xFFFF)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
 	val = result;
@@ -111,9 +111,9 @@ void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, toSubtract)) RESET_FLAG_H(); else SET_FLAG_H();
+	if (Bit::DidHalfCarry(val, toSubtract, 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result)) RESET_FLAG_C(); else SET_FLAG_C();
+	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
 	val = result;
@@ -195,7 +195,7 @@ void Cpu::DEC_8Bit(BYTE &val, int cycles)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried 
-	if (Bit::DidHalfCarry(val, -1)) RESET_FLAG_H(); else SET_FLAG_H();
+	if (Bit::DidHalfCarry(val, -1, 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 
 	// set val to the result
 	val = result;
@@ -224,7 +224,7 @@ void Cpu::INC_8Bit(BYTE &val, int cycles)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, 1)) SET_FLAG_H(); else RESET_FLAG_H();
+	if (Bit::DidHalfCarry(val, 1, 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
 
 	// set val to the result
 	val = result;
@@ -279,10 +279,10 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
-	// determine if we half carried
-	if (Bit::DidHalfCarry(val, val2)) RESET_FLAG_H(); else SET_FLAG_H();
+	// determine if we half carried (says from bit 4, so this should be 0x2F, right?)
+	if (Bit::DidHalfCarry(val, val2, 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (val < result) SET_FLAG_C(); else RESET_FLAG_C();
+	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// add the cycles
 	Cycles += cycles;
@@ -500,7 +500,7 @@ void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 	// rotate A left and put the carry flag bit back into it			
-	Memory::Write(address, result | Bit::Get(AF.lo, FLAG_C));
+	Memory::Write(address, result | GET_FLAG_C());
 	// add the cycles
 	Cycles += cycles;
 }
@@ -980,34 +980,27 @@ int Cpu::ExecuteOpcode()
 		break;
 		case 0x2F: // CPL
 			// set the N & H flags
-			Bit::Set(AF.lo, FLAG_N); 
-			Bit::Set(AF.lo, FLAG_H); 
+			SET_FLAG_N();
+			SET_FLAG_H();
 			// compliment A
 			AF.hi ^= 1; 
 			Cycles += 4; 
 		break; 
 		case 0x37: // SCF
 			// reset the N & H flags
-			Bit::Reset(AF.lo, FLAG_N); 
-			Bit::Reset(AF.lo, FLAG_H); 
+			RESET_FLAG_N();
+			RESET_FLAG_H(); 
 			// set the carry flag
-			Bit::Set(AF.lo, FLAG_C); 
+			SET_FLAG_C(); 
 			Cycles += 4;
 		break;
 		case 0x3F: // CCF
 			// reset the N & H flags
-			Bit::Reset(AF.lo, FLAG_N); 
-			Bit::Reset(AF.lo, FLAG_H);
+			RESET_FLAG_N();
+			RESET_FLAG_H();
 
 			// flip the carry flag
-			if (Bit::Get(AF.lo, FLAG_C))
-			{
-				Bit::Reset(AF.lo, FLAG_C);
-			}
-			else
-			{
-				Bit::Set(AF.lo, FLAG_C);
-			}
+			if (GET_FLAG_C()) RESET_FLAG_C(); else SET_FLAG_C();
 
 			Cycles += 4;
 		break; 
@@ -1040,8 +1033,8 @@ int Cpu::ExecuteOpcode()
 		case 0xE8: // ADD SP,r8
 		{
 			// reset flag Z & N
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
+			RESET_FLAG_Z();
+			RESET_FLAG_N();
 
 			// The value (r8)
 			SIGNED_BYTE nn = (SIGNED_BYTE)Memory::ReadByte(PC++);
@@ -1049,14 +1042,22 @@ int Cpu::ExecuteOpcode()
 			// determine if we half carried
 			if ((SP.reg & 0xF) + (nn & 0xF) > 0xF)
 			{
-				Bit::Set(AF.lo, FLAG_H);
+				SET_FLAG_H();
+			}
+			else
+			{
+				RESET_FLAG_H();
 			}
 
 			// determine if we carried
 			if ((SP.reg & 0xFF) + nn > 0xFF)
 			{ 
-				Bit::Set(AF.lo, FLAG_C);
-			}	
+				SET_FLAG_C();
+			}
+			else
+			{
+				RESET_FLAG_C();
+			}
 
 			// add nn to SP
 			SP.reg += nn;
@@ -1127,26 +1128,19 @@ int Cpu::ExecuteOpcode()
 			// store the result of the calculation
 			BYTE result = (Memory::ReadByte(HL.reg) - 1);
 			// set the N flag
-			Bit::Set(AF.lo, FLAG_N);
+			SET_FLAG_N();
 			
 			// set/unset the Z flag
-			if (result == 0)
-			{
-				Bit::Set(AF.lo, FLAG_Z); 
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_Z);
-			}
+			if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
-			// determine if we half carried
-			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), -1))
+			// determine if we half carried (says from bit 4, so this should be 0x2F, right?)
+			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), -1, 0xF))
 			{
-				Bit::Set(AF.lo, FLAG_H);
+				SET_FLAG_H();
 			}
 			else
 			{
-				Bit::Reset(AF.lo, FLAG_H);
+				RESET_FLAG_H();
 			}
 
 			// write the result back to memory
@@ -1174,26 +1168,19 @@ int Cpu::ExecuteOpcode()
 			BYTE result = (Memory::ReadByte(HL.reg) + 1);
 
 			// reset the N flag
-			Bit::Reset(AF.lo, FLAG_N);
+			RESET_FLAG_N();
 			
 			// set/unset the Z flag
-			if (result == 0)
-			{
-				Bit::Set(AF.lo, FLAG_Z); 
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_Z);
-			}
+			if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 			// determine if we half carried
-			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), 1))
+			if (Bit::DidHalfCarry(Memory::ReadByte(HL.reg), 1, 0xF))
 			{
-				Bit::Set(AF.lo, FLAG_H);
+				SET_FLAG_H();
 			}
 			else
 			{
-				Bit::Reset(AF.lo, FLAG_H);
+				RESET_FLAG_H();
 			}
 
 			// write the result back to memory
@@ -1293,8 +1280,8 @@ int Cpu::ExecuteOpcode()
 		case 0xF8: // LD HL,SP+r8
 		{
 			// reset the Z & N flags
-			Bit::Reset(AF.lo, FLAG_Z);
-			Bit::Reset(AF.lo, FLAG_N);
+			RESET_FLAG_Z();
+			RESET_FLAG_N();
 
 			// SP + r8
 			WORD nn = (SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC++));
@@ -1302,21 +1289,21 @@ int Cpu::ExecuteOpcode()
 			// determine if we half carried
 			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF)
 			{
-				Bit::Set(AF.lo, FLAG_H);
+				SET_FLAG_H();
 			}
 			else
 			{
-				Bit::Reset(AF.lo, FLAG_H);
+				RESET_FLAG_H();
 			}
 
 			// determine if we carried
 			if (((HL.reg & 0xFF) + (nn)) > 0xFF)
 			{
-				Bit::Set(AF.lo, FLAG_C);
+				SET_FLAG_C();
 			}
 			else
 			{
-				Bit::Reset(AF.lo, FLAG_C);
+				RESET_FLAG_C();
 			}
 			
 			// load nn into HL
@@ -1362,29 +1349,29 @@ int Cpu::ExecuteOpcode()
 		case 0x1F: RR(AF.hi, false, 4); break; // RR, A
 		// immediate jumps
 		case 0x18: JUMP_Immediate(true, 12); break; // JR r8
-		case 0x20: JUMP_Immediate(!Bit::Get(AF.lo, FLAG_Z), 8); break; // JR NZ,r8
-		case 0x28: JUMP_Immediate(Bit::Get(AF.lo, FLAG_Z), 8); break; // JR Z,r8
-		case 0x30: JUMP_Immediate(!Bit::Get(AF.lo, FLAG_C), 8); break; // JR NC,r8
-		case 0x38: JUMP_Immediate(Bit::Get(AF.lo, FLAG_C), 8); break; // JR C,r8
+		case 0x20: JUMP_Immediate(!GET_FLAG_Z(), 8); break; // JR NZ,r8
+		case 0x28: JUMP_Immediate(GET_FLAG_Z(), 8); break; // JR Z,r8
+		case 0x30: JUMP_Immediate(!GET_FLAG_C(), 8); break; // JR NC,r8
+		case 0x38: JUMP_Immediate(GET_FLAG_C(), 8); break; // JR C,r8
 		// jumps
 		case 0xC3: JUMP(true, 16); break; // JP a16
-		case 0xC2: JUMP(!Bit::Get(AF.lo, FLAG_Z), 12); break; // JP NZ,a16
-		case 0xCA: JUMP(Bit::Get(AF.lo, FLAG_Z), 12); break; // JP Z,a16
-		case 0xD2: JUMP(!Bit::Get(AF.lo, FLAG_C), 12); break; // JP NC,a16
-		case 0xDA: JUMP(Bit::Get(AF.lo, FLAG_C), 12); break; // JP C,a16
+		case 0xC2: JUMP(!GET_FLAG_Z(), 12); break; // JP NZ,a16
+		case 0xCA: JUMP(GET_FLAG_Z(), 12); break; // JP Z,a16
+		case 0xD2: JUMP(!GET_FLAG_C(), 12); break; // JP NC,a16
+		case 0xDA: JUMP(GET_FLAG_C(), 12); break; // JP C,a16
 		case 0xE9: PC = HL.reg; Cycles += 4; break; // JP,HL
 		// calls
 		case 0xCD: CALL(true, 24); break; // CALL a16
-		case 0xC4: CALL(!Bit::Get(AF.lo, FLAG_Z), 12); break; // CALL NZ,a16
-		case 0xCC: CALL(Bit::Get(AF.lo, FLAG_Z), 12); break; // CALL Z,a16
-		case 0xD4: CALL(!Bit::Get(AF.lo, FLAG_C), 12); break; // CALL NC,a16
-		case 0xDC: CALL(Bit::Get(AF.lo, FLAG_C), 12); break; // CALL C,a16
+		case 0xC4: CALL(!GET_FLAG_Z(), 12); break; // CALL NZ,a16
+		case 0xCC: CALL(GET_FLAG_Z(), 12); break; // CALL Z,a16
+		case 0xD4: CALL(!GET_FLAG_C(), 12); break; // CALL NC,a16
+		case 0xDC: CALL(GET_FLAG_C(), 12); break; // CALL C,a16
 		// returns
 		case 0xC9: RETURN(true, 16); break; // RET
-		case 0xC0: RETURN(!Bit::Get(AF.lo, FLAG_Z), 8); break; // RET NZ
-		case 0xC8: RETURN(Bit::Get(AF.lo, FLAG_Z), 8); break; // RET Z
-		case 0xD0: RETURN(!Bit::Get(AF.lo, FLAG_C), 8); break; // RET NC
-		case 0xD8: RETURN(Bit::Get(AF.lo, FLAG_C), 8); break;  // RET C
+		case 0xC0: RETURN(!GET_FLAG_Z(), 8); break; // RET NZ
+		case 0xC8: RETURN(GET_FLAG_Z(), 8); break; // RET Z
+		case 0xD0: RETURN(!GET_FLAG_C(), 8); break; // RET NC
+		case 0xD8: RETURN(GET_FLAG_C(), 8); break;  // RET C
 		case 0xD9: RETURN(true, 16); Interrupt::MasterSwitch = true; break; // RETI
 		// restarts
 		case 0xC7: RESTART(0x00, 16); break; // RST 00H
@@ -1441,15 +1428,15 @@ int Cpu::ExecuteOpcode()
 			BYTE result = 0;
 			bool wasSet = false;
 
-			if (!Bit::Get(AF.lo, FLAG_N))
+			if (!GET_FLAG_N())
 			{
-				if (((AF.hi & 0x0F) > 0x9) || Bit::Get(AF.lo, FLAG_H))
+				if (((AF.hi & 0x0F) > 0x9) || GET_FLAG_H())
 				{
 					result = (AF.hi + 0x6);
 					wasSet = true;
 				}
 
-				if ((AF.hi > 0x99) || Bit::Get(AF.lo, FLAG_C))
+				if ((AF.hi > 0x99) || GET_FLAG_C())
 				{
 					result = (AF.hi + 0x60);
 					wasSet = true;
@@ -1458,14 +1445,7 @@ int Cpu::ExecuteOpcode()
 
 			if (wasSet)
 			{
-				if (result == 0)
-				{
-					Bit::Set(AF.lo, FLAG_Z);
-				}
-				else
-				{
-					Bit::Reset(AF.lo, FLAG_Z);
-				}
+				if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 				AF.hi = result;
 			}
@@ -1542,19 +1522,12 @@ void Cpu::ExecuteExtendedOpcode()
 			BYTE result = ((val & 0xF0 >> 4) | (val & 0x0F << 4));
 
 			// reset the N, H & C flags
-			Bit::Reset(AF.lo, FLAG_N);
-			Bit::Reset(AF.lo, FLAG_H);
-			Bit::Reset(AF.lo, FLAG_C);
+			RESET_FLAG_N();
+			RESET_FLAG_H();
+			RESET_FLAG_C():
 
 			// set/unset the Z flag
-			if (result == 0)
-			{
-				Bit::Set(AF.lo, FLAG_Z);
-			}
-			else
-			{
-				Bit::Reset(AF.lo, FLAG_Z);
-			}
+			if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 			// write the new value to memory
 			WRITE_8Bit(HL.reg, result, 16);
@@ -1834,10 +1807,10 @@ int Cpu::ExecuteNextOpcode()
 // debugger
 void Cpu::Debugger()
 {
-	bool FlagZ = Bit::Get(AF.lo, FLAG_Z);
-	bool FlagN = Bit::Get(AF.lo, FLAG_N);
-	bool FlagH = Bit::Get(AF.lo, FLAG_H);
-	bool FlagC = Bit::Get(AF.lo, FLAG_C);
+	bool FlagZ = GET_FLAG_Z();
+	bool FlagN = GET_FLAG_N();
+	bool FlagH = GET_FLAG_H();
+	bool FlagC = GET_FLAG_C();
 
 	// var viewer window
 	ImGui::Begin("Register Viewer");

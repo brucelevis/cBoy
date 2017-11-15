@@ -20,8 +20,10 @@ class Bit
 		static void Set(BYTE &val, BYTE bit);
 		static void Reset(BYTE &val, BYTE bit);
 		static BYTE Get(BYTE val, BYTE bit);
-		static BYTE DidHalfCarry(BYTE val, BYTE val2);
-		static BYTE DidCarry(BYTE val);
+		static BYTE DidHalfCarry(BYTE val, BYTE val2, BYTE mask);
+		static WORD DidHalfCarry(WORD val, WORD val2, WORD mask);
+		static BYTE DidCarry(BYTE val, BYTE mask);
+		static WORD DidCarry(WORD val, WORD mask);
 };
 
 #endif

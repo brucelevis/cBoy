@@ -35,13 +35,25 @@ BYTE Bit::Get(BYTE val, BYTE bit)
 }
 
 // did we half carry
-BYTE Bit::DidHalfCarry(BYTE val, BYTE val2)
+BYTE Bit::DidHalfCarry(BYTE val, BYTE val2, BYTE mask)
 {
-	return ((val & 0xF) + (val2 & 0xF)) > 0xF;
+	return ((val & mask) + (val2 & mask)) > mask; //0xF
+}
+
+// did we half carry
+WORD Bit::DidHalfCarry(WORD val, WORD val2, WORD mask)
+{
+	return ((val & mask) + (val2 & mask)) > mask; //0xF
 }
 
 // did we carry
-BYTE Bit::DidCarry(BYTE val)
+BYTE Bit::DidCarry(BYTE val, BYTE mask)
 {
-	return val > 0xFF;
+	return val > mask; //0xFF
+}
+
+// did we carry
+WORD Bit::DidCarry(WORD val, WORD mask)
+{
+	return val > mask;
 }
