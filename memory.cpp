@@ -72,18 +72,18 @@ void Memory::Write(WORD address, BYTE data)
 		}
 		break;
 
+		// reset current scanline if anything attempts to write to it
+		case LY_ADDRESS:
+		{
+			mem[address] = 0;
+		}
+		break;
+
 		// disable writes to protected memory
 		case 0xFEA0 ... 0xFEFF:
 		{
 			// do nothing
 			Log::Critical("ATTEMPT TO WRITE TO PROTECTED MEMORY BLOCKED");
-		}
-		break;
-
-		// reset current scanline if anything attempts to write to it
-		case LY_ADDRESS:
-		{
-			mem[address] = 0;
 		}
 		break;
 
