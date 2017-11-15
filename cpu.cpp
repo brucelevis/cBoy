@@ -1287,24 +1287,9 @@ int Cpu::ExecuteOpcode()
 			WORD nn = (SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC++));
 
 			// determine if we half carried
-			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF)
-			{
-				SET_FLAG_H();
-			}
-			else
-			{
-				RESET_FLAG_H();
-			}
-
+			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF) SET_FLAG_H(); else RESET_FLAG_H();
 			// determine if we carried
-			if (((HL.reg & 0xFF) + (nn)) > 0xFF)
-			{
-				SET_FLAG_C();
-			}
-			else
-			{
-				RESET_FLAG_C();
-			}
+			if (((HL.reg & 0xFF) + (nn)) > 0xFF) SET_FLAG_C(); else RESET_FLAG_C();
 			
 			// load nn into HL
 			LOAD_16Bit(HL.reg, nn, 12);
@@ -1339,9 +1324,9 @@ int Cpu::ExecuteOpcode()
 		case 0x77: WRITE_8Bit(HL.reg, AF.hi, 8); break; // LD (HL),A
 		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); PC++; break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
-		case 0xF2: WRITE_8Bit(0xFF00 + AF.hi, Memory::ReadByte(BC.lo), 8); PC++; break; // LD A,(C)
-		case 0xF0: WRITE_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC++), 12); break; // LDH A,(a8)
-		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC++), AF.hi, 12); break; // LDH (a8),A
+		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); PC++; break; // LD A,(C)
+		case 0xF0: LOAD_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC), 12); PC++; break; // LDH A,(a8)
+		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC++; break; // LDH (a8),A
 		// rotates
 		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
