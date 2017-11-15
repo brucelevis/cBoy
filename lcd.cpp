@@ -16,25 +16,21 @@ typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
 // vars
-const WORD Lcd::LY_ADDRESS = 0xFF44;
-const WORD Lcd::STAT_ADDRESS = 0xFF41;
 GLuint texture;
 
 // init vars
-BYTE Lcd::screen[160][144][3] = {};
-BYTE screenData[144][160][3] = {};
+BYTE Lcd::screen[144][160][3] = {};
 
 // init the lcd
 void Lcd::Init()
 {
-	for (int x = 0; x < 160; x ++)
+	for (int y = 0; y < 144; y++)
 	{
-		for (int y = 0; y < 144; y++)
+		for (int x = 0; x < 160; x ++)
 		{
 			for (int c = 0; c < 3; c ++)
 			{
-				screen[x][y][c] = 255;
-				screenData[y][x][c] = 255;
+				screen[y][x][c] = 255;
 			}
 		}
 	}
@@ -55,10 +51,10 @@ void Lcd::Reset()
 }
 
 // render the lcd
-void Lcd::Render(SDL_Window *window)
+void Lcd::Render(int cycles)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, screenData);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, screen);
 
 	// draw the textured quad
 	glBegin(GL_QUADS);

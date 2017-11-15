@@ -10,6 +10,11 @@
 // definitions
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
+#define TIMA_ADDRESS 0xFF05
+#define TAC_ADDRESS 0xFF07
+#define TMA_ADDRESS 0xFF06
+#define DIVIDER_ADDRESS 0xFF04
+#define CLOCK_SPEED 4194304
 
 // timer class
 class Timer
@@ -24,13 +29,6 @@ class Timer
 
 	private:
 		static void UpdateDivider(int clockCycles);
-
-	public:
-		static const WORD TIMA_ADDRESS;
-		static const WORD TMA_ADDRESS;
-		static const WORD TAC_ADDRESS;
-		static const WORD DIVIDER_ADDRESS;
-		static const long CLOCK_SPEED;
 
 	private:
 		static int TimerCounter;

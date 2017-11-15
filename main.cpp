@@ -160,17 +160,27 @@ static void EmulationLoop()
 				cyclesThisUpdate += cycles;
 
 				/*
-				if (Cpu::GetPC() == 0x0210)
+				if (Cpu::GetPC() == 0210)
 				{
 					stepThrough = true;
 				}*/
+
+				for (unsigned short i = 0x8000; i < 0x8150; i++)
+				{
+					unsigned char val = Memory::ReadByte(i);
+
+					if (val != 00)
+					{
+						Log::Critical("Tile: %02x", val);
+					}
+				}
 
 				// update timers
 				Timer::Update(cycles);
 				// service interupts
 				Interrupt::Service();
 				// update graphics
-				Lcd::Render(window);
+				Lcd::Render(cycles);
 				// update the time
 				initialTime = timeNow;
 			}
@@ -232,11 +242,6 @@ static void StartMainLoop()
 		if (!stepThrough)
 		{
 			EmulationLoop();
-		}
-		else
-		{
-			// update graphics
-			Lcd::Render(window);
 		}
 
 		// don't show the imgui stuff in release mode
@@ -305,10 +310,10 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 
 		// individual cpu instruction tests
-		Rom::Load("roms/tests/cpu_instrs/01-special.gb");         
-		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb");               
-		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb");       
-		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb");
+		Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails      
+		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); 
+		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); // doesn't finish
+		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // doesn't finish
 		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb");
 		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb");
 		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb");

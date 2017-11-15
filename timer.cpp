@@ -18,11 +18,6 @@ typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
 
 // vars
-const WORD Timer::TIMA_ADDRESS = 0xFF05;
-const WORD Timer::TMA_ADDRESS = 0xFF06;
-const WORD Timer::TAC_ADDRESS = 0xFF07;
-const WORD Timer::DIVIDER_ADDRESS = 0xFF04;
-const long Timer::CLOCK_SPEED = 4194304;
 int Timer::TimerCounter = 0;
 BYTE Timer::DividerCounter = 0;
 const int FREQUENCIES[4] = {1024, 16, 64, 256};

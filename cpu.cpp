@@ -971,7 +971,7 @@ void Cpu::BIT_Test(BYTE &val, BYTE bit, int cycles)
 	Bit::Set(AF.lo, FLAG_H);
 
 	// set the Z flag if applicable
-	if (Bit::Get(val, bit))
+	if (!Bit::Get(val, bit))
 	{
 		Bit::Set(AF.lo, FLAG_Z);
 	}
@@ -991,7 +991,7 @@ void Cpu::BIT_Test_Memory(WORD address, BYTE bit, int cycles)
 	Bit::Set(AF.lo, FLAG_H);
 
 	// set the Z flag if applicable
-	if (Bit::Get(val, bit))
+	if (!Bit::Get(val, bit))
 	{
 		Bit::Set(AF.lo, FLAG_Z);
 	}
@@ -1686,7 +1686,10 @@ int Cpu::ExecuteOpcode()
 		case 0xC1: BC.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP BC
 		case 0xD1: DE.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP DE
 		case 0xE1: HL.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP HL
-		case 0xF1: AF.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP AF
+		case 0xF1: // POP AF 
+			AF.reg = POP_Word_Off_Stack(SP.reg) & (~0xF);
+			Cycles += 12; 
+		break;
 		// special instructions
 		case 0x27: // DAA
 		{
@@ -1728,7 +1731,7 @@ int Cpu::ExecuteOpcode()
 					wasSet = true;
 				}
 
-				if (((AF.hi & 0xF0) > 0x9) || Bit::Get(AF.lo, FLAG_C))
+				if ((AF.hi > 0x99) || Bit::Get(AF.lo, FLAG_C))
 				{
 					result = (AF.hi + 0x60);
 					wasSet = true;
@@ -1818,7 +1821,7 @@ void Cpu::ExecuteExtendedOpcode()
 			// get the value
 			BYTE val = Memory::ReadByte(HL.reg);
 			// calculate the result
-			BYTE result = ((val & 0x0F << 4) | (val & 0xF0 >> 4));
+			BYTE result = ((val & 0xF0 >> 4) | (val & 0x0F << 4));
 
 			// reset the N, H & C flags
 			Bit::Reset(AF.lo, FLAG_N);
@@ -1846,8 +1849,8 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x03: RLC(DE.lo, 8, true); break; // RLC E
 		case 0x04: RLC(HL.hi, 8, true); break; // RLC H
 		case 0x05: RLC(HL.lo, 8, true); break; // RLC L
-		case 0x07: RLC(AF.hi, 8, true); break; // RLC A
 		case 0x06: RLC_Write(HL.reg, 16, true); break; // RLC (HL)
+		case 0x07: RLC(AF.hi, 8, true); break; // RLC A
 		// rotate right circular
 		case 0x08: RRC(BC.hi, true, 8); break; // RRC B
 		case 0x09: RRC(BC.lo, true, 8); break; // RRC C
@@ -2000,9 +2003,9 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x9D: BIT_Reset(HL.lo, 3, 8); break; // RES 3,L
 		case 0x9E: BIT_Reset_Memory(HL.reg, 3, 16); break; // RES 3,(HL)
 		case 0x9F: BIT_Reset(AF.hi, 3, 8); break; // RES 3,A
-		case 0xA0: BIT_Reset(AF.hi, 4, 8); break; // RES 4,B
-		case 0xA1: BIT_Reset(BC.hi, 4, 8); break; // RES 4,C
-		case 0xA2: BIT_Reset(DE.lo, 4, 8); break; // RES 4,D
+		case 0xA0: BIT_Reset(BC.hi, 4, 8); break; // RES 4,B
+		case 0xA1: BIT_Reset(BC.lo, 4, 8); break; // RES 4,C
+		case 0xA2: BIT_Reset(DE.hi, 4, 8); break; // RES 4,D
 		case 0xA3: BIT_Reset(DE.lo, 4, 8); break; // RES 4,E
 		case 0xA4: BIT_Reset(HL.hi, 4, 8); break; // RES 4,H
 		case 0xA5: BIT_Reset(HL.lo, 4, 8); break; // RES 4,L
@@ -2046,7 +2049,7 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0xCA: BIT_Set(DE.hi, 1, 8); break; // SET 1,D
 		case 0xCB: BIT_Set(DE.lo, 1, 8); break; // SET 1,E
 		case 0xCC: BIT_Set(HL.hi, 1, 8); break; // SET 1,H
-		case 0xCD: BIT_Set(HL.hi, 1, 8); break; // SET 1,L
+		case 0xCD: BIT_Set(HL.lo, 1, 8); break; // SET 1,L
 		case 0xCE: BIT_Set_Memory(HL.reg, 1, 16); break; // SET 1,(HL)
 		case 0xCF: BIT_Set(AF.hi, 1, 8); break; // SET 1,A
 		case 0xD0: BIT_Set(BC.hi, 2, 8); break; // SET 2,B
@@ -2128,10 +2131,10 @@ void Cpu::Debugger()
 	ImGui::Text("BC: %04X", BC.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Text("DE: %04X", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("HL: %04X", HL.reg); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("LY: %02X", Memory::ReadByte(Lcd::LY_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("STAT: %02X", Memory::ReadByte(Lcd::STAT_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("IE: %02X", Memory::ReadByte(Interrupt::ENABLED_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("IR: %02X", Memory::ReadByte(Interrupt::REQUEST_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("LY: %02X", Memory::ReadByte(LY_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("STAT: %02X", Memory::ReadByte(STAT_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("IE: %02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGui::Text("IR: %02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Text("IME: %d", Interrupt::MasterSwitch); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("LCDC: %02X", 0); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Spacing();

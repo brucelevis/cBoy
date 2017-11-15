@@ -12,6 +12,8 @@ typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
+#define INT_ENABLED_ADDRESS 0xFFFF
+#define INT_REQUEST_ADDRESS 0xFF0F
 
 // interrupts class
 class Interrupt
@@ -28,8 +30,6 @@ class Interrupt
 			VBLANK, LCD, TIMER, JOYPAD
 		};
 		static bool MasterSwitch;
-		static const WORD ENABLED_ADDRESS;
-		static const WORD REQUEST_ADDRESS; 
 
 	private:
 		union Type

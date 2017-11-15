@@ -16,8 +16,6 @@ typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
-const WORD Interrupt::ENABLED_ADDRESS = 0xFFFF;
-const WORD Interrupt::REQUEST_ADDRESS = 0xFF0F;
 
 // define the interrupts
 Interrupt::Type Interrupt::VBlank = {{.bit = 0, .address = 0x40}};
@@ -37,11 +35,11 @@ bool Interrupt::MasterSwitch = false;
 void Interrupt::Request(int interruptId)
 {
 	// get the value of the interupt request register
-	BYTE val = Memory::ReadByte(REQUEST_ADDRESS);
+	BYTE val = Memory::ReadByte(INT_REQUEST_ADDRESS);
 	// set the appropriate bit for this request
 	Bit::Set(val, InterruptList[interruptId].bit);
 	// Write the value back to the request reg
-	Memory::Write(REQUEST_ADDRESS, val);
+	Memory::Write(INT_REQUEST_ADDRESS, val);
 }
 
 // should we service the interrupt?
@@ -51,9 +49,9 @@ int Interrupt::ShouldService()
 	if (MasterSwitch)
 	{
 		// get the request interrupt value
-		BYTE requestedInterrupt = Memory::ReadByte(REQUEST_ADDRESS);
+		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
 		// get the interrupts enabled value
-		BYTE interruptsEnabled = Memory::ReadByte(ENABLED_ADDRESS);
+		BYTE interruptsEnabled = Memory::ReadByte(INT_ENABLED_ADDRESS);
 
 		// if the requested interupt isn't zero
 		if (requestedInterrupt != 0)
@@ -90,9 +88,9 @@ void Interrupt::Service()
 		// turn off the master interrupt switch
 		MasterSwitch = false;
 		// reset the requested interrupt
-		BYTE requestedInterrupt = Memory::ReadByte(REQUEST_ADDRESS);
+		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
 		Bit::Reset(requestedInterrupt, interruptId);
-		Memory::Write(REQUEST_ADDRESS, requestedInterrupt);
+		Memory::Write(INT_REQUEST_ADDRESS, requestedInterrupt);
 
 		// push the program counter onto the stack
 		Cpu::PUSH_Word_Onto_Stack(Cpu::GetPC());
