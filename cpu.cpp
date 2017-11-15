@@ -20,6 +20,26 @@ typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
+// set flag
+#define FLAG_Z 7
+#define FLAG_N 6
+#define FLAG_H 5
+#define FLAG_C 4
+// ## macros ## //
+
+// flags
+#define GET_FLAG_Z() Bit::Get(AF.lo, FLAG_Z)
+#define GET_FLAG_N() Bit::Get(AF.lo, FLAG_N)
+#define GET_FLAG_H() Bit::Get(AF.lo, FLAG_H)
+#define GET_FLAG_C() Bit::Get(AF.lo, FLAG_C)
+#define SET_FLAG_Z() Bit::Set(AF.lo, FLAG_Z)
+#define SET_FLAG_N() Bit::Set(AF.lo, FLAG_N)
+#define SET_FLAG_H() Bit::Set(AF.lo, FLAG_H)
+#define SET_FLAG_C() Bit::Set(AF.lo, FLAG_C)
+#define RESET_FLAG_Z() Bit::Reset(AF.lo, FLAG_Z)
+#define RESET_FLAG_N() Bit::Reset(AF.lo, FLAG_N)
+#define RESET_FLAG_H() Bit::Reset(AF.lo, FLAG_H)
+#define RESET_FLAG_C() Bit::Reset(AF.lo, FLAG_C)
 
 // initialize vars
 WORD Cpu::PC = 0x100;
@@ -32,58 +52,29 @@ Cpu::Operations Cpu::Operation = {};
 int Cpu::Cycles = 0;
 // debug memory viewer
 static MemoryEditor memoryViewer;
-// set flag
-#define FLAG_Z 7
-#define FLAG_N 6
-#define FLAG_H 5
-#define FLAG_C 4
 
 // add 8-bit
 void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 {
 	// determine the value for addition
-	BYTE toAdd = (addCarry) ? (val2 + Bit::Get(AF.lo, FLAG_C)) : val2;
+	BYTE toAdd = (addCarry) ? (val2 + GET_FLAG_C()) : val2;
 	// store the result of the calculation
 	BYTE result = (val + toAdd);
 
 	// reset the N flag
-	Bit::Reset(AF.lo, FLAG_N);
+	RESET_FLAG_N();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, toAdd))
-	{
-		Bit::Set(AF.lo, FLAG_H);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_H);
-	}
-
+	if (Bit::DidHalfCarry(val, toAdd)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result))
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	} 
-	else 
-	{
-		Bit::Reset(AF.lo, FLAG_C);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (Bit::DidCarry(result)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
  	val = result;
+ 	// add the cycles
+	Cycles += cycles;
 }
 
 // add 16-bit
@@ -93,81 +84,41 @@ void Cpu::ADD_16Bit(WORD &val, WORD val2, int cycles)
 	WORD result = (val + val2);
 
 	// reset the N flag
-	Bit::Reset(AF.lo, FLAG_N);
+	RESET_FLAG_N();
 
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, val2))
-	{
-		Bit::Set(AF.lo, FLAG_H); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_H);
-	}
-
+	if (Bit::DidHalfCarry(val, val2)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result))
-	{
-		Bit::Set(AF.lo, FLAG_C); 
-	}
-	else 
-	{
-		Bit::Reset(AF.lo, FLAG_C);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (Bit::DidCarry(result)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // sub 8-bit
 void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 {
 	// determine the value for subtraction
-	BYTE toSubtract = (addCarry) ? (val2 + Bit::Get(AF.lo, FLAG_C)) : val2;
+	BYTE toSubtract = (addCarry) ? (val2 + GET_FLAG_C()) : val2;
 	// store the result of the calculation
 	BYTE result = (val - toSubtract);
 	
 	// set the N flag
-	Bit::Set(AF.lo, FLAG_N);
+	SET_FLAG_N();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, toSubtract))
-	{
-		Bit::Reset(AF.lo, FLAG_H);
-	}
-	else
-	{
-		Bit::Set(AF.lo, FLAG_H);
-	}
-
+	if (Bit::DidHalfCarry(val, toSubtract)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry(result))
-	{
-		Bit::Reset(AF.lo, FLAG_C); 
-	}
-	else
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (Bit::DidCarry(result)) RESET_FLAG_C(); else SET_FLAG_C();
 
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // and 8-bit
@@ -177,27 +128,19 @@ void Cpu::AND_8Bit(BYTE &val, BYTE val2, int cycles)
 	BYTE result = (val & val2);
 
 	// reset the N flag
-	Bit::Reset(AF.lo, FLAG_N);
+	RESET_FLAG_N();
 	// set the H flag
-	Bit::Set(AF.lo, FLAG_H);
+	SET_FLAG_H();
 	// reset the C flag
-	Bit::Reset(AF.lo, FLAG_C);
+	RESET_FLAG_C();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // or 8-bit
@@ -207,25 +150,17 @@ void Cpu::OR_8Bit(BYTE &val, BYTE val2, int cycles)
 	BYTE result = (val | val2);
 
 	// reset the N, H & C flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
-	Bit::Reset(AF.lo, FLAG_C);
+	RESET_FLAG_N();
+	RESET_FLAG_H();
+	RESET_FLAG_C();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // xor 8-bit
@@ -235,25 +170,17 @@ void Cpu::XOR_8Bit(BYTE &val, BYTE val2, int cycles)
 	BYTE result = (val ^ val2);
 	
 	// reset the N, H & C flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
-	Bit::Reset(AF.lo, FLAG_C);
+	RESET_FLAG_N();
+	RESET_FLAG_H();
+	RESET_FLAG_C();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // dec 8-bit
@@ -263,42 +190,26 @@ void Cpu::DEC_8Bit(BYTE &val, int cycles)
 	BYTE result = (val - 1);
 
 	// set the N flag
-	Bit::Set(AF.lo, FLAG_N);
+	SET_FLAG_N();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried 
-	if (Bit::DidHalfCarry(val, -1))
-	{
-		Bit::Reset(AF.lo, FLAG_H);
-	}
-	else
-	{
-		Bit::Set(AF.lo, FLAG_H);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (Bit::DidHalfCarry(val, -1)) RESET_FLAG_H(); else SET_FLAG_H();
 
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // dec 16-bit
 void Cpu::DEC_16Bit(WORD &val, int cycles)
 {
-	// add the cycles
-	Cycles += cycles;
 	// decrement val
 	val--;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // inc 8-bit
@@ -308,69 +219,53 @@ void Cpu::INC_8Bit(BYTE &val, int cycles)
 	BYTE result = (val + 1);
 
 	// reset the N flag
-	Bit::Reset(AF.lo, FLAG_N);
+	RESET_FLAG_N();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, 1))
-	{
-		Bit::Set(AF.lo, FLAG_H);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_H);
-	}
-
-	// add the cycles
-	Cycles += cycles;
+	if (Bit::DidHalfCarry(val, 1)) SET_FLAG_H(); else RESET_FLAG_H();
 
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // inc 16-bit
 void Cpu::INC_16Bit(WORD &val, int cycles)
 {
-	// add the cycles
-	Cycles += cycles;
 	// increment val
 	val++;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // ld 8-bit
 void Cpu::LOAD_8Bit(BYTE &val, BYTE val2, int cycles)
 {
-	// add the cycles
-	Cycles += cycles;
 	// set val to val2
 	val = val2;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // ld 16-bit
 void Cpu::LOAD_16Bit(WORD &val, WORD val2, int cycles)
 {
-	// add the cycles
-	Cycles += cycles;
 	// set val to val2
 	val = val2;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // write 8-bit
 void Cpu::WRITE_8Bit(WORD address, BYTE val, int cycles)
 {
-	// add the cycles
-	Cycles += cycles;
 	// write val to address
 	Memory::Write(address, val);
+	// add the cycles
+	Cycles += cycles;
 }
 
 // compare 8-bit
@@ -380,37 +275,14 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 	BYTE result = (val - val2);
 
 	// reset the N flag
-	Bit::Set(AF.lo, FLAG_N);
+	RESET_FLAG_N();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z); 
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, val2)) 
-	{
-		Bit::Reset(AF.lo, FLAG_H);
-	}
-	else
-	{
-		Bit::Set(AF.lo, FLAG_H);
-	}
-
+	if (Bit::DidHalfCarry(val, val2)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (val < result)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C);
-	}
+	if (val < result) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// add the cycles
 	Cycles += cycles;
@@ -420,36 +292,26 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 void Cpu::RL(BYTE &val, bool checkForZero, int cycles)
 {
 	// get the carry flag value
-	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	BYTE carryFlag = GET_FLAG_C();
 	// calculate the result
 	BYTE result = (val << 1);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0)
-		{
-			Bit::Set(AF.lo, FLAG_Z);
-		}
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
-		Bit::Reset(AF.lo, FLAG_Z);
+		RESET_FLAG_Z();
 	}
 
 	// set the carry flag
-	if (Bit::Get(val, 7) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// rotate A left and put the old carry flag bit back into it
 	val = (result | carryFlag);
@@ -461,36 +323,26 @@ void Cpu::RL(BYTE &val, bool checkForZero, int cycles)
 void Cpu::RL_Write(WORD address, bool checkForZero, int cycles)
 {
 	// get the carry flag value
-	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	BYTE carryFlag = GET_FLAG_C();
 	// calculate the result
 	BYTE result = (Memory::ReadByte(address) << 1);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0)
-		{
-			Bit::Set(AF.lo, FLAG_Z);
-		}
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
-		Bit::Reset(AF.lo, FLAG_Z);
+		RESET_FLAG_Z();
 	}
 
 	// set the carry flag
-	if (Bit::Get(result, 7) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(result, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// write the result + carry flag back to memory
 	Memory::Write(address, (result | carryFlag));
@@ -502,36 +354,26 @@ void Cpu::RL_Write(WORD address, bool checkForZero, int cycles)
 void Cpu::RR(BYTE &val, bool checkForZero, int cycles)
 {
 	// get the carry flag value
-	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	BYTE carryFlag = GET_FLAG_C();
 	// calculate the result
 	BYTE result = (val >> 1);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0)
-		{
-			Bit::Set(AF.lo, FLAG_Z);
-		}
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
-		Bit::Reset(AF.lo, FLAG_Z);
+		RESET_FLAG_Z();
 	}
 
 	// set the carry flag
-	if (Bit::Get(val, 7) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// rotate A right and put the old carry flag bit back into it
 	val = (result | carryFlag);
@@ -543,36 +385,26 @@ void Cpu::RR(BYTE &val, bool checkForZero, int cycles)
 void Cpu::RR_Write(WORD address, bool checkForZero, int cycles)
 {
 	// get the carry flag value
-	BYTE carryFlag = Bit::Get(AF.lo, FLAG_C);
+	BYTE carryFlag = GET_FLAG_C();
 	// calculate the result
 	BYTE result = (Memory::ReadByte(address) >> 1);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0)
-		{
-			Bit::Set(AF.lo, FLAG_Z);
-		}
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
-		Bit::Reset(AF.lo, FLAG_Z);
+		RESET_FLAG_Z();
 	}
 
 	// set the carry flag
-	if (Bit::Get(result, 7) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(result, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// write the result + carry flag back to memory
 	Memory::Write(address, (result | carryFlag));
@@ -587,24 +419,21 @@ void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
 	BYTE result = (val << 1);
 
 	// reset the N & H flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0)
-		{
-			Bit::Set(AF.lo, FLAG_Z);
-		}
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
-		Bit::Reset(AF.lo, FLAG_Z);
+		RESET_FLAG_Z();
 	}
 
 	// rotate A left and put the carry flag bit back into it			
-	val = ((val << 1) | Bit::Get(AF.lo, FLAG_C));
+	val = ((val << 1) | GET_FLAG_C());
 	// add the cycles
 	Cycles += cycles;
 }
@@ -616,17 +445,14 @@ void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
 	BYTE result = (Memory::ReadByte(address) << 1);
 
 	// reset the N & H flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set/unset Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 	// rotate A left and put the carry flag bit back into it			
-	Memory::Write(address, result | Bit::Get(AF.lo, FLAG_C));
+	Memory::Write(address, result | GET_FLAG_C());
 	// add the cycles
 	Cycles += cycles;
 }
@@ -638,34 +464,24 @@ void Cpu::RRC(BYTE &val, bool checkForZero, int cycles)
 	BYTE result = (val >> 1);
 
 	// reset the N & H flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set carry flag
-	if (Bit::Get(val, 0))
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C);
-	}
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0)
-		{
-			Bit::Set(AF.lo, FLAG_Z);
-		}
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
-		Bit::Reset(AF.lo, FLAG_Z);
+		RESET_FLAG_Z();
 	}
 
 	// rotate A right and put the carry flag bit back into it			
-	val = ((val >> 1) | Bit::Get(AF.lo, FLAG_C));
+	val = ((val >> 1) | GET_FLAG_C());
 	// add the cycles
 	Cycles += cycles;
 }
@@ -677,14 +493,11 @@ void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 	BYTE result = (Memory::ReadByte(address) >> 1);
 
 	// reset the N & H flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set/unset Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 	// rotate A left and put the carry flag bit back into it			
 	Memory::Write(address, result | Bit::Get(AF.lo, FLAG_C));
@@ -698,25 +511,14 @@ void Cpu::SLA(BYTE &val, int cycles)
 	// calculate the result
 	BYTE result = (val << 1);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 7) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// shift A left
 	val = result;
@@ -734,25 +536,14 @@ void Cpu::SLA_Write(WORD address, int cycles)
 	// calculate the result
 	BYTE result = (val << 1);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 7) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// shift A left
 	val = result;
@@ -772,37 +563,19 @@ void Cpu::SRA(BYTE &val, int cycles)
 	// get the old MSB data
 	BYTE oldMSB = Bit::Get(val, 7);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// shift A right
 	val = result;
 	// set MSB back to its original value
-	if (oldMSB)
-	{
-		Bit::Set(val, 7);
-	}
-	else
-	{
-		Bit::Reset(val, 7);
-	}
+	if (oldMSB) Bit::Set(val, 7); else Bit::Reset(val, 7);
 	
 	// add the cycles
 	Cycles += cycles;
@@ -818,37 +591,19 @@ void Cpu::SRA_Write(WORD address, int cycles)
 	// get the old MSB data
 	BYTE oldMSB = Bit::Get(val, 7);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// shift A right
 	val = result;
 	// set MSB back to its original value
-	if (oldMSB)
-	{
-		Bit::Set(val, 7);
-	}
-	else
-	{
-		Bit::Reset(val, 7);
-	}
+	if (oldMSB) Bit::Set(val, 7); else Bit::Reset(val, 7);
 
 	// write the result back to memory
 	Memory::Write(address, val);
@@ -865,25 +620,14 @@ void Cpu::SRL(BYTE &val, int cycles)
 	// get the old MSB data
 	BYTE oldMSB = Bit::Get(val, 7);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// shift A right
 	val = result;
@@ -904,25 +648,14 @@ void Cpu::SRL_Write(WORD address, int cycles)
 	// get the old MSB data
 	BYTE oldMSB = Bit::Get(val, 7);
 
-	// reset the H & N flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0)
-	{
-		Bit::Set(AF.lo, FLAG_C);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_C); // should we be resetting?
-	}
+	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// shift A right
 	val = result;
@@ -942,39 +675,28 @@ void Cpu::SWAP_8Bit(BYTE &val, int cycles)
 	BYTE result = ((val & 0xF0 >> 4) | (val & 0x0F << 4));
 
 	// reset the N, H & C flags
-	Bit::Reset(AF.lo, FLAG_N);
-	Bit::Reset(AF.lo, FLAG_H);
-	Bit::Reset(AF.lo, FLAG_C);
+	RESET_FLAG_N();
+	RESET_FLAG_H();
+	RESET_FLAG_C();
 
 	// set/unset the Z flag
-	if (result == 0)
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
-	else
-	{
-		Bit::Reset(AF.lo, FLAG_Z);
-	}
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
-	// add the cycles
-	Cycles += cycles;
 	// set val to the result
 	val = result;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // test if a bit is off
 void Cpu::BIT_Test(BYTE &val, BYTE bit, int cycles)
 {
-	// reset the N flag
-	Bit::Reset(AF.lo, FLAG_N);
-	// set the H flag
-	Bit::Set(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (!Bit::Get(val, bit))
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
+	if (!Bit::Get(val, bit)) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 	// add the cycles
 	Cycles += cycles;
@@ -985,16 +707,13 @@ void Cpu::BIT_Test_Memory(WORD address, BYTE bit, int cycles)
 {
 	// get the data
 	BYTE val = Memory::ReadByte(address);
-	// reset the N flag
-	Bit::Reset(AF.lo, FLAG_N);
-	// set the H flag
-	Bit::Set(AF.lo, FLAG_H);
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
 
 	// set the Z flag if applicable
-	if (!Bit::Get(val, bit))
-	{
-		Bit::Set(AF.lo, FLAG_Z);
-	}
+	if (!Bit::Get(val, bit)) SET_FLAG_Z(); else RESET_FLAG_Z();
+
 	// add the cycles
 	Cycles += cycles;
 }
@@ -1002,10 +721,10 @@ void Cpu::BIT_Test_Memory(WORD address, BYTE bit, int cycles)
 // set a bit
 void Cpu::BIT_Set(BYTE &val, BYTE bit, int cycles)
 {
-	// add the cycles
-	Cycles += cycles;
 	// set the bit
 	Bit::Set(val, bit);
+	// add the cycles
+	Cycles += cycles;
 }
 
 // set a bit
@@ -1024,10 +743,10 @@ void Cpu::BIT_Set_Memory(WORD address, BYTE bit, int cycles)
 // reset a bit
 void Cpu::BIT_Reset(BYTE &val, BYTE bit, int cycles)
 {
-	// add the cycles
-	Cycles += cycles;
 	// reset the bit
 	Bit::Reset(val, bit);
+	// add the cycles
+	Cycles += cycles;
 }
 
 // reset a bit
@@ -1064,12 +783,11 @@ int Cpu::JUMP_Immediate(bool condition, int cycles)
 			PC += Memory::ReadByte(PC);	
 		}
 	}
-
-	// add the cycles
-	Cycles += cycles;
 	
 	// increment PC
 	PC++;
+	// add the cycles
+	Cycles += cycles;
 }
 
 // jump (two byte immediate value)
@@ -1093,6 +811,9 @@ int Cpu::JUMP(bool condition, int cycles)
 // call
 int Cpu::CALL(bool condition, int cycles)
 {
+	// add the cycles
+	Cycles += cycles;
+
 	// if the condition is true
 	if (condition)
 	{
@@ -1102,9 +823,6 @@ int Cpu::CALL(bool condition, int cycles)
 		PC = nn;
 		return 0;
 	}
-
-	// add the cycles
-	Cycles += cycles;
 
 	// increment PC
 	PC += 2;
