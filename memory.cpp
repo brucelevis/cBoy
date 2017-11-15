@@ -91,7 +91,11 @@ void Memory::Write(WORD address, BYTE data)
 		default:
 		{
 			// echo ram
-			if (address >= 0xE000 && address <= 0xFE00)
+			if (address >= 0xC000 && address <= 0xDE00)
+			{
+				mem[address + 0x2000] = data;
+			}
+			else if (address >= 0xE000 && address <= 0xFE00)
 			{
 				mem[address - 0x2000] = data;
 			}
