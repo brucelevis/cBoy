@@ -1524,7 +1524,7 @@ void Cpu::ExecuteExtendedOpcode()
 			// reset the N, H & C flags
 			RESET_FLAG_N();
 			RESET_FLAG_H();
-			RESET_FLAG_C():
+			RESET_FLAG_C();
 
 			// set/unset the Z flag
 			if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
