@@ -90,6 +90,13 @@ void Memory::Write(WORD address, BYTE data)
 		// write
 		default:
 		{
+			// echo ram
+			if (address >= 0xE000 && address <= 0xFE00)
+			{
+				mem[address - 0x2000] = data;
+			}
+
+			// wrte to memory
 			mem[address] = data;
 		}
 		break;
