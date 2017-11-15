@@ -113,7 +113,7 @@ void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// determine if we half carried
 	if ((val & 0xF) < (val2 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (val < val2) RESET_FLAG_C(); else SET_FLAG_C();
+	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
 	val = result;
@@ -282,7 +282,7 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 	// determine if we half carried
 	if ((val & 0xF) < (val2 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
 	// determine if we carried
-	if (val < val2) RESET_FLAG_C(); else SET_FLAG_C();
+	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// add the cycles
 	Cycles += cycles;
@@ -1063,7 +1063,7 @@ int Cpu::ExecuteOpcode()
 			}
 
 			// add nn to SP
-			SP.reg += nn;
+			SP.reg = (WORD)(SP.reg + nn);
 			// increment cycles
 			Cycles += 16;
 		}
@@ -1291,7 +1291,7 @@ int Cpu::ExecuteOpcode()
 			RESET_FLAG_N();
 
 			// SP + r8
-			WORD nn = (SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC++));
+			WORD nn = (WORD)(SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC++));
 
 			// determine if we half carried
 			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF) SET_FLAG_H(); else RESET_FLAG_H();
@@ -1309,8 +1309,7 @@ int Cpu::ExecuteOpcode()
 			WORD nn = Memory::ReadWord(PC);
 			// write SP to memory
 			Memory::Write(nn, SP.hi);
-			nn++;
-			Memory::Write(nn, SP.lo);
+			Memory::Write(nn + 1, SP.lo);
 			// increment PC
 			PC += 2;
 			Cycles += 20;
@@ -1332,8 +1331,8 @@ int Cpu::ExecuteOpcode()
 		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); PC++; break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
 		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); PC++; break; // LD A,(C)
-		case 0xF0: LOAD_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC), 12); PC++; break; // LDH A,(a8)
-		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC++; break; // LDH (a8),A
+		case 0xF0: LOAD_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC++), 12); break; // LDH A,(a8)
+		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC++), AF.hi, 12); break; // LDH (a8),A
 		// rotates
 		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
