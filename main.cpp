@@ -41,6 +41,7 @@ SDL_GLContext glContext = NULL;
 // set the interval
 int interval = (INTERVAL / TARGET_FPS);
 unsigned int initialTime = SDL_GetTicks();
+int instructionsRan = 0;
 
 // init SDL
 static bool InitSDL()
@@ -139,6 +140,8 @@ static void EmulationLoop()
 		int cycles = Cpu::ExecuteNextOpcode(); 
 		cyclesThisUpdate += cycles;
 
+		instructionsRan++;
+
 		// update timers
 		Timer::Update(cycles);
 		// service interupts
@@ -159,17 +162,19 @@ static void EmulationLoop()
 				int cycles = Cpu::ExecuteNextOpcode(); 
 				cyclesThisUpdate += cycles;
 
+				instructionsRan++;
+
 				/*
 				if (Cpu::GetPC() == 0210)
 				{
 					stepThrough = true;
 				}*/
 
-				for (unsigned short i = 0x8000; i < 0x8150; i++)
+				for (unsigned short i = 0x8000; i < 0x8FFF; i++)
 				{
 					unsigned char val = Memory::ReadByte(i);
 
-					if (val != 00)
+					if (val != 0)
 					{
 						Log::Critical("Tile: %02x", val);
 					}
@@ -282,6 +287,8 @@ static void StartMainLoop()
 				EmulationLoop();
 			}
 
+			ImGui::Text("Ins ran: %d", instructionsRan);
+
 			// end window
 			ImGui::End();
 
@@ -310,13 +317,13 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 
 		// individual cpu instruction tests
-		Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails      
+		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails      
 		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); 
 		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); // doesn't finish
 		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // doesn't finish
 		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb");
 		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb");
-		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb");
+		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // test this against the other emu
 		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb");
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb");
 		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb");

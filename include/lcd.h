@@ -15,8 +15,13 @@ typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
-#define LY_ADDRESS 0xFF44
+#define LCDC_ADDRESS 0xFF40
 #define STAT_ADDRESS 0xFF41
+#define SCROLL_Y_ADDRESS 0xFF42
+#define SCROLL_X_ADDRESS 0xFF43
+#define LY_ADDRESS 0xFF44
+#define LY_CP_ADDRESS 0xFF45
+#define DMA_ADDRESS 0xFF46
 
 // lcd class
 class Lcd
@@ -24,10 +29,21 @@ class Lcd
 	public:
 		static void Init();
 		static void Reset();
+		static void SetLCDStatus();
+		static void IsLCDEnabled();
+		static void DrawScanline();
 		static void Render(int cycles);
 
 	private:
-		static BYTE screen[144][160][3];
+		
+
+	private:
+		static BYTE Screen[144][160][3];
+		static int ScanlineCounter;
+		enum Status
+		{
+			HBLANK, VBLANK, OAM, TRANSFER
+		};
 };
 
 #endif

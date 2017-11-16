@@ -275,7 +275,7 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 	BYTE result = (val - val2);
 
 	// reset the N flag
-	RESET_FLAG_N();
+	SET_FLAG_N();
 
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
@@ -416,7 +416,7 @@ void Cpu::RR_Write(WORD address, bool checkForZero, int cycles)
 void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
 {
 	// store the result of the calculation
-	BYTE result = (val << 1);
+	BYTE result = ((val << 1) | (val >> 7));
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -441,8 +441,10 @@ void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
 // rotate right (write to mem) (circular)
 void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
 {
+	// the data
+	BYTE val = Memory::ReadByte(address);
 	// store the result of the calculation
-	BYTE result = (Memory::ReadByte(address) << 1);
+	BYTE result = ((val << 1) | (val >> 7));
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -468,7 +470,7 @@ void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
 void Cpu::RRC(BYTE &val, bool checkForZero, int cycles)
 {
 	// store the result of the calculation
-	BYTE result = (val >> 1);
+	BYTE result = ((val >> 1) | (val << 7));
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -496,8 +498,10 @@ void Cpu::RRC(BYTE &val, bool checkForZero, int cycles)
 // rotate right (write to mem) (circular)
 void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 {
+	// the data
+	BYTE val = Memory::ReadByte(address);
 	// store the result of the calculation
-	BYTE result = (Memory::ReadByte(address) >> 1);
+	BYTE result = ((val >> 1) | (val << 7));
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -818,9 +822,11 @@ int Cpu::CALL(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
+		// get nn
 		WORD nn = Memory::ReadWord(PC);
-		PC += 2;
-		PUSH_Word_Onto_Stack(PC);
+		// push the address of the next instruction to the stack
+		PUSH(PC + 2);
+		// call the instruction at nn
 		PC = nn;
 		return 0;
 	}
@@ -837,7 +843,7 @@ void Cpu::RETURN(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
-		PC = POP_Word_Off_Stack(SP.reg);
+		PC = POP();
 	}
 
 	// add the cycles
@@ -847,7 +853,9 @@ void Cpu::RETURN(bool condition, int cycles)
 // restart
 void Cpu::RESTART(BYTE address, int cycles)
 {
-	PUSH_Word_Onto_Stack(PC);
+	// push the PC onto the stack
+	PUSH(PC);
+	// set the PC to the address
 	PC = address;
 
 	// add the cycles
@@ -855,21 +863,24 @@ void Cpu::RESTART(BYTE address, int cycles)
 }
 
 // push word onto stack
-void Cpu::PUSH_Word_Onto_Stack(WORD data)
+void Cpu::PUSH(WORD data)
 {
-	BYTE hi = data >> 8;
-	BYTE lo = data & 0xFF;
-	SP.reg--;
-	Memory::Write(SP.reg, hi);
-	SP.reg--;
-	Memory::Write(SP.reg, lo);
+	// get the hi and lo bytes
+	BYTE hi = (data >> 8);
+	BYTE lo = (data & 0xFF);
+	// write the data to the stack
+	Memory::Write(--SP.reg, hi);
+	Memory::Write(--SP.reg, lo);
 }
 
 // pop word off stack
-WORD Cpu::POP_Word_Off_Stack(WORD address)
+WORD Cpu::POP()
 {
-	WORD data = Memory::ReadWord(address);
+	// get the data
+	WORD data = Memory::ReadWord(SP.reg);
+	// increment the stack pointer
 	SP.reg += 2;
+	// return the data
 	return data;
 }
 
@@ -1279,6 +1290,8 @@ int Cpu::ExecuteOpcode()
 		case 0x7E: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // LD A,(HL)
 		case 0x7F: LOAD_8Bit(AF.hi, AF.hi, 4); break; // LD A,A
 		case 0xFA: LOAD_8Bit(AF.hi, Memory::ReadByte(Memory::ReadWord(PC)), 16); PC += 2; break; // LD A,(a16)
+		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); PC++; break; // LD A,(C)
+		case 0xF0: LOAD_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC++), 12); break; // LDH A,(a8)
 		// 16-bit load
 		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
 		case 0x11: LOAD_16Bit(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
@@ -1328,11 +1341,9 @@ int Cpu::ExecuteOpcode()
 		case 0x74: WRITE_8Bit(HL.reg, HL.hi, 8); break; // LD (HL),H
 		case 0x75: WRITE_8Bit(HL.reg, HL.lo, 8); break; // LD (HL),L
 		case 0x77: WRITE_8Bit(HL.reg, AF.hi, 8); break; // LD (HL),A
-		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); PC++; break; // LD (C),A
+		case 0xE2: WRITE_8Bit((WORD)(0xFF00 + BC.lo), AF.hi, 12); PC++; break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
-		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); PC++; break; // LD A,(C)
-		case 0xF0: LOAD_8Bit(AF.hi, 0xFF00 + Memory::ReadByte(PC++), 12); break; // LDH A,(a8)
-		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC++), AF.hi, 12); break; // LDH (a8),A
+		case 0xE0: WRITE_8Bit((WORD)(0xFF00 + Memory::ReadByte(PC++)), AF.hi, 12); break; // LDH (a8),A
 		// rotates
 		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
@@ -1374,20 +1385,15 @@ int Cpu::ExecuteOpcode()
 		case 0xF7: RESTART(0x30, 16); break; // RST 30H
 		case 0xFF: RESTART(0x38, 16); break; // RST 38H
 		// push
-		case 0xC5: PUSH_Word_Onto_Stack(BC.reg); Cycles += 16; break; // PUSH BC
-		case 0xD5: PUSH_Word_Onto_Stack(DE.reg); Cycles += 16; break; // PUSH DE
-		case 0xE5: PUSH_Word_Onto_Stack(HL.reg); Cycles += 16; break; // PUSH HL
-		case 0xF5: PUSH_Word_Onto_Stack(AF.reg); Cycles += 16; break; // PUSH AF
+		case 0xC5: PUSH(BC.reg); Cycles += 16; break; // PUSH BC
+		case 0xD5: PUSH(DE.reg); Cycles += 16; break; // PUSH DE
+		case 0xE5: PUSH(HL.reg); Cycles += 16; break; // PUSH HL
+		case 0xF5: PUSH(AF.reg); Cycles += 16; break; // PUSH AF
 		// pop
-		case 0xC1: BC.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP BC
-		case 0xD1: DE.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP DE
-		case 0xE1: HL.reg = POP_Word_Off_Stack(SP.reg); Cycles += 12; break; // POP HL
-		case 0xF1: // POP AF 
-		{
-			AF.reg = POP_Word_Off_Stack(SP.reg) & (~0xF);
-			Cycles += 12; 
-		}
-		break;
+		case 0xC1: BC.reg = POP(); Cycles += 12; break; // POP BC
+		case 0xD1: DE.reg = POP(); Cycles += 12; break; // POP DE
+		case 0xE1: HL.reg = POP(); Cycles += 12; break; // POP HL
+		case 0xF1: AF.reg = (POP() & (~0xF)); Cycles += 12; break; // POP AF 
 		// special instructions
 		case 0x27: // DAA
 		{
@@ -1821,7 +1827,7 @@ void Cpu::Debugger()
 	ImGui::Text("IE: %02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("IR: %02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Text("IME: %d", Interrupt::MasterSwitch); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("LCDC: %02X", 0); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("LCDC: %d", Bit::Get(Memory::ReadByte(LCDC_ADDRESS), 7)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
 	ImGui::Spacing();
 	ImGui::Checkbox("Z", &FlagZ); ImGui::SameLine();
 	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();

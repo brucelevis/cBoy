@@ -19,7 +19,7 @@ typedef signed short SIGNED_WORD;
 GLuint texture;
 
 // init vars
-BYTE Lcd::screen[144][160][3] = {};
+BYTE Lcd::Screen[144][160][3] = {};
 
 // init the lcd
 void Lcd::Init()
@@ -30,7 +30,7 @@ void Lcd::Init()
 		{
 			for (int c = 0; c < 3; c ++)
 			{
-				screen[y][x][c] = 255;
+				Screen[y][x][c] = 255;
 			}
 		}
 	}
@@ -54,7 +54,7 @@ void Lcd::Reset()
 void Lcd::Render(int cycles)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, screen);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, Screen);
 
 	// draw the textured quad
 	glBegin(GL_QUADS);

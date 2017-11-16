@@ -23,7 +23,7 @@ class Cpu
 		static int ExecuteNextOpcode();
 		static WORD GetPC();
 		static void SetPC(WORD val);
-		static void PUSH_Word_Onto_Stack(WORD data);
+		static void PUSH(WORD data);
 		static void Debugger();
 
 	private:
@@ -68,7 +68,7 @@ class Cpu
 		static int CALL(bool condition, int cycles);
 		static void RETURN(bool condition, int cycles);
 		static void RESTART(BYTE address, int cycles);
-		static WORD POP_Word_Off_Stack(WORD address);
+		static WORD POP();
 
 	public:
 		struct Operations {

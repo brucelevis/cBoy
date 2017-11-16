@@ -93,7 +93,7 @@ void Interrupt::Service()
 		Memory::Write(INT_REQUEST_ADDRESS, requestedInterrupt);
 
 		// push the program counter onto the stack
-		Cpu::PUSH_Word_Onto_Stack(Cpu::GetPC());
+		Cpu::PUSH(Cpu::GetPC());
 
 		// execute the interrupt
 		Cpu::SetPC(InterruptList[interruptId].address);
