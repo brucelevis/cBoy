@@ -1341,9 +1341,9 @@ int Cpu::ExecuteOpcode()
 		case 0x74: WRITE_8Bit(HL.reg, HL.hi, 8); break; // LD (HL),H
 		case 0x75: WRITE_8Bit(HL.reg, HL.lo, 8); break; // LD (HL),L
 		case 0x77: WRITE_8Bit(HL.reg, AF.hi, 8); break; // LD (HL),A
-		case 0xE2: WRITE_8Bit((0xFF00 + BC.lo), AF.hi, 12); PC++; break; // LD (C),A
+		case 0xE2: WRITE_8Bit(Memory::ReadByte(0xFF00 + Memory::ReadByte(BC.lo)), AF.hi, 12); PC++; break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
-		case 0xE0: WRITE_8Bit((0xFF00 + Memory::ReadByte(PC++)), AF.hi, 12); break; // LDH (a8),A
+		case 0xE0: WRITE_8Bit(Memory::ReadByte(0xFF00 + Memory::ReadByte(PC++)), AF.hi, 12); break; // LDH (a8),A
 		// rotates
 		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
