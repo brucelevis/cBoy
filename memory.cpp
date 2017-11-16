@@ -29,7 +29,7 @@ BYTE Memory::ReadByte(WORD address)
 // read word
 WORD Memory::ReadWord(WORD address)
 {
-	return (ReadByte(address + 1) << 8) | (ReadByte(address));
+	return ((ReadByte(address + 1) << 8) | ReadByte(address));
 }
 
 // write memory
