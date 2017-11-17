@@ -863,13 +863,12 @@ void Cpu::RESTART(BYTE address, int cycles)
 // push word onto stack
 void Cpu::PUSH(WORD data)
 {
-	SP.reg -= 2;
 	// get the hi and lo bytes
 	BYTE hi = (data >> 8);
 	BYTE lo = (data & 0xFF);
 	// write the data to the stack
-	Memory::Write(SP.reg, lo);
-	Memory::Write(SP.reg + 1, hi);
+	Memory::Write(--SP.reg, hi);
+	Memory::Write(--SP.reg, lo);
 }
 
 // pop word off stack
