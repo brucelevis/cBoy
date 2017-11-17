@@ -30,8 +30,9 @@ class Lcd
 		static void Init();
 		static void Reset();
 		static void SetLCDStatus();
-		static void IsLCDEnabled();
+		static bool IsLCDEnabled();
 		static void DrawScanline();
+		static void Update(int cycles);
 		static void Render(int cycles);
 
 	private:

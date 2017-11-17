@@ -782,8 +782,7 @@ int Cpu::JUMP_Immediate(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
-		PC += (SIGNED_BYTE)Memory::ReadByte(PC++);
-		return 0;
+		PC += (SIGNED_BYTE)Memory::ReadByte(PC);
 	}
 	
 	// increment PC
@@ -1027,7 +1026,7 @@ int Cpu::ExecuteOpcode()
 		case 0x85: ADD_8Bit(AF.hi, HL.lo, 4); break; // ADD A,L
 		case 0x86: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // ADD A,(HL)
 		case 0x87: ADD_8Bit(AF.hi, AF.hi, 4); break; // ADD A,A
-		case 0xC6: ADD_8Bit(AF.hi, Memory::ReadByte(PC++), 4); break; // ADD A,d8
+		case 0xC6: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 4); PC++; break; // ADD A,d8
 		// 8-bit add + carry
 		case 0x88: ADD_8Bit(AF.hi, BC.hi, 4, true); break; // ADC A,B
 		case 0x89: ADD_8Bit(AF.hi, BC.lo, 4, true); break; // ADC A,C
@@ -1037,7 +1036,7 @@ int Cpu::ExecuteOpcode()
 		case 0x8D: ADD_8Bit(AF.hi, HL.lo, 4, true); break; // ADC A,L
 		case 0x8E: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8, true); break; // ADC A,(HL)
 		case 0x8F: ADD_8Bit(AF.hi, AF.hi, 4, true); break; // ADC A,A
-		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC++), 8, true); break; // ADC A,d8
+		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // ADC A,d8
 		// 16-bit add
 		case 0x09: ADD_16Bit(HL.reg, BC.reg, 8); break; // ADD HL,BC
 		case 0x19: ADD_16Bit(HL.reg, DE.reg, 8); break; // ADD HL,DE
@@ -1050,7 +1049,7 @@ int Cpu::ExecuteOpcode()
 			RESET_FLAG_N();
 
 			// The value (r8)
-			SIGNED_BYTE nn = (SIGNED_BYTE)Memory::ReadByte(PC++);
+			SIGNED_BYTE nn = (SIGNED_BYTE)Memory::ReadByte(PC);
 
 			// determine if we half carried
 			if ((SP.reg & 0xF) + (nn & 0xF) > 0xF)
@@ -1074,6 +1073,7 @@ int Cpu::ExecuteOpcode()
 
 			// add nn to SP
 			SP.reg = (WORD)(SP.reg + nn);
+			PC++;
 			// increment cycles
 			Cycles += 16;
 		}
@@ -1087,7 +1087,7 @@ int Cpu::ExecuteOpcode()
 		case 0x95: SUB_8Bit(AF.hi, HL.lo, 4); break; // SUB L
 		case 0x96: SUB_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // SUB (HL)
 		case 0x97: SUB_8Bit(AF.hi, AF.hi, 4); break; // SUB A
-		case 0xD6: SUB_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // SUB d8
+		case 0xD6: SUB_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // SUB d8
 		// 8-bit sub + carry
 		case 0x98: SUB_8Bit(AF.hi, BC.hi, 4, true); break; // SBC A,B
 		case 0x99: SUB_8Bit(AF.hi, BC.lo, 4, true); break; // SBC A,C
@@ -1097,7 +1097,7 @@ int Cpu::ExecuteOpcode()
 		case 0x9D: SUB_8Bit(AF.hi, HL.lo, 4, true); break; // SBC A,L
 		case 0x9E: SUB_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8, true); break; // SBC A,(HL)
 		case 0x9F: SUB_8Bit(AF.hi, AF.hi, 4, true); break; // SBC A,A
-		case 0xDE: SUB_8Bit(AF.hi, Memory::ReadByte(PC++), 8, true); break; // SBC A,d8
+		case 0xDE: SUB_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // SBC A,d8
 		// 8-bit and
 		case 0xA0: AND_8Bit(AF.hi, BC.hi, 4); break; // AND B
 		case 0xA1: AND_8Bit(AF.hi, BC.lo, 4); break; // AND C
@@ -1107,7 +1107,7 @@ int Cpu::ExecuteOpcode()
 		case 0xA5: AND_8Bit(AF.hi, HL.lo, 4); break; // AND L
 		case 0xA6: AND_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // AND (HL)
 		case 0xA7: AND_8Bit(AF.hi, AF.hi, 4); break; // AND A
-		case 0xE6: AND_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // AND d8		
+		case 0xE6: AND_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // AND d8		
 		// 8-bit or
 		case 0xB0: OR_8Bit(AF.hi, BC.hi, 4); break; // OR B
 		case 0xB1: OR_8Bit(AF.hi, BC.lo, 4); break; // OR C
@@ -1117,7 +1117,7 @@ int Cpu::ExecuteOpcode()
 		case 0xB5: OR_8Bit(AF.hi, HL.lo, 4); break; // OR L
 		case 0xB6: OR_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // OR (HL)
 		case 0xB7: OR_8Bit(AF.hi, AF.hi, 4); break; // OR A
-		case 0xF6: OR_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // OR d8
+		case 0xF6: OR_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // OR d8
 		// 8-bit xor
 		case 0xA8: XOR_8Bit(AF.hi, BC.hi, 4); break; // XOR B
 		case 0xA9: XOR_8Bit(AF.hi, BC.lo, 4); break; // XOR C
@@ -1127,7 +1127,7 @@ int Cpu::ExecuteOpcode()
 		case 0xAD: XOR_8Bit(AF.hi, HL.lo, 4); break; // XOR L
 		case 0xAE: XOR_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // XOR (HL)
 		case 0xAF: XOR_8Bit(AF.hi, AF.hi, 4); break; // XOR A
-		case 0xEE: XOR_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // XOR d8
+		case 0xEE: XOR_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // XOR d8
 		// 8-bit dec
 		case 0x05: DEC_8Bit(BC.hi, 4); break; // DEC B
 		case 0x0D: DEC_8Bit(BC.lo, 4); break; // DEC C
@@ -1218,15 +1218,15 @@ int Cpu::ExecuteOpcode()
 		case 0xBD: COMPARE_8Bit(AF.hi, HL.lo, 4); break; // CP L
 		case 0xBE: COMPARE_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // CP (HL)
 		case 0xBF: COMPARE_8Bit(AF.hi, AF.hi, 4); break; // CP A
-		case 0xFE: COMPARE_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // CP,d8		
+		case 0xFE: COMPARE_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // CP,d8		
 		// 8-bit load
-		case 0x06: LOAD_8Bit(BC.hi, Memory::ReadByte(PC++), 8); break; // LD B,d8
-		case 0x0E: LOAD_8Bit(BC.lo, Memory::ReadByte(PC++), 8); break; // LD C,d8
-		case 0x16: LOAD_8Bit(DE.hi, Memory::ReadByte(PC++), 8); break; // LD D,d8
-		case 0x1E: LOAD_8Bit(DE.lo, Memory::ReadByte(PC++), 8); break; // LD E,d8
-		case 0x26: LOAD_8Bit(HL.hi, Memory::ReadByte(PC++), 8); break; // LD H,d8
-		case 0x2E: LOAD_8Bit(HL.lo, Memory::ReadByte(PC++), 8); break; // LD L,d8
-		case 0x3E: LOAD_8Bit(AF.hi, Memory::ReadByte(PC++), 8); break; // LD A,d8 
+		case 0x06: LOAD_8Bit(BC.hi, Memory::ReadByte(PC), 8); PC++; break; // LD B,d8
+		case 0x0E: LOAD_8Bit(BC.lo, Memory::ReadByte(PC), 8); PC++; break; // LD C,d8
+		case 0x16: LOAD_8Bit(DE.hi, Memory::ReadByte(PC), 8); PC++; break; // LD D,d8
+		case 0x1E: LOAD_8Bit(DE.lo, Memory::ReadByte(PC), 8); PC++; break; // LD E,d8
+		case 0x26: LOAD_8Bit(HL.hi, Memory::ReadByte(PC), 8); PC++; break; // LD H,d8
+		case 0x2E: LOAD_8Bit(HL.lo, Memory::ReadByte(PC), 8); PC++; break; // LD L,d8
+		case 0x3E: LOAD_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // LD A,d8 
 		case 0x0A: LOAD_8Bit(AF.hi, Memory::ReadByte(BC.reg), 8); break; // LD A,(BC)
 		case 0x1A: LOAD_8Bit(AF.hi, Memory::ReadByte(DE.reg), 8); break; // LD A,(DE)
 		case 0x2A: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg++; break; // LD A,(HL+)
@@ -1289,7 +1289,7 @@ int Cpu::ExecuteOpcode()
 		case 0x7F: LOAD_8Bit(AF.hi, AF.hi, 4); break; // LD A,A
 		case 0xFA: LOAD_8Bit(AF.hi, Memory::ReadByte(Memory::ReadWord(PC)), 16); PC += 2; break; // LD A,(a16)
 		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); break; // LD A,(C)
-		case 0xF0: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); PC++; break; // LDH A,(a8)
+		case 0xF0: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); Log::Critical("Loading data into a from address %04x", 0xFF00 + Memory::ReadByte(PC)); PC++; break; // LDH A,(a8)
 		// 16-bit load
 		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
 		case 0x11: LOAD_16Bit(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
@@ -1302,7 +1302,7 @@ int Cpu::ExecuteOpcode()
 			RESET_FLAG_N();
 
 			// SP + r8
-			WORD nn = (WORD)(SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC++));
+			WORD nn = (WORD)(SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC));
 
 			// determine if we half carried
 			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF) SET_FLAG_H(); else RESET_FLAG_H();
@@ -1311,6 +1311,7 @@ int Cpu::ExecuteOpcode()
 			
 			// load nn into HL
 			LOAD_16Bit(HL.reg, nn, 12);
+			PC++;
 		}
 		break;
 		case 0xF9: LOAD_16Bit(SP.reg, HL.reg, 8); break; // LD SP,HL
@@ -1331,7 +1332,7 @@ int Cpu::ExecuteOpcode()
 		case 0x12: WRITE_8Bit(DE.reg, AF.hi, 8); break; // LD (DE),A
 		case 0x22: WRITE_8Bit(HL.reg, AF.hi, 12); HL.reg++; break; // LD (HL+),A
 		case 0x32: WRITE_8Bit(HL.reg, AF.hi, 12); HL.reg--; break; // LD (HL-),A
-		case 0x36: WRITE_8Bit(HL.reg, Memory::ReadByte(PC++), 12); break; // LD (HL),d8
+		case 0x36: WRITE_8Bit(HL.reg, Memory::ReadByte(PC), 12); PC++; break; // LD (HL),d8
 		case 0x70: WRITE_8Bit(HL.reg, BC.hi, 8); break; // LD (HL),B
 		case 0x71: WRITE_8Bit(HL.reg, BC.lo, 8); break; // LD (HL),C
 		case 0x72: WRITE_8Bit(HL.reg, DE.hi, 8); break; // LD (HL),D
@@ -1341,7 +1342,7 @@ int Cpu::ExecuteOpcode()
 		case 0x77: WRITE_8Bit(HL.reg, AF.hi, 8); break; // LD (HL),A
 		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
-		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC++; break; // LDH (a8),A
+		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); Log::Critical("Writing to address %04x", 0xFF00 + Memory::ReadByte(PC)); PC++; break; // LDH (a8),A
 		// rotates
 		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
