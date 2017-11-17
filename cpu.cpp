@@ -195,7 +195,7 @@ void Cpu::DEC_8Bit(BYTE &val, int cycles)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried 
-	if ((val & 0xF) < (1 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
+	if ((val & 0xF) < (1 & 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
 
 	// set val to the result
 	val = result;
@@ -1016,7 +1016,7 @@ int Cpu::ExecuteOpcode()
 
 			Cycles += 4;
 		break; 
-		case 0xCB: ExecuteExtendedOpcode(); Log::Critical("Executing extended opcode"); Cycles += 4; break; // PREFIX CB
+		case 0xCB: ExecuteExtendedOpcode(); /*Log::Critical("Executing extended opcode");*/ Cycles += 4; break; // PREFIX CB
 		// 8-bit add
 		case 0x80: ADD_8Bit(AF.hi, BC.hi, 4); break; // ADD A,B
 		case 0x81: ADD_8Bit(AF.hi, BC.lo, 4); break; // ADD A,C
