@@ -783,6 +783,8 @@ int Cpu::JUMP_Immediate(bool condition, int cycles)
 	if (condition)
 	{
 		PC += (SIGNED_BYTE)Memory::ReadByte(PC);
+		// add the correct extra cycles as the action took place
+		Cycles += 4;
 	}
 	
 	// increment PC
@@ -803,6 +805,8 @@ int Cpu::JUMP(bool condition, int cycles)
 	if (condition)
 	{
 		PC = Memory::ReadWord(PC);
+		// add the correct extra cycles as the action took place
+		Cycles += 4;
 		return 0;
 	}
 
@@ -827,6 +831,8 @@ int Cpu::CALL(bool condition, int cycles)
 		PUSH(PC + 2);
 		// call the instruction at nn
 		PC = nn;
+		// add the correct extra cycles as the action took place
+		Cycles += 12;
 		return 0;
 	}
 
@@ -843,6 +849,8 @@ void Cpu::RETURN(bool condition, int cycles)
 	if (condition)
 	{
 		PC = POP();
+		// add the correct extra cycles as the action took place
+		Cycles += 12;
 	}
 
 	// add the cycles
@@ -1811,17 +1819,17 @@ void Cpu::Debugger()
 	bool FlagH = GET_FLAG_H();
 	bool FlagC = GET_FLAG_C();
 
-	// var viewer window
+	// register viewer window
 	ImGui::Begin("Register Viewer");
 	ImGui::SetWindowSize("Register Viewer", ImVec2(180, 210));
 	ImGui::SetWindowPos("Register Viewer", ImVec2(640 - 180, 5));
 	ImGui::Text("AF: %04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("LCDC: %02X", Memory::ReadByte(LCDC_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("BC: %04X", BC.reg); ImGui::SameLine(); ImGui::Indent(80.f);//ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("BC: %04X", BC.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("STAT: %02X", Memory::ReadByte(STAT_ADDRESS)); ImGui::Unindent(80.f);
 	ImGui::Text("DE: %04X", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("LY: %02X", Memory::ReadByte(LY_ADDRESS)); ImGui::Unindent(80.f);
-	ImGui::Text("HL: %04X", HL.reg); ImGui::SameLine(); ImGui::Indent(80.f);//ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGui::Text("HL: %04X", HL.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("IME: %d", Interrupt::MasterSwitch); ImGui::Unindent(80.f);
 	ImGui::Text("SP: %04X", SP.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGui::Text("IE: %02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::Unindent(80.f);
@@ -1831,6 +1839,20 @@ void Cpu::Debugger()
 	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();
 	ImGui::Checkbox("H", &FlagH);
 	ImGui::Checkbox("C", &FlagC);
+	ImGui::End();
+
+	// memory viewer window
+	ImGui::Begin("Mem View");
+	ImGui::SetWindowSize("Mem View", ImVec2(100, 210));
+	ImGui::SetWindowPos("Mem View", ImVec2((640 - 289), 5));
+	ImGui::Text("FFFE: %04X", Memory::ReadWord(0xFFFE));
+	ImGui::Text("FFFC: %04X", Memory::ReadWord(0xFFFC));
+	ImGui::Text("FFFA: %04X", Memory::ReadWord(0xFFFA));
+	ImGui::Text("FFF8: %04X", Memory::ReadWord(0xFFF8));
+	ImGui::Text("FFF6: %04X", Memory::ReadWord(0xFFF6));
+	ImGui::Text("FFF4: %04X", Memory::ReadWord(0xFFF4));
+	ImGui::Text("FFF2: %04X", Memory::ReadWord(0xFFF2));
+	ImGui::Text("FFF0: %04X", Memory::ReadWord(0xFFF0));
 	ImGui::End();
 
 	// memory viewer window
