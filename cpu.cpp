@@ -782,7 +782,8 @@ int Cpu::JUMP_Immediate(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
-		PC += (SIGNED_BYTE)Memory::ReadByte(PC);
+		PC += (SIGNED_BYTE)Memory::ReadByte(PC++);
+		return 0;
 	}
 	
 	// increment PC
@@ -802,8 +803,7 @@ int Cpu::JUMP(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
-		WORD nn = Memory::ReadWord(PC);
-		PC = nn;
+		PC = Memory::ReadWord(PC);
 		return 0;
 	}
 
@@ -857,7 +857,6 @@ void Cpu::RESTART(BYTE address, int cycles)
 	PUSH(PC);
 	// set the PC to the address
 	PC = address;
-
 	// add the cycles
 	Cycles += cycles;
 }
@@ -985,7 +984,6 @@ int Cpu::ExecuteOpcode()
 			Operation.Stop = true;
 			// TODO: check for button press
 			// TODO: halt display
-			PC++;
 			Cycles += 12;
 		break;
 		case 0x76: // HALT
@@ -997,7 +995,7 @@ int Cpu::ExecuteOpcode()
 			SET_FLAG_N();
 			SET_FLAG_H();
 			// compliment A
-			AF.hi ^= 1; 
+			AF.hi ^= 0xFF; 
 			Cycles += 4; 
 		break; 
 		case 0x37: // SCF
@@ -1018,7 +1016,7 @@ int Cpu::ExecuteOpcode()
 
 			Cycles += 4;
 		break; 
-		case 0xCB: ExecuteExtendedOpcode(); Cycles += 4; break; // PREFIX CB
+		case 0xCB: ExecuteExtendedOpcode(); Log::Critical("Executing extended opcode"); Cycles += 4; break; // PREFIX CB
 		// 8-bit add
 		case 0x80: ADD_8Bit(AF.hi, BC.hi, 4); break; // ADD A,B
 		case 0x81: ADD_8Bit(AF.hi, BC.lo, 4); break; // ADD A,C
@@ -1162,7 +1160,6 @@ int Cpu::ExecuteOpcode()
 			// write the result back to memory
 			Memory::Write(HL.reg, result);
 			Cycles += 12;
-			//Log::UnimplementedOpcode(Opcode);
 		}
 		break;
 		// 16-bit dec
@@ -1290,7 +1287,7 @@ int Cpu::ExecuteOpcode()
 		case 0x7E: LOAD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // LD A,(HL)
 		case 0x7F: LOAD_8Bit(AF.hi, AF.hi, 4); break; // LD A,A
 		case 0xFA: LOAD_8Bit(AF.hi, Memory::ReadByte(Memory::ReadWord(PC)), 16); PC += 2; break; // LD A,(a16)
-		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); PC++; break; // LD A,(C)
+		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); break; // LD A,(C)
 		case 0xF0: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC++)), 12); break; // LDH A,(a8)
 		// 16-bit load
 		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
@@ -1341,7 +1338,7 @@ int Cpu::ExecuteOpcode()
 		case 0x74: WRITE_8Bit(HL.reg, HL.hi, 8); break; // LD (HL),H
 		case 0x75: WRITE_8Bit(HL.reg, HL.lo, 8); break; // LD (HL),L
 		case 0x77: WRITE_8Bit(HL.reg, AF.hi, 8); break; // LD (HL),A
-		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); PC++; break; // LD (C),A
+		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
 		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC++), AF.hi, 12); break; // LDH (a8),A
 		// rotates
@@ -1393,7 +1390,7 @@ int Cpu::ExecuteOpcode()
 		case 0xC1: BC.reg = POP(); Cycles += 12; break; // POP BC
 		case 0xD1: DE.reg = POP(); Cycles += 12; break; // POP DE
 		case 0xE1: HL.reg = POP(); Cycles += 12; break; // POP HL
-		case 0xF1: AF.reg = (POP() & (~0xF)); Cycles += 12; break; // POP AF 
+		case 0xF1: AF.reg = (POP() & ~0xF); Cycles += 12; break; // POP AF 
 		// special instructions
 		case 0x27: // DAA
 		{
@@ -1451,7 +1448,7 @@ int Cpu::ExecuteOpcode()
 			}*/
 
 			Cycles += 4;
-			//printf("WARNING: DAA instruction not implemented\n");
+			printf("WARNING: DAA instruction not implemented\n");
 		}
 		break;
 
@@ -1469,7 +1466,7 @@ int Cpu::ExecuteOpcode()
 		}
 		break;
 
-		default: printf("op not implemented 0x%02X", Opcode); break;//Log::UnimplementedOpcode(Opcode); break;
+		default: printf("op not implemented 0x%02X", Opcode); break;
 	}
 
 	// enable interrupts if requested
