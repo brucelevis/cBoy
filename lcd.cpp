@@ -94,7 +94,7 @@ void Lcd::Update(int cycles)
 			else if (currentScanline > 153)
 			{
 				// move the scanline back to the top of the screen
-				Memory::Get()[LY_ADDRESS] = 0;
+				Memory::Write(LY_ADDRESS, 0); // use this as it'll reset LY anyway
 			}
 			// draw scanline
 			else if (currentScanline < 144)
