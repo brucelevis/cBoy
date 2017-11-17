@@ -8,6 +8,7 @@
 #include <cstddef>
 #include "imgui/imgui.h"
 #include "imgui/imgui_memory_editor.h"
+#include "imgui/imgui_custom_extensions.h"
 #include "include/bit.h"
 #include "include/cpu.h"
 #include "include/interrupt.h"
@@ -1823,18 +1824,18 @@ void Cpu::Debugger()
 	ImGui::Begin("Register Viewer");
 	ImGui::SetWindowSize("Register Viewer", ImVec2(180, 210));
 	ImGui::SetWindowPos("Register Viewer", ImVec2(640 - 180, 5));
-	ImGui::Text("AF: %04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("LCDC: %02X", Memory::ReadByte(LCDC_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGui::Text("BC: %04X", BC.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("STAT: %02X", Memory::ReadByte(STAT_ADDRESS)); ImGui::Unindent(80.f);
-	ImGui::Text("DE: %04X", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("LY: %02X", Memory::ReadByte(LY_ADDRESS)); ImGui::Unindent(80.f);
-	ImGui::Text("HL: %04X", HL.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("IME: %d", Interrupt::MasterSwitch); ImGui::Unindent(80.f);
-	ImGui::Text("SP: %04X", SP.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("IE: %02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::Unindent(80.f);
-	ImGui::Text("PC: %04X", PC); ImGui::SameLine(); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGui::Text("IR: %02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}AF:"); ImGui::SameLine(); ImGui::Text("%04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}LCDC:"); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(LCDC_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}BC:"); ImGui::SameLine(); ImGui::Text("%04X", BC.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}STAT:"); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(STAT_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}DE:"); ImGui::SameLine(); ImGui::Text("%04X", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}LY:"); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(LY_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}HL:"); ImGui::SameLine(); ImGui::Text("%04X", HL.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}IME:"); ImGui::SameLine(); ImGui::Text("%d", Interrupt::MasterSwitch); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}SP:"); ImGui::SameLine(); ImGui::Text("%04X", SP.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}IE:"); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}PC:"); ImGui::SameLine(); ImGui::Text("%04X", PC); ImGui::SameLine(); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}IR:"); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::Unindent(80.f);
 	ImGui::Checkbox("Z", &FlagZ); ImGui::SameLine();
 	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();
 	ImGui::Checkbox("H", &FlagH);
@@ -1845,14 +1846,21 @@ void Cpu::Debugger()
 	ImGui::Begin("Mem View");
 	ImGui::SetWindowSize("Mem View", ImVec2(100, 210));
 	ImGui::SetWindowPos("Mem View", ImVec2((640 - 289), 5));
-	ImGui::Text("FFFE: %04X", Memory::ReadWord(0xFFFE));
-	ImGui::Text("FFFC: %04X", Memory::ReadWord(0xFFFC));
-	ImGui::Text("FFFA: %04X", Memory::ReadWord(0xFFFA));
-	ImGui::Text("FFF8: %04X", Memory::ReadWord(0xFFF8));
-	ImGui::Text("FFF6: %04X", Memory::ReadWord(0xFFF6));
-	ImGui::Text("FFF4: %04X", Memory::ReadWord(0xFFF4));
-	ImGui::Text("FFF2: %04X", Memory::ReadWord(0xFFF2));
-	ImGui::Text("FFF0: %04X", Memory::ReadWord(0xFFF0));
+
+	// high ram
+	for (WORD i = 0xFFFE; i >= 0xFF00; --i)
+	{
+		// high ram
+		if (i == 0xFFFE) ImGuiExtensions::TextWithColors("{77FF77}High Ram");
+		else if (i == 0xFF7E) ImGuiExtensions::TextWithColors("{77FF77}I/O");
+		ImGuiExtensions::TextWithColors("{FF0000}%04X:", i); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(i));
+	}
+	
+	// i/o
+	//for (WORD i = 0xFF00; i <= 0xFF7E; i++)
+	//{
+		//ImGui::Text("%04X: %02X", i, Memory::ReadByte(i));
+	//}
 	ImGui::End();
 
 	// memory viewer window

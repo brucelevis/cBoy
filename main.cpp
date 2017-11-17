@@ -10,6 +10,7 @@
 #include <SDL2/SDL_opengl.h>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl.h"
+#include "imgui/imgui_custom_extensions.h"
 #include "include/bios.h"
 #include "include/cpu.h"
 #include "include/interrupt.h"
@@ -27,7 +28,7 @@
 // emulator name
 #define EMULATOR_NAME "cBoy: GameBoy Emulator"
 // emulator settings
-#define MAX_CYCLES 69905
+#define MAX_CYCLES 70221 
 // are we in release mode?
 const bool RELEASE_MODE = false; 
 // should we step through instructions?
@@ -42,6 +43,7 @@ SDL_GLContext glContext = NULL;
 int interval = (INTERVAL / TARGET_FPS);
 unsigned int initialTime = SDL_GetTicks();
 int instructionsRan = 0;
+bool quitBreakpoint = false;
 
 // init SDL
 static bool InitSDL()
@@ -144,6 +146,8 @@ static void EmulationLoop()
 
 		// update timers
 		Timer::Update(cycles);
+		// update graphics
+		Lcd::Render(cycles);
 		// service interupts
 		Interrupt::Service();
 	}
@@ -158,6 +162,11 @@ static void EmulationLoop()
 			// execute if within the max cycles for this update
 			while (cyclesThisUpdate < MAX_CYCLES)
 			{
+				if (!quitBreakpoint && Cpu::GetPC() == 0xC243) //&& (Cpu::DE.reg > 0xC73A && Cpu::DE.reg <= 0xC73B))
+				{
+					// start at C220 in BGB
+					break; //0xC243  < last checked (0xC000 is a good starting place also)
+				}
 				// execute the next opcode
 				int cycles = Cpu::ExecuteNextOpcode(); 
 				cyclesThisUpdate += cycles;
@@ -176,7 +185,7 @@ static void EmulationLoop()
 
 					if (val != 0)
 					{
-						Log::Critical("Tile: %02x", val);
+						//Log::Critical("Tile: %02x", val);
 					}
 				}
 
@@ -257,8 +266,8 @@ static void StartMainLoop()
 			
 			// var viewer window
 			ImGui::Begin("Controls");
-			ImGui::SetWindowSize("Controls", ImVec2(180, 145));
-			ImGui::SetWindowPos("Controls", ImVec2((640 - 380), 5));
+			ImGui::SetWindowSize("Controls", ImVec2(120, 210));
+			ImGui::SetWindowPos("Controls", ImVec2((640 - 420), 5));
 			// step button
 			ImGui::Button("Step Forward");
 
@@ -283,11 +292,12 @@ static void StartMainLoop()
 			// see if the stop button is clicked
 			if (ImGui::IsItemClicked())
 			{
+				quitBreakpoint = true;
 				stepThrough = true;
-				EmulationLoop();
 			}
 
-			ImGui::Text("Ins ran: %d", instructionsRan);
+			// display the number of instructions ran
+			ImGuiExtensions::TextWithColors("{FF0000}Ins Ran:"); ImGui::SameLine(); ImGui::Text("%d", instructionsRan);
 
 			// end window
 			ImGui::End();
@@ -315,6 +325,7 @@ int main(int argc, char* args[])
 		// load rom
 		//Rom::Load("roms/Tetris.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
+		Rom::Load("roms/tests/big_scroller.gb");
 
 		// individual cpu instruction tests
 		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails      
@@ -323,7 +334,7 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // doesn't finish
 		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb");
 		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb");
-		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // test this against the other emu
+		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // test this against the other emu
 		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb");
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb");
 		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb");
