@@ -914,6 +914,7 @@ int Cpu::Init()
 	Operation.PendingInterruptEnabled = false;
 	Operation.Stop = false;
 	// init memory
+	//Memory::Write(0xFF00, 0xFF);
 	Memory::Write(0xFF05, 0x00);
 	Memory::Write(0xFF06, 0x00);
 	Memory::Write(0xFF07, 0x00);
@@ -1288,7 +1289,7 @@ int Cpu::ExecuteOpcode()
 		case 0x7F: LOAD_8Bit(AF.hi, AF.hi, 4); break; // LD A,A
 		case 0xFA: LOAD_8Bit(AF.hi, Memory::ReadByte(Memory::ReadWord(PC)), 16); PC += 2; break; // LD A,(a16)
 		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); break; // LD A,(C)
-		case 0xF0: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC++)), 12); break; // LDH A,(a8)
+		case 0xF0: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); PC++; break; // LDH A,(a8)
 		// 16-bit load
 		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
 		case 0x11: LOAD_16Bit(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
@@ -1340,7 +1341,7 @@ int Cpu::ExecuteOpcode()
 		case 0x77: WRITE_8Bit(HL.reg, AF.hi, 8); break; // LD (HL),A
 		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
-		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC++), AF.hi, 12); break; // LDH (a8),A
+		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC++; break; // LDH (a8),A
 		// rotates
 		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
