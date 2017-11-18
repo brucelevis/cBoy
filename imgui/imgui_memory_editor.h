@@ -150,7 +150,7 @@ struct MemoryEditor
         ImGui::SetWindowPos(title, ImVec2((640 - 234), 480 - 260));
 
         Open = true;
-        if (ImGui::Begin(title, &Open, ImGuiWindowFlags_NoScrollbar))
+        if (ImGui::Begin(title, &Open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
         {
             if (ImGui::IsRootWindowOrAnyChildHovered() && ImGui::IsMouseClicked(1))
                 ImGui::OpenPopup("context");

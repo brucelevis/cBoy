@@ -25,6 +25,8 @@ class Cpu
 		static void SetPC(WORD val);
 		static void PUSH(WORD data);
 		static void Debugger();
+		static void SaveState();
+		static void LoadState();
 
 	private:
 		static void ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry = false);

@@ -53,6 +53,8 @@ Cpu::Operations Cpu::Operation = {};
 int Cpu::Cycles = 0;
 // debug memory viewer
 static MemoryEditor memoryViewer;
+// used for imgui windows
+static bool showImGuiWindow = true;
 
 // add 8-bit
 void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
@@ -1814,6 +1816,54 @@ int Cpu::ExecuteNextOpcode()
 	return cycles;
 }
 
+// save state
+void Cpu::SaveState()
+{
+	// save the below to a file
+	/*
+	// save registers
+	AF.reg;
+	BC.reg;
+	DE.reg;
+	HL.reg;
+	// save program counter
+	PC;
+	// save stack pointer
+	SP.reg;
+	// save cycles
+	Cycles = 0;
+	// save operations
+	Operation.PendingInterruptDisabled;
+	Operation.PendingInterruptEnabled;
+	Operation.Stop;
+	// save memory
+	*/
+}
+
+// load state
+void Cpu::LoadState()
+{
+	/*
+	// load the below from a file
+	// load registers
+	AF.reg = ;
+	BC.reg = ;
+	DE.reg = ;
+	HL.reg = ;
+	// load program counter
+	PC = ;
+	// load stack pointer
+	SP.reg = ;
+	// load cycles
+	Cycles = ;
+	// load operations
+	Operation.PendingInterruptDisabled = ;
+	Operation.PendingInterruptEnabled = ;
+	Operation.Stop = ;
+	// load memory
+	*/
+}
+
 // debugger
 void Cpu::Debugger()
 {
@@ -1823,7 +1873,7 @@ void Cpu::Debugger()
 	bool FlagC = GET_FLAG_C();
 
 	// register viewer window
-	ImGui::Begin("Register Viewer");
+	ImGui::Begin("Register Viewer", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("Register Viewer", ImVec2(180, 210));
 	ImGui::SetWindowPos("Register Viewer", ImVec2(640 - 180, 5));
 	ImGuiExtensions::TextWithColors("{FF0000}AF: {FFFFFF}%04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
@@ -1845,7 +1895,7 @@ void Cpu::Debugger()
 	ImGui::End();
 
 	// memory viewer window
-	ImGui::Begin("Mem View");
+	ImGui::Begin("Mem View", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("Mem View", ImVec2(100, 210));
 	ImGui::SetWindowPos("Mem View", ImVec2((640 - 289), 5));
 

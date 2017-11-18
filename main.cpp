@@ -6,6 +6,8 @@
 
 // includes
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "imgui/imgui.h"
@@ -34,25 +36,28 @@
 // are we in release mode?
 const bool RELEASE_MODE = false; 
 // should we step through instructions?
-int stepThrough = true;
+static int stepThrough = true;
 // the breakpoint
-unsigned short breakpoint = 0x0;
-bool quitBreakpoint = true;
-char breakpointBuffer[256];
+static unsigned short breakpoint = 0;
+static bool stopAtBreakpoint = false;
+static char breakpointBuffer[256];
+static bool debuggerActive = !RELEASE_MODE;
 // number of instructions ran
-int instructionsRan = 0;
+static int instructionsRan = 0;
 // the current cycles
-int currentCycles = 0;
+static int currentCycles = 0;
 // has the user requested to quit the emulator?
-bool shouldQuit = false;
+static bool shouldQuit = false;
 // the SDL window
-SDL_Window* window = NULL;
+static SDL_Window* window = NULL;
 // the SDL GL context
-SDL_GLContext glContext = NULL;
+static SDL_GLContext glContext = NULL;
 // set the interval
-int interval = (INTERVAL / TARGET_FPS);
+static int interval = (INTERVAL / TARGET_FPS);
 // the initial time
-unsigned int initialTime = SDL_GetTicks();
+static unsigned int initialTime = SDL_GetTicks();
+// used for imgui windows
+static bool showImGuiWindow = true;
 
 // init SDL
 static bool InitSDL()
@@ -169,10 +174,13 @@ static void EmulationLoop()
 			// execute if within the max cycles for this update
 			while (cyclesThisUpdate < MAX_CYCLES)
 			{
-				if (!quitBreakpoint && Cpu::GetPC() == breakpoint) //&& (Cpu::DE.reg > 0xC73A && Cpu::DE.reg <= 0xC73B))
+				// determine if we should stop execution at a specific breakpoint
+				if (stopAtBreakpoint && breakpoint != 0 && Cpu::GetPC() == breakpoint)
 				{
-					// start at C220 in BGB
-					break; //0xC243  < last checked (0xC000 is a good starting place also)
+					// enable step through mode
+					stepThrough = true;
+					// break out of the loop
+					break;
 				}
 				// execute the next opcode
 				int cycles = Cpu::ExecuteNextOpcode(); 
@@ -199,7 +207,7 @@ static void EmulationLoop()
 static void ShowRomInfoWindow()
 {
 	// create the rom info window
-	ImGui::Begin("Rom Info");
+	ImGui::Begin("Rom Info", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("Rom Info", ImVec2(240, 270));
 	ImGui::SetWindowPos("Rom Info", ImVec2((640 - 480), 480 - 260));
 
@@ -234,11 +242,11 @@ static void ShowRomInfoWindow()
 static void ShowFileWindow()
 {
 	// create the rom info window
-	ImGui::Begin("File");
+	ImGui::Begin("File", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("File", ImVec2(156, 270));
 	ImGui::SetWindowPos("File", ImVec2(0, 480 - 260));
 	// file open button
-	ImGui::Button("Open Rom", ImVec2(110, 0));
+	ImGui::Button("Open Rom", ImVec2(140, 0));
 
 	// if the "open" button is clicked
 	if (ImGui::IsItemClicked())
@@ -247,21 +255,31 @@ static void ShowFileWindow()
 	}
 
 	// save state button
-	ImGui::Button("Save State", ImVec2(110, 0));
+	ImGui::Button("Save State", ImVec2(140, 0));
 
 	// if the "save state" button is clicked
 	if (ImGui::IsItemClicked())
 	{
-		
+		Cpu::SaveState();
 	}
 
 	// load state button
-	ImGui::Button("Load State", ImVec2(110, 0));
+	ImGui::Button("Load State", ImVec2(140, 0));
 
 	// if the "load state" button is clicked
 	if (ImGui::IsItemClicked())
 	{
-		
+		Cpu::LoadState();
+	}
+
+	// hide debugger button
+	ImGui::Button("Hide Debugger", ImVec2(140, 0));
+
+	// if the "hide" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		debuggerActive = false;
+		// should scale the game to full screen here too...
 	}
 
 	ImGui::End();
@@ -271,11 +289,11 @@ static void ShowFileWindow()
 static void ShowDebuggerControlsWindow()
 {
 	// debuger controls window
-	ImGui::Begin("Controls");
-	ImGui::SetWindowSize("Controls", ImVec2(120, 210));
-	ImGui::SetWindowPos("Controls", ImVec2((640 - 420), 5));
+	ImGui::Begin("Controls", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	ImGui::SetWindowSize("Controls", ImVec2(156, 210));
+	ImGui::SetWindowPos("Controls", ImVec2((640 - 456), 5));
 	// step button
-	ImGui::Button("Step Forward", ImVec2(110, 0));
+	ImGui::Button("Step Forward", ImVec2(140, 0));
 
 	// if the "step" button is clicked
 	if (ImGui::IsItemClicked())
@@ -284,26 +302,29 @@ static void ShowDebuggerControlsWindow()
 	}
 
 	// run button
-	ImGui::Button("Run (no bk)", ImVec2(110, 0));
+	ImGui::Button("Run (no break)", ImVec2(140, 0));
 
 	// if the "run" button is clicked
 	if (ImGui::IsItemClicked())
 	{
+		// disable step through mode
 		stepThrough = false;
 	}
 
 	// run button
-	ImGui::Button("Run To", ImVec2(110, 0));
+	ImGui::Button("Run To Break PT", ImVec2(140, 0));
 
 	// if the "run to" button is clicked
 	if (ImGui::IsItemClicked())
 	{
+		// open the breakpoint popup
 		ImGui::OpenPopup("Set Breakpoint");
 	}
 
 	// the breakpoint popup
 	if (ImGui::BeginPopupModal("Set Breakpoint"))
 	{
+		// set the popup width
 		ImGui::PushItemWidth(180);
 		ImGui::Text("Run To PC:");
 		ImGui::InputText("", breakpointBuffer, 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
@@ -313,8 +334,12 @@ static void ShowDebuggerControlsWindow()
 		if (ImGui::IsItemClicked())
 		{
 			//printf("entered breakpoint: %s\n", buf);
-			//printf("breakpoint as Ushort: %04X\n", breakpoint);
+			breakpoint = (unsigned short)strtol(breakpointBuffer, NULL, 16);
+			printf("breakpoint as Ushort: %04X\n", breakpoint);
+			// disable step through mode
 			stepThrough = false;
+			// we want to stop at the breakpoint
+			stopAtBreakpoint = true;
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -322,22 +347,26 @@ static void ShowDebuggerControlsWindow()
 	}
 
 	// stop button
-	ImGui::Button("Stop", ImVec2(110, 0));
+	ImGui::Button("Stop", ImVec2(140, 0));
 
 	// see if the "stop" button is clicked
 	if (ImGui::IsItemClicked())
 	{
-		quitBreakpoint = true;
+		// we no longer want to stop at the breakpoint
+		stopAtBreakpoint = false;
+		// enable step through mode
 		stepThrough = true;
 	}
 
 	// reset button
-	ImGui::Button("Reset", ImVec2(110, 0));
+	ImGui::Button("Reset", ImVec2(140, 0));
 
 	// see if the "reset" button is clicked
 	if (ImGui::IsItemClicked())
 	{
-		quitBreakpoint = true;
+		// we no longer want to stop at the breakpoint
+		stopAtBreakpoint = false;
+		// enable step through mode
 		stepThrough = true;
 		// init the cpu again
 		Cpu::Init();
@@ -403,12 +432,12 @@ static void StartMainLoop()
 			}
 		}
 
-		// don't show the imgui stuff in release mode
-		if (!RELEASE_MODE)
-		{
-			// clear the screen
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// clear the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// don't show the imgui stuff in release mode
+		if (debuggerActive)
+		{
 			// Use ImGui functions between here and Render()
 			ImGui_ImplSdlGL2_NewFrame(window);
 
@@ -418,7 +447,6 @@ static void StartMainLoop()
 			ShowDebuggerControlsWindow();
 			// show the file window
 			ShowFileWindow();
-
 			// show the debugger
 			Cpu::Debugger();
 
