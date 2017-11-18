@@ -1826,18 +1826,18 @@ void Cpu::Debugger()
 	ImGui::Begin("Register Viewer");
 	ImGui::SetWindowSize("Register Viewer", ImVec2(180, 210));
 	ImGui::SetWindowPos("Register Viewer", ImVec2(640 - 180, 5));
-	ImGuiExtensions::TextWithColors("{FF0000}AF:"); ImGui::SameLine(); ImGui::Text("%04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}LCDC:"); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(LCDC_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}BC:"); ImGui::SameLine(); ImGui::Text("%04X", BC.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}STAT:"); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(STAT_ADDRESS)); ImGui::Unindent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}DE:"); ImGui::SameLine(); ImGui::Text("%04X", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}LY:  "); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(LY_ADDRESS)); ImGui::Unindent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}HL:"); ImGui::SameLine(); ImGui::Text("%04X", HL.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}IME: "); ImGui::SameLine(); ImGui::Text("%d", Interrupt::MasterSwitch); ImGui::Unindent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}SP:"); ImGui::SameLine(); ImGui::Text("%04X", SP.reg); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}IE:  "); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::Unindent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}PC:"); ImGui::SameLine(); ImGui::Text("%04X", PC); ImGui::SameLine(); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}IR:  "); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}AF: {FFFFFF}%04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}LCDC: {FFFFFF}%02X", Memory::ReadByte(LCDC_ADDRESS)); ImGui::SameLine(); ImGui::NewLine(); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}BC: {FFFFFF}%04X", BC.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}STAT: {FFFFFF}%02X", Memory::ReadByte(STAT_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}DE: {FFFFFF}%04X", DE.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}LY:   {FFFFFF}%02X", Memory::ReadByte(LY_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}HL: {FFFFFF}%04X", HL.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}IME:  {FFFFFF}%d", Interrupt::MasterSwitch); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}SP: {FFFFFF}%04X", SP.reg); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}IE:   {FFFFFF}%02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}PC: {FFFFFF}%04X", PC); ImGui::SameLine(); ImGui::SameLine(); ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}IR:   {FFFFFF}%02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::Unindent(80.f);
 	ImGui::Checkbox("Z", &FlagZ); ImGui::SameLine();
 	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();
 	ImGui::Checkbox("H", &FlagH);
@@ -1866,7 +1866,7 @@ void Cpu::Debugger()
 		}
 		
 		// print the value at the address
-		ImGuiExtensions::TextWithColors("{FF0000}%04X:", i); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(i));
+		ImGuiExtensions::TextWithColors("{FF0000}%04X: {FFFFFF}%02X", i, Memory::ReadByte(i));
 	}
 	
 	// print the category
@@ -1878,7 +1878,7 @@ void Cpu::Debugger()
 	for (WORD i = 0x9FFE; i >= 0x8000; --i)
 	{
 		// print the value at the address
-		ImGuiExtensions::TextWithColors("{FF0000}%04X:", i); ImGui::SameLine(); ImGui::Text("%02X", Memory::ReadByte(i));
+		ImGuiExtensions::TextWithColors("{FF0000}%04X: {FFFFFF}%02X", i, Memory::ReadByte(i));
 	}
 	ImGui::End();
 

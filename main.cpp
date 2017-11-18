@@ -39,6 +39,10 @@ int stepThrough = true;
 unsigned short breakpoint = 0x0;
 bool quitBreakpoint = true;
 char breakpointBuffer[256];
+// number of instructions ran
+int instructionsRan = 0;
+// the current cycles
+int currentCycles = 0;
 // has the user requested to quit the emulator?
 bool shouldQuit = false;
 // the SDL window
@@ -47,8 +51,8 @@ SDL_Window* window = NULL;
 SDL_GLContext glContext = NULL;
 // set the interval
 int interval = (INTERVAL / TARGET_FPS);
+// the initial time
 unsigned int initialTime = SDL_GetTicks();
-int instructionsRan = 0;
 
 // init SDL
 static bool InitSDL()
@@ -90,7 +94,7 @@ static bool InitSDL()
 				glLoadIdentity();
 				glOrtho(0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, -1.0, 1.0);
 				glClearColor(0, 0, 0, 1.0);
-				glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				glShadeModel(GL_FLAT);
 				glEnable(GL_TEXTURE_2D);
 				glDisable(GL_DEPTH_TEST);
@@ -144,13 +148,13 @@ static void EmulationLoop()
 		// execute the next opcode
 		int cycles = Cpu::ExecuteNextOpcode(); 
 		cyclesThisUpdate += cycles;
+		// store the current cycles
+		currentCycles = cyclesThisUpdate;
 		// increment the instructions ran
 		instructionsRan++;
 
 		// update timers
 		Timer::Update(cycles);
-		// update graphics
-		Lcd::Render(cycles);
 		// service interupts
 		Interrupt::Service();
 	}
@@ -173,6 +177,8 @@ static void EmulationLoop()
 				// execute the next opcode
 				int cycles = Cpu::ExecuteNextOpcode(); 
 				cyclesThisUpdate += cycles;
+				// store the current cycles
+				currentCycles = cyclesThisUpdate;
 				// increment the instructions ran
 				instructionsRan++;
 
@@ -213,17 +219,51 @@ static void ShowRomInfoWindow()
 	ImGui::NewLine();
 
 	// rom type
-	ImGuiExtensions::TextWithColors("{FF0000}Type:"); ImGui::SameLine();
-	ImGui::Text("%02x", Memory::ReadByte(0x0147));
+	ImGuiExtensions::TextWithColors("{FF0000}Type: {FFFFFF}%02x", Memory::ReadByte(0x0147));
 	// rom rom-size
-	ImGuiExtensions::TextWithColors("{FF0000}Rom-Size:"); ImGui::SameLine();
-	ImGui::Text("%02x", Memory::ReadByte(0x0148));
+	ImGuiExtensions::TextWithColors("{FF0000}Rom-Size: {FFFFFF}%02x", Memory::ReadByte(0x0148));
 	// rom ram size
-	ImGuiExtensions::TextWithColors("{FF0000}Ram-Size:"); ImGui::SameLine();
-	ImGui::Text("%02x", Memory::ReadByte(0x0149));
+	ImGuiExtensions::TextWithColors("{FF0000}Ram-Size: {FFFFFF}%02x", Memory::ReadByte(0x0149));
 	// rom file name + path
-	ImGuiExtensions::TextWithColors("{FF0000}Filename:"); ImGui::SameLine();
+	ImGuiExtensions::TextWithColors("{FF0000}Filename:");
 	ImGui::TextWrapped("%s", Rom::currentRomFileName);
+	ImGui::End();
+}
+
+// show the file window
+static void ShowFileWindow()
+{
+	// create the rom info window
+	ImGui::Begin("File");
+	ImGui::SetWindowSize("File", ImVec2(156, 270));
+	ImGui::SetWindowPos("File", ImVec2(0, 480 - 260));
+	// file open button
+	ImGui::Button("Open Rom", ImVec2(110, 0));
+
+	// if the "open" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		
+	}
+
+	// save state button
+	ImGui::Button("Save State", ImVec2(110, 0));
+
+	// if the "save state" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		
+	}
+
+	// load state button
+	ImGui::Button("Load State", ImVec2(110, 0));
+
+	// if the "load state" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		
+	}
+
 	ImGui::End();
 }
 
@@ -244,7 +284,7 @@ static void ShowDebuggerControlsWindow()
 	}
 
 	// run button
-	ImGui::Button("Run", ImVec2(110, 0));
+	ImGui::Button("Run (no bk)", ImVec2(110, 0));
 
 	// if the "run" button is clicked
 	if (ImGui::IsItemClicked())
@@ -262,11 +302,11 @@ static void ShowDebuggerControlsWindow()
 	}
 
 	// the breakpoint popup
-	if (ImGui::BeginPopup("Set Breakpoint"))
+	if (ImGui::BeginPopupModal("Set Breakpoint"))
 	{
 		ImGui::PushItemWidth(180);
 		ImGui::Text("Run To PC:");
-		//ImGui::InputText("", buf, 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+		ImGui::InputText("", breakpointBuffer, 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 		ImGui::Button("Ok");
 
 		// if the "ok" button is clicked
@@ -332,6 +372,7 @@ static void StartMainLoop()
 			{
 				case SDL_QUIT: // user quit
 					shouldQuit = true;
+
 				break;
 
             	// key down event
@@ -362,28 +403,38 @@ static void StartMainLoop()
 			}
 		}
 
-		// execute the emulation loop
-		if (!stepThrough)
-		{
-			EmulationLoop();
-		}
-
 		// don't show the imgui stuff in release mode
 		if (!RELEASE_MODE)
 		{
+			// clear the screen
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 			// Use ImGui functions between here and Render()
 			ImGui_ImplSdlGL2_NewFrame(window);
 
 			// show the rom info window
 			ShowRomInfoWindow();
-			// show the debugger controls
+			// show the debugger controls window
 			ShowDebuggerControlsWindow();
+			// show the file window
+			ShowFileWindow();
 
 			// show the debugger
 			Cpu::Debugger();
 
 			// ImGui functions end here
 			ImGui::Render();
+		}
+
+		// execute the emulation loop
+		if (!stepThrough)
+		{
+			EmulationLoop();
+		}
+		else
+		{
+			// update graphics
+			Lcd::Render(currentCycles);
 		}
 
 		// flip buffers
