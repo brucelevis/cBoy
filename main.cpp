@@ -320,24 +320,77 @@ static void ShowDebuggerControlsWindow()
 	}
 
 	// the breakpoint popup
-	if (ImGui::BeginPopupModal("Set Breakpoint"))
+	if (ImGui::BeginPopupModal("Set Breakpoint", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		// set the popup width
 		ImGui::PushItemWidth(180);
+		// run to pc text
 		ImGui::Text("Run To PC:");
-		ImGui::InputText("", breakpointBuffer, 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-		ImGui::Button("Ok");
+		// text input area
+		ImGui::InputText("", breakpointBuffer, 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_AutoSelectAll);
+		
+		// focus the keyboard to the input when the field is highlighted
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetKeyboardFocusHere();
+		}
+
+		// ok button
+		ImGui::Button("Ok", ImVec2(80, 0)); ImGui::SameLine();
 
 		// if the "ok" button is clicked
 		if (ImGui::IsItemClicked())
 		{
-			//printf("entered breakpoint: %s\n", buf);
+			// convert the breakpoint buffer to a short
 			breakpoint = (unsigned short)strtol(breakpointBuffer, NULL, 16);
-			printf("breakpoint as Ushort: %04X\n", breakpoint);
-			// disable step through mode
-			stepThrough = false;
-			// we want to stop at the breakpoint
-			stopAtBreakpoint = true;
+			// only enable the breakpoint if text has been entered
+			if (strlen(breakpointBuffer) > 0)
+			{
+				// disable step through mode
+				stepThrough = false;
+				// we want to stop at the breakpoint
+				stopAtBreakpoint = true;
+				// close the popup
+				ImGui::CloseCurrentPopup();
+			}
+			else
+			{
+				// open the breakpoint error popup
+				ImGui::OpenPopup("Breakpoint Error");
+			}
+		}
+
+		// breakpoint error popup
+		if (ImGui::BeginPopupModal("Breakpoint Error", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+		{
+			// set the window size
+			ImGui::SetWindowSize("Breakpoint Error", ImVec2(230, 210));
+
+			// invalid breakpoint text
+			ImGuiExtensions::TextWithColors("{FF0000}No Breakpoint Entered!");
+			ImGui::TextWrapped("You must set a breakpoint before you can start execution.\n\nIf you don't want to use a breakpoint, just hit cancel instead.");
+			ImGui::NewLine();
+
+			// ok button
+			ImGui::Button("Ok", ImVec2(200, 0));
+
+			// if the "ok" button is clicked
+			if (ImGui::IsItemClicked())
+			{
+				// close the popup
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		// cancel button
+		ImGui::Button("Cancel", ImVec2(80, 0));
+
+		// if the "cancel" button is clicked
+		if (ImGui::IsItemClicked())
+		{
+			// close the popup
 			ImGui::CloseCurrentPopup();
 		}
 
