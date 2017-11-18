@@ -53,8 +53,6 @@ Cpu::Operations Cpu::Operation = {};
 int Cpu::Cycles = 0;
 // debug memory viewer
 static MemoryEditor memoryViewer;
-// used for imgui windows
-static bool showImGuiWindow = true;
 
 // add 8-bit
 void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
@@ -1873,7 +1871,7 @@ void Cpu::Debugger()
 	bool FlagC = GET_FLAG_C();
 
 	// register viewer window
-	ImGui::Begin("Register Viewer", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	ImGui::Begin("Register Viewer", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("Register Viewer", ImVec2(180, 210));
 	ImGui::SetWindowPos("Register Viewer", ImVec2(640 - 180, 5));
 	ImGuiExtensions::TextWithColors("{FF0000}AF: {FFFFFF}%04X", AF.reg); ImGui::SameLine(); ImGui::Indent(80.f);
@@ -1895,7 +1893,7 @@ void Cpu::Debugger()
 	ImGui::End();
 
 	// memory viewer window
-	ImGui::Begin("Mem View", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	ImGui::Begin("Mem View", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("Mem View", ImVec2(100, 210));
 	ImGui::SetWindowPos("Mem View", ImVec2((640 - 289), 5));
 

@@ -56,8 +56,6 @@ static SDL_GLContext glContext = NULL;
 static int interval = (INTERVAL / TARGET_FPS);
 // the initial time
 static unsigned int initialTime = SDL_GetTicks();
-// used for imgui windows
-static bool showImGuiWindow = true;
 
 // init SDL
 static bool InitSDL()
@@ -207,7 +205,7 @@ static void EmulationLoop()
 static void ShowRomInfoWindow()
 {
 	// create the rom info window
-	ImGui::Begin("Rom Info", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	ImGui::Begin("Rom Info", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("Rom Info", ImVec2(240, 270));
 	ImGui::SetWindowPos("Rom Info", ImVec2((640 - 480), 480 - 260));
 
@@ -242,7 +240,7 @@ static void ShowRomInfoWindow()
 static void ShowFileWindow()
 {
 	// create the rom info window
-	ImGui::Begin("File", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	ImGui::Begin("File", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("File", ImVec2(156, 270));
 	ImGui::SetWindowPos("File", ImVec2(0, 480 - 260));
 	// file open button
@@ -289,7 +287,7 @@ static void ShowFileWindow()
 static void ShowDebuggerControlsWindow()
 {
 	// debuger controls window
-	ImGui::Begin("Controls", &showImGuiWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	ImGui::Begin("Controls", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowSize("Controls", ImVec2(156, 210));
 	ImGui::SetWindowPos("Controls", ImVec2((640 - 456), 5));
 	// step button
