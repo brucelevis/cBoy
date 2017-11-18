@@ -20,6 +20,8 @@
 #include "include/rom.h"
 #include "include/timer.h"
 
+// breakpoint
+#define BREAKPOINT 0xC243
 // screen dimensions
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -33,6 +35,10 @@
 const bool RELEASE_MODE = false; 
 // should we step through instructions?
 int stepThrough = true;
+// the breakpoint
+unsigned short breakpoint = 0x0;
+bool quitBreakpoint = true;
+char breakpointBuffer[256];
 // has the user requested to quit the emulator?
 bool shouldQuit = false;
 // the SDL window
@@ -43,7 +49,6 @@ SDL_GLContext glContext = NULL;
 int interval = (INTERVAL / TARGET_FPS);
 unsigned int initialTime = SDL_GetTicks();
 int instructionsRan = 0;
-bool quitBreakpoint = false;
 
 // init SDL
 static bool InitSDL()
@@ -77,7 +82,7 @@ static bool InitSDL()
 
 				// set the imgui font
 				ImGuiIO& io = ImGui::GetIO();
-				io.Fonts->AddFontFromFileTTF("imgui/extra_fonts/Roboto-Medium.ttf", 16.0f);
+				io.Fonts->AddFontFromFileTTF("imgui/extra_fonts/Cousine-Regular.ttf", 16.0f);
 
 				// initialize and setup Open GL
 				glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -118,12 +123,10 @@ static void Close()
 {
 	// shutdown imgui
 	ImGui_ImplSdlGL2_Shutdown();
-
 	// destroy the window
 	SDL_DestroyWindow(window);
 	// delete the gl context
 	SDL_GL_DeleteContext(glContext);
-
 	// quit SDL subsystems
 	SDL_Quit();
 }
@@ -141,7 +144,7 @@ static void EmulationLoop()
 		// execute the next opcode
 		int cycles = Cpu::ExecuteNextOpcode(); 
 		cyclesThisUpdate += cycles;
-
+		// increment the instructions ran
 		instructionsRan++;
 
 		// update timers
@@ -162,7 +165,7 @@ static void EmulationLoop()
 			// execute if within the max cycles for this update
 			while (cyclesThisUpdate < MAX_CYCLES)
 			{
-				if (!quitBreakpoint && Cpu::GetPC() == 0xC243) //&& (Cpu::DE.reg > 0xC73A && Cpu::DE.reg <= 0xC73B))
+				if (!quitBreakpoint && Cpu::GetPC() == breakpoint) //&& (Cpu::DE.reg > 0xC73A && Cpu::DE.reg <= 0xC73B))
 				{
 					// start at C220 in BGB
 					break; //0xC243  < last checked (0xC000 is a good starting place also)
@@ -170,24 +173,8 @@ static void EmulationLoop()
 				// execute the next opcode
 				int cycles = Cpu::ExecuteNextOpcode(); 
 				cyclesThisUpdate += cycles;
-
+				// increment the instructions ran
 				instructionsRan++;
-
-				/*
-				if (Cpu::GetPC() == 0210)
-				{
-					stepThrough = true;
-				}*/
-
-				for (unsigned short i = 0x8000; i < 0x8FFF; i++)
-				{
-					unsigned char val = Memory::ReadByte(i);
-
-					if (val != 0)
-					{
-						//Log::Critical("Tile: %02x", val);
-					}
-				}
 
 				// update timers
 				Timer::Update(cycles);
@@ -200,6 +187,129 @@ static void EmulationLoop()
 			}
 		}
 	}
+}
+
+// show the rom info window
+static void ShowRomInfoWindow()
+{
+	// create the rom info window
+	ImGui::Begin("Rom Info");
+	ImGui::SetWindowSize("Rom Info", ImVec2(240, 270));
+	ImGui::SetWindowPos("Rom Info", ImVec2((640 - 480), 480 - 260));
+
+	// rom name prefix
+	ImGuiExtensions::TextWithColors("{FF0000}Name:"); ImGui::SameLine();
+
+	// print the rom name
+	for (unsigned short i = 0x0134; i < 0x0143; i++)
+	{
+		if (Memory::ReadByte(i) != 0)
+		{
+			ImGui::Text("%c", Memory::ReadByte(i));
+			ImGui::SameLine();
+		}
+	}
+
+	ImGui::NewLine();
+
+	// rom type
+	ImGuiExtensions::TextWithColors("{FF0000}Type:"); ImGui::SameLine();
+	ImGui::Text("%02x", Memory::ReadByte(0x0147));
+	// rom rom-size
+	ImGuiExtensions::TextWithColors("{FF0000}Rom-Size:"); ImGui::SameLine();
+	ImGui::Text("%02x", Memory::ReadByte(0x0148));
+	// rom ram size
+	ImGuiExtensions::TextWithColors("{FF0000}Ram-Size:"); ImGui::SameLine();
+	ImGui::Text("%02x", Memory::ReadByte(0x0149));
+	// rom file name + path
+	ImGuiExtensions::TextWithColors("{FF0000}Filename:"); ImGui::SameLine();
+	ImGui::TextWrapped("%s", Rom::currentRomFileName);
+	ImGui::End();
+}
+
+// show the debugger controls window
+static void ShowDebuggerControlsWindow()
+{
+	// debuger controls window
+	ImGui::Begin("Controls");
+	ImGui::SetWindowSize("Controls", ImVec2(120, 210));
+	ImGui::SetWindowPos("Controls", ImVec2((640 - 420), 5));
+	// step button
+	ImGui::Button("Step Forward", ImVec2(110, 0));
+
+	// if the "step" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		EmulationLoop();
+	}
+
+	// run button
+	ImGui::Button("Run", ImVec2(110, 0));
+
+	// if the "run" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		stepThrough = false;
+	}
+
+	// run button
+	ImGui::Button("Run To", ImVec2(110, 0));
+
+	// if the "run to" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		ImGui::OpenPopup("Set Breakpoint");
+	}
+
+	// the breakpoint popup
+	if (ImGui::BeginPopup("Set Breakpoint"))
+	{
+		ImGui::PushItemWidth(180);
+		ImGui::Text("Run To PC:");
+		//ImGui::InputText("", buf, 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+		ImGui::Button("Ok");
+
+		// if the "ok" button is clicked
+		if (ImGui::IsItemClicked())
+		{
+			//printf("entered breakpoint: %s\n", buf);
+			//printf("breakpoint as Ushort: %04X\n", breakpoint);
+			stepThrough = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	// stop button
+	ImGui::Button("Stop", ImVec2(110, 0));
+
+	// see if the "stop" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		quitBreakpoint = true;
+		stepThrough = true;
+	}
+
+	// reset button
+	ImGui::Button("Reset", ImVec2(110, 0));
+
+	// see if the "reset" button is clicked
+	if (ImGui::IsItemClicked())
+	{
+		quitBreakpoint = true;
+		stepThrough = true;
+		// init the cpu again
+		Cpu::Init();
+		// init the lcd again
+		Lcd::Init();
+	}
+
+	// display the number of instructions ran
+	ImGuiExtensions::TextWithColors("  {FF0000}Ins Ran:"); ImGui::Indent(20.f); ImGui::Text("%d", instructionsRan); ImGui::Unindent(20.f);
+
+	// end window
+	ImGui::End();
 }
 
 // main loop
@@ -263,44 +373,11 @@ static void StartMainLoop()
 		{
 			// Use ImGui functions between here and Render()
 			ImGui_ImplSdlGL2_NewFrame(window);
-			
-			// var viewer window
-			ImGui::Begin("Controls");
-			ImGui::SetWindowSize("Controls", ImVec2(120, 210));
-			ImGui::SetWindowPos("Controls", ImVec2((640 - 420), 5));
-			// step button
-			ImGui::Button("Step Forward");
 
-			// see if the step button is clicked
-			if (ImGui::IsItemClicked())
-			{
-				EmulationLoop();
-			}
-
-			// run button
-			ImGui::Button("Run");
-
-			// see if the run button is clicked
-			if (ImGui::IsItemClicked())
-			{
-				stepThrough = false;
-			}
-
-			// stop button
-			ImGui::Button("Stop");
-
-			// see if the stop button is clicked
-			if (ImGui::IsItemClicked())
-			{
-				quitBreakpoint = true;
-				stepThrough = true;
-			}
-
-			// display the number of instructions ran
-			ImGuiExtensions::TextWithColors("{FF0000}Ins Ran:"); ImGui::SameLine(); ImGui::Text("%d", instructionsRan);
-
-			// end window
-			ImGui::End();
+			// show the rom info window
+			ShowRomInfoWindow();
+			// show the debugger controls
+			ShowDebuggerControlsWindow();
 
 			// show the debugger
 			Cpu::Debugger();
@@ -325,7 +402,7 @@ int main(int argc, char* args[])
 		// load rom
 		//Rom::Load("roms/Tetris.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
-		Rom::Load("roms/tests/big_scroller.gb");
+		//Rom::Load("roms/tests/big_scroller.gb");
 
 		// individual cpu instruction tests
 		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails      
@@ -334,7 +411,7 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // doesn't finish
 		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb");
 		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb");
-		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // test this against the other emu
+		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // test this against the other emu
 		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb");
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb");
 		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb");

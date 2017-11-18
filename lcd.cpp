@@ -111,8 +111,6 @@ void Lcd::Render(int cycles)
 	// update the LCD
 	Update(cycles);
 
-	// clear the screen
-	glClear(GL_COLOR_BUFFER_BIT);
 	// draw the image
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, Screen);
 

@@ -42,6 +42,7 @@ bool Rom::Load(const char *fileName)
 		// Set the current rom name
 		currentRomFileName = fileName;
 
+		/*
 		// print the rom name
 		printf("Rom Name: ");
 		for (unsigned short i = 0x0134; i < 0x0143; i++)
@@ -52,13 +53,13 @@ bool Rom::Load(const char *fileName)
 
 		// print the rom cartridge type
 		printf("Rom Cartridge Type: %02x | Rom-Size: %02x | Ram-Size: %02x\n", Memory::Get()[0x0147], Memory::Get()[0x0148], Memory::Get()[0x0149]);
+		*/
 	}
 	else
 	{
 		Log::Critical("FAILED TO LOAD rom '%s'", fileName);
 	}
 
-	
 	// close the rom
 	fclose(gbRom);
 	

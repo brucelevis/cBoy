@@ -147,6 +147,7 @@ struct MemoryEditor
         Sizes s;
         CalcSizes(s, mem_size, base_display_addr);
         ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, 0.0f), ImVec2(s.WindowWidth, 360));
+        ImGui::SetWindowPos(title, ImVec2((640 - 234), 480 - 260));
 
         Open = true;
         if (ImGui::Begin(title, &Open, ImGuiWindowFlags_NoScrollbar))
@@ -168,7 +169,7 @@ struct MemoryEditor
     {
         Sizes s;
         CalcSizes(s, mem_size, base_display_addr);
-        ImGuiStyle& style = ImGui::GetStyle();
+        //ImGuiStyle& style = ImGui::GetStyle();
 
         ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -208,7 +209,7 @@ struct MemoryEditor
         // Draw vertical separator
         ImVec2 window_pos = ImGui::GetWindowPos();
         if (OptShowAscii)
-            draw_list->AddLine(ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y), ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y + 9999), ImGui::GetColorU32(ImGuiCol_Border));
+            draw_list->AddLine(ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y), ImVec2(window_pos.x + s.PosAsciiStart - s.GlyphWidth, window_pos.y + 9999), IM_COL32(255, 0, 0, 128));
 
         const ImU32 color_text = ImGui::GetColorU32(ImGuiCol_Text);
         const ImU32 color_disabled = OptGreyOutZeroes ? ImGui::GetColorU32(ImGuiCol_TextDisabled) : color_text;
@@ -227,19 +228,20 @@ struct MemoryEditor
                 ImGui::SameLine(byte_pos_x);
 
                 // Draw highlight
-                if ((addr >= HighlightMin && addr < HighlightMax) || (HighlightFn && HighlightFn(mem_data, addr)))
-                {
+                if ((addr >= HighlightMin && addr <= HighlightMax))// || (HighlightFn && HighlightFn(mem_data, addr)))
+                {                    
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     float highlight_width = s.GlyphWidth * 2;
-                    bool is_next_byte_highlighted =  (addr + 1 < mem_size) && ((HighlightMax != (size_t)-1 && addr + 1 < HighlightMax) || (HighlightFn && HighlightFn(mem_data, addr + 1)));
+                    bool is_next_byte_highlighted = (addr + 1 < mem_size) && ((HighlightMax != (size_t)-1 && addr + 1 <= HighlightMax) || (HighlightFn && HighlightFn(mem_data, addr + 1)));
                     if (is_next_byte_highlighted || (n + 1 == Rows))
                     {
                         highlight_width = s.HexCellWidth;
                         if (OptMidRowsCount > 0 && n > 0 && (n + 1) < Rows && ((n + 1) % OptMidRowsCount) == 0)
                             highlight_width += s.SpacingBetweenMidRows;
                     }
-                    draw_list->AddRectFilled(pos, ImVec2(pos.x + highlight_width, pos.y + s.LineHeight), HighlightColor);
+                    draw_list->AddRectFilled(pos, ImVec2(pos.x + highlight_width, pos.y + s.LineHeight), IM_COL32(255, 0, 0, 150));
                 }
+
 
                 if (DataEditingAddr == addr)
                 {
@@ -248,8 +250,8 @@ struct MemoryEditor
                     ImGui::PushID((void*)addr);
                     if (DataEditingTakeFocus)
                     {
-                        ImGui::SetKeyboardFocusHere();
-                        ImGui::CaptureKeyboardFromApp(true);
+                        //ImGui::SetKeyboardFocusHere();
+                        //ImGui::CaptureKeyboardFromApp(true);
                         sprintf(AddrInputBuf, "%0*" _PRISizeT, s.AddrDigitsCount, base_display_addr + addr);
                         sprintf(DataInputBuf, "%02X", ReadFn ? ReadFn(mem_data, addr) : mem_data[addr]);
                     }
@@ -322,11 +324,12 @@ struct MemoryEditor
                         else
                             ImGui::Text("%02X ", b);
                     }
+                    /*
                     if (!ReadOnly && ImGui::IsItemHovered() && ImGui::IsMouseClicked(0))
                     {
                         DataEditingTakeFocus = true;
                         data_editing_addr_next = addr;
-                    }
+                    }*/
                 }
             }
 
@@ -347,8 +350,8 @@ struct MemoryEditor
                 {
                     if (addr == DataEditingAddr)
                     {
-                        draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_FrameBg));
-                        draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), ImGui::GetColorU32(ImGuiCol_TextSelectedBg));
+                        draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), IM_COL32(255, 0, 0, 128));
+                        draw_list->AddRectFilled(pos, ImVec2(pos.x + s.GlyphWidth, pos.y + s.LineHeight), IM_COL32(255, 0, 0, 128));
                     }
                     unsigned char c = ReadFn ? ReadFn(mem_data, addr) : mem_data[addr];
                     char display_c = (c < 32 || c >= 128) ? '.' : c;
@@ -371,6 +374,7 @@ struct MemoryEditor
             DataEditingAddr = data_editing_addr_next;
         }
 
+        /*
         ImGui::Separator();
 
         // Options menu
@@ -401,6 +405,7 @@ struct MemoryEditor
             }
         }
         ImGui::PopItemWidth();
+        */
 
         if (GotoAddr != (size_t)-1)
         {

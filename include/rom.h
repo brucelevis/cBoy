@@ -19,9 +19,7 @@ class Rom
 
 	public:
 		static BYTE cartridgeMem[0x200000];
-
-	private:
-		static const char *currentRomFileName;
+		static const char *currentRomFileName;		
 };
 
 #endif
