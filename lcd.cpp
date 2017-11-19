@@ -18,9 +18,10 @@ typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
+#define LCD_CLOCK_CYCLES 456
 // vars
 GLuint texture;
-int Lcd::ScanlineCounter = 456;
+int Lcd::ScanlineCounter = LCD_CLOCK_CYCLES;
 
 // init vars
 BYTE Lcd::Screen[144][160][3] = {};
@@ -60,6 +61,115 @@ bool Lcd::IsLCDEnabled()
 	return Bit::Get(Memory::ReadByte(LCDC_ADDRESS), 7);
 }
 
+// set the LCD status
+int Lcd::SetLCDStatus()
+{
+	// get the current mode of the LCD
+	BYTE mode = (Memory::ReadByte(STAT_ADDRESS) & 0x3);
+	// get the current scanline value
+	BYTE currentScanline = Memory::ReadByte(LY_ADDRESS);
+	// should we request an interrupt?
+	bool requestInterrupt = false;
+	// the next LCD mode
+	BYTE nextMode = 0;
+	// LCD mode ranges
+	int modeRange[4] = {265, 144, LCD_CLOCK_CYCLES - 80, LCD_CLOCK_CYCLES - 176};
+
+	// set the mode to 1 if the LCD is off
+	if (!IsLCDEnabled())
+	{
+		// reset the scanline counter
+		ScanlineCounter = LCD_CLOCK_CYCLES;
+		// reset the scanline
+		Memory::Write(LY_ADDRESS, 0);
+		// set mode 1
+		Bit::Reset(mode, 0);
+		Bit::Set(mode, 1);
+		// write the mode to memory
+		Memory::Write(STAT_ADDRESS, mode);
+		return 0;
+	}
+
+	// ## handle modes ##
+
+	// vblank
+	if (currentScanline >= modeRange[1])
+	{
+		// set the next mode
+		nextMode = 1;
+		// check if we should request an interrupt
+		requestInterrupt = Bit::Get(mode, 4);
+		// set the mode
+		Bit::Set(mode, 0);
+		Bit::Reset(mode, 1);
+	}
+	else
+	{
+		// mode 2
+		if (ScanlineCounter >= modeRange[2])
+		{
+			// set the next mode
+			nextMode = 2;
+			// check if we should request an interrupt
+			requestInterrupt = Bit::Get(mode, 5);
+			// set the mode
+			Bit::Set(mode, 1);
+			Bit::Reset(mode, 0);
+		}
+		// mode 3
+		else if (ScanlineCounter >= modeRange[3])
+		{
+			// set the next mode
+			nextMode = 3;
+			// set the mode
+			Bit::Set(mode, 1);
+			Bit::Set(mode, 0);
+		}
+		// mode 0
+		if (ScanlineCounter >= modeRange[0])
+		{
+			// set the next mode
+			nextMode = 0;
+			// check if we should request an interrupt
+			requestInterrupt = Bit::Get(mode, 3);
+			// set the mode
+			Bit::Reset(mode, 1);
+			Bit::Reset(mode, 0);
+		}
+	}
+
+	// if we're in a new mode, request the appropriate interrupt
+	if (requestInterrupt && (nextMode != mode))
+	{
+		Interrupt::Request(Interrupt::IDS::LCD);
+	}
+
+	// handle the coincidence flag
+	if (Memory::ReadByte(LY_ADDRESS) == Memory::ReadByte(LY_CP_ADDRESS))
+	{
+		// set bit 2 on the stat register
+		Bit::Set(mode, 2);
+
+		/*
+		If the coincidence flag (bit 2) is set and the conincidence 
+		interupt enabled flag (bit 6) is set then an LCD Interupt is requested.*/
+		if (Bit::Get(mode, 6))
+		{
+			Interrupt::Request(Interrupt::IDS::LCD);
+		}
+	}
+	else
+	{
+		// reset bit 2
+		Bit::Reset(mode, 2);
+	}
+
+	// update the stat reg
+	Memory::Write(STAT_ADDRESS, mode);
+
+	return 0;
+}
+
 // draw the current scanline
 void Lcd::DrawScanline()
 {
@@ -67,42 +177,54 @@ void Lcd::DrawScanline()
 }
 
 // update the LCD
-void Lcd::Update(int cycles)
+int Lcd::Update(int cycles)
 {
-	// if the screen is enabled
-	if (IsLCDEnabled())
+	// if the screen isn't enabled, return
+	if (!IsLCDEnabled()) return 0;
+
+	// decrement the scanline counter
+	ScanlineCounter -= cycles;
+
+	// if the scanline counter hits zero
+	if (ScanlineCounter <= 0)
 	{
-		// decrement the scanline counter
-		ScanlineCounter -= cycles;
+		// increment the scanline
+		Memory::Get()[LY_ADDRESS]++;
+		// get the current scanline value
+		BYTE currentScanline = Memory::ReadByte(LY_ADDRESS);
+		// reset the scanline counter
+		ScanlineCounter = LCD_CLOCK_CYCLES;
 
-		// if the scanline counter hits zero
-		if (ScanlineCounter <= 0)
+		// handle the correct action
+		switch(currentScanline)
 		{
-			// increment the scanline
-			Memory::Get()[LY_ADDRESS]++;
-			// get the current scanline value
-			BYTE currentScanline = Memory::ReadByte(LY_ADDRESS);
-			// reset the scanline counter
-			ScanlineCounter = 456;
-
 			// vblank
-			if (currentScanline == 144)
+			case 144:
 			{
+				// request the vblank interrupt
 				Interrupt::Request(Interrupt::VBLANK);
 			}
-			// scanline reached the bottom of the screen
-			else if (currentScanline > 153)
+			break;
+
+			// scanline reached bottom of screen
+			case 154:
 			{
 				// move the scanline back to the top of the screen
-				Memory::Write(LY_ADDRESS, 0); // use this as it'll reset LY anyway
+				// writing to LY will automatically reset it (handled in memory.cpp)
+				Memory::Write(LY_ADDRESS, 0);
 			}
-			// draw scanline
-			else if (currentScanline < 144)
+			break;
+
+			// draw the scanline
+			default:
 			{
 				DrawScanline();
 			}
+			break;
 		}
 	}
+
+	return 0;
 }
 
 // render the LCD

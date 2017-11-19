@@ -29,10 +29,10 @@ class Lcd
 	public:
 		static void Init();
 		static void Reset();
-		static void SetLCDStatus();
+		static int SetLCDStatus();
 		static bool IsLCDEnabled();
 		static void DrawScanline();
-		static void Update(int cycles);
+		static int Update(int cycles);
 		static void Render(int cycles);
 
 	private:

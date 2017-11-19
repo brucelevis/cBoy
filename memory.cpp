@@ -48,6 +48,18 @@ void Memory::Write(WORD address, BYTE data)
 		}
 		break;
 
+		// DMA
+		case 0xFF46:
+		{
+			WORD address = (data << 8);
+
+			for (WORD i = 0; i < 0xA0; i++)
+			{
+				Write(0xFE00 + i, ReadByte(address + i));
+			}
+		}
+		break;
+
 		// update timer settings
 		case TAC_ADDRESS:
 		{
