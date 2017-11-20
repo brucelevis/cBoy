@@ -112,7 +112,7 @@ void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if ((val & 0xF) < (val2 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
+	if ((val & 0xF) < (val2 & 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
 	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
 
