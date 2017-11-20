@@ -145,6 +145,7 @@ static void EmulationLoop()
 	int cyclesThisUpdate = 0;
 	// reset Cpu cycles
 	Cpu::Cycles = 0;
+	currentCycles = 0;
 
 	if (stepThrough)
 	{
@@ -152,7 +153,7 @@ static void EmulationLoop()
 		int cycles = Cpu::ExecuteNextOpcode(); 
 		cyclesThisUpdate += cycles;
 		// store the current cycles
-		currentCycles = cyclesThisUpdate;
+		currentCycles += cycles;
 		// increment the instructions ran
 		instructionsRan++;
 
@@ -180,20 +181,21 @@ static void EmulationLoop()
 					// break out of the loop
 					break;
 				}
+
 				// execute the next opcode
 				int cycles = Cpu::ExecuteNextOpcode(); 
 				cyclesThisUpdate += cycles;
 				// store the current cycles
-				currentCycles = cyclesThisUpdate;
+				currentCycles = cyclesThisUpdate - cycles;
 				// increment the instructions ran
 				instructionsRan++;
 
 				// update timers
 				Timer::Update(cycles);
+				// update graphics
+				Lcd::Render(cycles); // cycles * 4 shows the whole logo...
 				// service interupts
 				Interrupt::Service();
-				// update graphics
-				Lcd::Render(cycles);
 				// update the time
 				initialTime = timeNow;
 			}
@@ -249,7 +251,101 @@ static void ShowFileWindow()
 	// if the "open" button is clicked
 	if (ImGui::IsItemClicked())
 	{
+		//ImGui::OpenPopup("File Browser");
+
+		// open the file browser popup
+		// popen doesn't seem to contain valid data...		
+		/*
+		FILE *file = popen("zenity --file-selection --file-filter='*.gb *.bin'", "r");
+		if (file)
+		{
+			static char fileBuffer[0x8000] = {0};
+			fgets(fileBuffer, 0x8000, file);
+			pclose(file);
+		}
+		*/
+
+		// show a zenity file browser window, and write the file path to a file
+		// this works, but crashes when passed to rom::load()
+		/*
+		system("zenity --file-selection --file-filter='*.gb *.bin' > filePath.txt");
+		FILE *fileName = fopen("filePath.txt", "r");
+		fseek(fileName, 0L, SEEK_END);
+		long len = ftell(fileName);
+		rewind(fileName);
+
+		char ff = (char *)malloc(len + 1);
+		fread(ff, 1, len, fileName);
+
+		//fread(file, 1, 1024, fileName);
+		fclose(fileName);
+
+		printf("file len: %ld | path: %s\n", len, ff);
+		//Rom::Load(ff);
+		*/
+	}
+
+	// breakpoint error popup
+	if (ImGui::BeginPopupModal("File Browser", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	{
+		// set the window size
+		ImGui::SetWindowSize("File Browser", ImVec2(230, 210));
+
+		// invalid breakpoint text
+		//ImGuiExtensions::TextWithColors("{FF0000}Select Rom file (.gb, .bin)");
+
+		//if ((dir = opendir(cwd)))
+		//{
+		/*
+			while (ent == readdir(opendir(cwd)))
+			{
+				ImGui::Text("%s", ent->d_name);
+			}
+			closedir(dir);*/
+		//}
+		//else
+		//{
+		//	printf("could not open dir\n");
+		//}
+
+
+		/*
+		//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.6f));
+		//ImGui::TextUnformatted("Test file one."); ImGui::SameLine();
+		//ImGui::PopStyleColor();
+
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+			ImGui::Indent(-1700.f); ImGui::TextUnformatted("Test file one.");
+			ImGui::PopStyleColor();
+			ImGui::Unindent(-1700.f);
+		}*/
 		
+		// if the "ok" button is clicked
+		if (ImGui::IsItemClicked())
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+			ImGui::PopStyleColor();
+			//ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 255, 255, 255));
+			printf("text is clicked\n");
+		}
+
+		ImGui::NewLine();
+
+		// load button
+		ImGui::Button("Load", ImVec2(200, 0));
+
+		// if the "load" button is clicked
+		if (ImGui::IsItemClicked())
+		{
+			// load the rom
+
+			// close the popup
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
 	}
 
 	// save state button
@@ -419,10 +515,18 @@ static void ShowDebuggerControlsWindow()
 		stopAtBreakpoint = false;
 		// enable step through mode
 		stepThrough = true;
+		// reset the instructions ran
+		instructionsRan = 0;
+		// reset the memory
+		Memory::Init();
 		// init the cpu again
 		Cpu::Init();
-		// init the lcd again
-		Lcd::Init();
+		// reload the rom
+		Rom::Reload();
+		// reload the bios
+		Bios::Reload();
+		// reset the lcd
+		Lcd::Reset();
 	}
 
 	// display the number of instructions ran
@@ -510,11 +614,6 @@ static void StartMainLoop()
 		{
 			EmulationLoop();
 		}
-		else
-		{
-			// update graphics
-			Lcd::Render(currentCycles);
-		}
 
 		// flip buffers
 		SDL_GL_SwapWindow(window);
@@ -533,6 +632,7 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/Tetris.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 		//Rom::Load("roms/tests/big_scroller.gb");
+		//Rom::Load("roms/tests/bgbtest.gb");
 
 		// individual cpu instruction tests
 		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails      

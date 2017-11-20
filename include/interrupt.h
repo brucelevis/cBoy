@@ -27,7 +27,7 @@ class Interrupt
 
 	public:
 		enum IDS{
-			VBLANK, LCD, TIMER, JOYPAD
+			VBLANK = 0, LCD = 1, TIMER = 2, JOYPAD = 3
 		};
 		static bool MasterSwitch;
 

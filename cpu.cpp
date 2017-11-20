@@ -281,7 +281,7 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if ((val & 0xF) < (val2 & 0xF)) RESET_FLAG_H(); else SET_FLAG_H();
+	if ((val & 0xF) < (val2 & 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
 	if (val < val2) SET_FLAG_C(); else RESET_FLAG_C();
 
@@ -631,7 +631,7 @@ void Cpu::SRA_Write(WORD address, int cycles)
 	Cycles += cycles;
 }
 
-// shift right (into carry) - MSB set to 0
+// shift left (into carry) - MSB set to 0
 void Cpu::SRL(BYTE &val, int cycles)
 {
 	// calculate the result
@@ -655,7 +655,7 @@ void Cpu::SRL(BYTE &val, int cycles)
 	Cycles += cycles;
 }
 
-// shift right (into carry) write to mem - MSB set to 0
+// shift left (into carry) write to mem - MSB set to 0
 void Cpu::SRL_Write(WORD address, int cycles)
 {
 	// get the data
@@ -687,7 +687,7 @@ void Cpu::SRL_Write(WORD address, int cycles)
 void Cpu::SWAP_8Bit(BYTE &val, int cycles)
 {
 	// calculate the result
-	BYTE result = ((val & 0xF0 >> 4) | (val & 0x0F << 4));
+	BYTE result = (((val & 0xF0) >> 4) | ((val & 0x0F) << 4));
 
 	// reset the N, H & C flags
 	RESET_FLAG_N();
@@ -704,11 +704,12 @@ void Cpu::SWAP_8Bit(BYTE &val, int cycles)
 }
 
 // test if a bit is off
-void Cpu::BIT_Test(BYTE &val, BYTE bit, int cycles)
+void Cpu::BIT_Test(BYTE val, BYTE bit, int cycles)
 {
-	// reset the N & H flags
+	// reset the N flag
 	RESET_FLAG_N();
-	RESET_FLAG_H();
+	// set the H flag
+	SET_FLAG_H();
 
 	// set the Z flag if applicable
 	if (!Bit::Get(val, bit)) SET_FLAG_Z(); else RESET_FLAG_Z();
@@ -722,9 +723,10 @@ void Cpu::BIT_Test_Memory(WORD address, BYTE bit, int cycles)
 {
 	// get the data
 	BYTE val = Memory::ReadByte(address);
-	// reset the N & H flags
+	// reset the N flag
 	RESET_FLAG_N();
-	RESET_FLAG_H();
+	// set the H flag
+	SET_FLAG_H();
 
 	// set the Z flag if applicable
 	if (!Bit::Get(val, bit)) SET_FLAG_Z(); else RESET_FLAG_Z();
@@ -826,12 +828,10 @@ int Cpu::CALL(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
-		// get nn
-		WORD nn = Memory::ReadWord(PC);
 		// push the address of the next instruction to the stack
 		PUSH(PC + 2);
 		// call the instruction at nn
-		PC = nn;
+		PC = Memory::ReadWord(PC);
 		// add the correct extra cycles as the action took place
 		Cycles += 12;
 		return 0;
@@ -908,15 +908,28 @@ int Cpu::Init()
 {
 	// setup the memory viewer
 	memoryViewer.Rows = 4;
+	// init program counter
+	PC = 0x100;
+
+	//*
+	// init stack pointer
+	SP.reg = 0xFFFE;
 	// init registers
 	AF.reg = 0x01B0;
 	BC.reg = 0x0013;
 	DE.reg = 0x00D8;
 	HL.reg = 0x014D;
-	// init program counter
-	PC = 0x100;
-	// init stack pointer
-	SP.reg = 0xFFFE;
+	//*/
+
+	/*
+	// set for bios
+	AF.reg = 0x0000;
+	BC.reg = 0x0000;
+	DE.reg = 0x0000;
+	HL.reg = 0x0000;
+	SP.reg = 0x0000;
+	*/
+
 	// reset cycles
 	Cycles = 0;
 	// reset operations
@@ -947,6 +960,8 @@ int Cpu::Init()
 	Memory::Write(0xFF25, 0xF3);
 	Memory::Write(0xFF26, 0xF1);
 	Memory::Write(0xFF40, 0x91);
+	//Memory::Write(0xFF40, 0x00); // for bios
+	Memory::Write(0xFF41, 0x84); // new (stat reg)
 	Memory::Write(0xFF42, 0x00);
 	Memory::Write(0xFF43, 0x00);
 	Memory::Write(0xFF45, 0x00);
@@ -973,15 +988,6 @@ int Cpu::ExecuteOpcode()
 	{
 		PC++;
 	}
-
-	/*
-	for (unsigned short i = 0x8000; i < 0x8FFF; i++)
-	{
-		BYTE data = Memory::ReadByte(i);
-
-		if (data != 0x00)
-		Log::Normal("Data at mem location 0x%04x: %02x", i, data);
-	}*/
 
 	//Log::ExecutedOpcode(Opcode);
 
@@ -1434,7 +1440,7 @@ int Cpu::ExecuteOpcode()
 					needs to be adjusted to 0x10 and the carry set
 				*/
 
-			/*
+			
 			BYTE result = 0;
 			bool wasSet = false;
 
@@ -1458,10 +1464,10 @@ int Cpu::ExecuteOpcode()
 				if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 
 				AF.hi = result;
-			}*/
+			}
 
 			Cycles += 4;
-			printf("WARNING: DAA instruction not implemented\n");
+			//printf("WARNING: DAA instruction not implemented\n");
 		}
 		break;
 
@@ -1486,7 +1492,7 @@ int Cpu::ExecuteOpcode()
 	if (Operation.PendingInterruptEnabled)
 	{
 		// If the last instruction was to enable interrupts
-		if (Memory::ReadByte(PC - 1) == 0xFB)
+		if (Memory::ReadByte(PC - 1) != 0xFB)
 		{
 			Interrupt::MasterSwitch = true;
 			Operation.PendingInterruptEnabled = false;
@@ -1497,7 +1503,7 @@ int Cpu::ExecuteOpcode()
 	if (Operation.PendingInterruptDisabled)
 	{
 		// If the last instruction was to enable interrupts
-		if (Memory::ReadByte(PC - 1) == 0xF3)
+		if (Memory::ReadByte(PC - 1) != 0xF3)
 		{
 			Interrupt::MasterSwitch = false;
 			Operation.PendingInterruptDisabled = false;
@@ -1811,7 +1817,7 @@ int Cpu::ExecuteNextOpcode()
 	// Execute the next Opcode
 	int cycles = ExecuteOpcode();
 
-	return cycles;
+	return Cycles;
 }
 
 // save state
@@ -1885,7 +1891,7 @@ void Cpu::Debugger()
 	ImGuiExtensions::TextWithColors("{FF0000}SP: {FFFFFF}%04X", SP.reg); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGuiExtensions::TextWithColors("{FF0000}IE:   {FFFFFF}%02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::Unindent(80.f);
 	ImGuiExtensions::TextWithColors("{FF0000}PC: {FFFFFF}%04X", PC); ImGui::SameLine(); ImGui::SameLine(); ImGui::Indent(80.f);
-	ImGuiExtensions::TextWithColors("{FF0000}IR:   {FFFFFF}%02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}IF:   {FFFFFF}%02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::Unindent(80.f);
 	ImGui::Checkbox("Z", &FlagZ); ImGui::SameLine();
 	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();
 	ImGui::Checkbox("H", &FlagH);

@@ -15,6 +15,7 @@ class Bios
 {
 	public:
 		static bool Load(const char *fileName);
+		static void Reload();
 		static void Remove();
 
 	private:

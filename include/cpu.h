@@ -57,7 +57,7 @@ class Cpu
 		static void SRA_Write(WORD address, int cycles);
 		static void SRL(BYTE &val, int cycles);
 		static void SRL_Write(WORD address, int cycles);
-		static void BIT_Test(BYTE &val, BYTE bit, int cycles);
+		static void BIT_Test(BYTE val, BYTE bit, int cycles);
 		static void BIT_Test_Memory(WORD address, BYTE bit, int cycles);
 		static void BIT_Set(BYTE &val, BYTE bit, int cycles);
 		static void BIT_Set_Memory(WORD address, BYTE bit, int cycles);

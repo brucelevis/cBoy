@@ -71,7 +71,7 @@ bool Timer::IsEnabled()
 	// get the value of the TAC register
 	BYTE TAC = Memory::ReadByte(TAC_ADDRESS);
 	// return the value of the enabled bit
-	return (Bit::Get(TAC, 2) == 1);
+	return Bit::Get(TAC, 2);
 }
 
 // get the timer clock frequency

@@ -18,12 +18,21 @@ typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
 
 // initialize vars
-BYTE Memory::mem[0x10000] = {0};
+BYTE Memory::Mem[0x10000] = {0};
+
+// init memory
+void Memory::Init()
+{
+	for (int i = 0; i < 0x10000; i++)
+	{
+		Mem[i] = 0x00;
+	}
+}
 
 // read memory
 BYTE Memory::ReadByte(WORD address)
 {
-	return mem[address];
+	return Mem[address];
 }
 
 // read word
@@ -66,7 +75,7 @@ void Memory::Write(WORD address, BYTE data)
 			// get the current clock frequency
 			BYTE currentFrequency = Timer::GetClockFrequency();
 			// write the new TAC data
-			mem[TAC_ADDRESS] = data;
+			Mem[TAC_ADDRESS] = data;
 			// get the new clock frequency
 			BYTE newFrequency = Timer::GetClockFrequency();
 			// if the new frequency isn't equal to the current one
@@ -80,14 +89,14 @@ void Memory::Write(WORD address, BYTE data)
 		// reset divider if written to
 		case DIVIDER_ADDRESS:
 		{
-			mem[DIVIDER_ADDRESS] = 0;
+			Mem[DIVIDER_ADDRESS] = 0;
 		}
 		break;
 
 		// reset current scanline if anything attempts to write to it
 		case LY_ADDRESS:
 		{
-			mem[address] = 0;
+			Mem[LY_ADDRESS] = 0x0;
 		}
 		break;
 
@@ -105,15 +114,17 @@ void Memory::Write(WORD address, BYTE data)
 			// echo ram
 			if (address >= 0xC000 && address <= 0xDE00)
 			{
-				mem[address + 0x2000] = data;
+				Mem[address] = data;
+				Mem[address + 0x2000] = data;
 			}
 			else if (address >= 0xE000 && address <= 0xFE00)
 			{
-				mem[address - 0x2000] = data;
+				Mem[address] = data;
+				Mem[address - 0x2000] = data;
 			}
 
 			// wrte to memory
-			mem[address] = data;
+			Mem[address] = data;
 		}
 		break;
 	}
@@ -122,5 +133,5 @@ void Memory::Write(WORD address, BYTE data)
 // get memory
 BYTE * Memory::Get()
 {
-	return mem;
+	return Mem;
 }

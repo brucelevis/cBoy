@@ -15,6 +15,7 @@ class Rom
 {
 	public:
 		static bool Load(const char *fileName);
+		static void Reload();
 		static void Close();
 
 	public:

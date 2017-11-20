@@ -36,17 +36,29 @@ bool Bios::Load(const char *fileName)
 		loadResult = true;
 		// read the bios into memory
 		fread(&Memory::Get()[0x00], 1, 0x100, gbBios);
+		// set the bios filename
+		biosFileName = fileName;
 	}
 
 	// close the bios
 	fclose(gbBios);
 
+	// set the program counter to 0x00
 	Cpu::SetPC(0x00);
 	
 	return loadResult;
 }
 
-// remvove the bios
+// reload the bios
+void Bios::Reload()
+{
+	if (biosFileName != NULL)
+	{
+		Load(biosFileName);
+	}
+}
+
+// remove the bios
 void Bios::Remove()
 {
 	// remove the bios from memory (TODO: not complete)

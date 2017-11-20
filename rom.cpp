@@ -66,6 +66,12 @@ bool Rom::Load(const char *fileName)
 	return loadResult;
 }
 
+// reload a rom
+void Rom::Reload()
+{
+	Rom::Load(currentRomFileName);
+}
+
 // close a rom
 void Rom::Close()
 {
