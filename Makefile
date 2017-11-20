@@ -2,9 +2,8 @@
 OBJS = main.cpp bit.cpp bios.cpp cpu.cpp interrupt.cpp lcd.cpp log.cpp memory.cpp rom.cpp timer.cpp imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_impl_sdl.cpp imgui/imgui_custom_extensions.cpp
 
 #CC specifies which compiler we're using
-CC = g++ --std=c++11 -Wall -Wextra -funroll-loops -O3
+CC = g++ --std=c++11 -Wall -Wextra -funroll-loops -O2
 
-#-O3
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -w suppresses all warnings
 #COMPILER_FLAGS = 

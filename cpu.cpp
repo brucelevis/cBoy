@@ -904,31 +904,34 @@ void Cpu::SetPC(WORD val)
 }
 
 // init cpu
-int Cpu::Init()
+int Cpu::Init(bool usingBios)
 {
 	// setup the memory viewer
 	memoryViewer.Rows = 4;
-	// init program counter
-	PC = 0x100;
 
-	//*
-	// init stack pointer
-	SP.reg = 0xFFFE;
-	// init registers
-	AF.reg = 0x01B0;
-	BC.reg = 0x0013;
-	DE.reg = 0x00D8;
-	HL.reg = 0x014D;
-	//*/
-
-	/*
-	// set for bios
-	AF.reg = 0x0000;
-	BC.reg = 0x0000;
-	DE.reg = 0x0000;
-	HL.reg = 0x0000;
-	SP.reg = 0x0000;
-	*/
+	// initialise certain vars to different values, if we're using the bios or not
+	if (usingBios)
+	{
+		// init program counter
+		PC = 0x0000;
+		AF.reg = 0x0000;
+		BC.reg = 0x0000;
+		DE.reg = 0x0000;
+		HL.reg = 0x0000;
+		SP.reg = 0x0000;
+	}
+	else
+	{
+		// init program counter
+		PC = 0x100;
+		// init stack pointer
+		SP.reg = 0xFFFE;
+		// init registers
+		AF.reg = 0x01B0;
+		BC.reg = 0x0013;
+		DE.reg = 0x00D8;
+		HL.reg = 0x014D;
+	}
 
 	// reset cycles
 	Cycles = 0;
@@ -959,8 +962,15 @@ int Cpu::Init()
 	Memory::Write(0xFF24, 0x77);
 	Memory::Write(0xFF25, 0xF3);
 	Memory::Write(0xFF26, 0xF1);
-	Memory::Write(0xFF40, 0x91);
-	//Memory::Write(0xFF40, 0x00); // for bios
+	// initialise certain vars to different values, if we're using the bios or not
+	if (usingBios)
+	{
+		Memory::Write(0xFF40, 0x00);
+	}
+	else
+	{
+		Memory::Write(0xFF40, 0x91);
+	}	
 	Memory::Write(0xFF41, 0x84); // new (stat reg)
 	Memory::Write(0xFF42, 0x00);
 	Memory::Write(0xFF43, 0x00);
@@ -976,7 +986,7 @@ int Cpu::Init()
 }
 
 // execute Opcode
-int Cpu::ExecuteOpcode()
+void Cpu::ExecuteOpcode()
 {
 	// get the current Opcode
 	BYTE Opcode = Memory::ReadByte(PC);
@@ -1509,8 +1519,6 @@ int Cpu::ExecuteOpcode()
 			Operation.PendingInterruptDisabled = false;
 		}
 	}
-
-	return Cycles;
 }
 
 // execute extended Opcode
@@ -1815,7 +1823,7 @@ void Cpu::ExecuteExtendedOpcode()
 int Cpu::ExecuteNextOpcode()
 {
 	// Execute the next Opcode
-	int cycles = ExecuteOpcode();
+	ExecuteOpcode();
 
 	return Cycles;
 }

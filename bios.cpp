@@ -8,9 +8,8 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#include "include/memory.h"
 #include "include/bios.h"
-#include "include/cpu.h"
+#include "include/memory.h"
 #include "include/log.h"
 
 // definitions
@@ -23,7 +22,7 @@ const char *Bios::biosFileName = NULL;
 bool Bios::Load(const char *fileName)
 {
 	// the result of the load
-	bool loadResult = true;
+	bool loadResult = false;
 
 	// open the gb bios
 	FILE *gbBios = fopen(fileName, "rb");
@@ -42,9 +41,6 @@ bool Bios::Load(const char *fileName)
 
 	// close the bios
 	fclose(gbBios);
-
-	// set the program counter to 0x00
-	Cpu::SetPC(0x00);
 	
 	return loadResult;
 }

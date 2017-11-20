@@ -17,8 +17,8 @@ typedef signed short SIGNED_WORD;
 class Cpu
 {
 	public:
-		static int Init();
-		static int ExecuteOpcode();
+		static int Init(bool usingBios);
+		static void ExecuteOpcode();
 		static void ExecuteExtendedOpcode();
 		static int ExecuteNextOpcode();
 		static WORD GetPC();

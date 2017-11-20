@@ -17,18 +17,14 @@
 #include "include/cpu.h"
 #include "include/interrupt.h"
 #include "include/lcd.h"
-#include "include/memory.h"
 #include "include/log.h"
+#include "include/memory.h"
 #include "include/rom.h"
 #include "include/timer.h"
 
-// breakpoint
-#define BREAKPOINT 0xC243
 // screen dimensions
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
-#define TARGET_FPS 59.73
-#define INTERVAL 1000
 // emulator name
 #define EMULATOR_NAME "cBoy: GameBoy Emulator"
 // emulator settings
@@ -42,20 +38,16 @@ static unsigned short breakpoint = 0;
 static bool stopAtBreakpoint = false;
 static char breakpointBuffer[256];
 static bool debuggerActive = !RELEASE_MODE;
+// did we load the bios
+static bool didLoadBios = false;
 // number of instructions ran
 static int instructionsRan = 0;
-// the current cycles
-static int currentCycles = 0;
 // has the user requested to quit the emulator?
 static bool shouldQuit = false;
 // the SDL window
 static SDL_Window* window = NULL;
 // the SDL GL context
 static SDL_GLContext glContext = NULL;
-// set the interval
-static int interval = (INTERVAL / TARGET_FPS);
-// the initial time
-static unsigned int initialTime = SDL_GetTicks();
 
 // init SDL
 static bool InitSDL()
@@ -145,15 +137,12 @@ static void EmulationLoop()
 	int cyclesThisUpdate = 0;
 	// reset Cpu cycles
 	Cpu::Cycles = 0;
-	currentCycles = 0;
 
 	if (stepThrough)
 	{
 		// execute the next opcode
 		int cycles = Cpu::ExecuteNextOpcode(); 
 		cyclesThisUpdate += cycles;
-		// store the current cycles
-		currentCycles += cycles;
 		// increment the instructions ran
 		instructionsRan++;
 
@@ -164,41 +153,30 @@ static void EmulationLoop()
 	}
 	else
 	{
-		// get the current time
-		unsigned int timeNow = SDL_GetTicks();
-
-		// limit to TARGET_FPS
-		if ((initialTime + interval) < timeNow)
+		// execute if within the max cycles for this update
+		while (cyclesThisUpdate < MAX_CYCLES)
 		{
-			// execute if within the max cycles for this update
-			while (cyclesThisUpdate < MAX_CYCLES)
+			// determine if we should stop execution at a specific breakpoint
+			if (stopAtBreakpoint && breakpoint != 0 && Cpu::GetPC() == breakpoint)
 			{
-				// determine if we should stop execution at a specific breakpoint
-				if (stopAtBreakpoint && breakpoint != 0 && Cpu::GetPC() == breakpoint)
-				{
-					// enable step through mode
-					stepThrough = true;
-					// break out of the loop
-					break;
-				}
-
-				// execute the next opcode
-				int cycles = Cpu::ExecuteNextOpcode(); 
-				cyclesThisUpdate += cycles;
-				// store the current cycles
-				currentCycles = cyclesThisUpdate - cycles;
-				// increment the instructions ran
-				instructionsRan++;
-
-				// update timers
-				Timer::Update(cycles);
-				// update graphics
-				Lcd::Render(cycles); // cycles * 4 shows the whole logo...
-				// service interupts
-				Interrupt::Service();
-				// update the time
-				initialTime = timeNow;
+				// enable step through mode
+				stepThrough = true;
+				// break out of the loop
+				break;
 			}
+
+			// execute the next opcode
+			int cycles = Cpu::ExecuteNextOpcode(); 
+			cyclesThisUpdate += cycles;
+			// increment the instructions ran
+			instructionsRan++;
+
+			// update timers
+			Timer::Update(cycles);
+			// update graphics
+			Lcd::Render(cycles);
+			// service interupts
+			Interrupt::Service();
 		}
 	}
 }
@@ -392,6 +370,8 @@ static void ShowDebuggerControlsWindow()
 	// if the "step" button is clicked
 	if (ImGui::IsItemClicked())
 	{
+		// enable step through mode
+		stepThrough = true;
 		EmulationLoop();
 	}
 
@@ -520,7 +500,9 @@ static void ShowDebuggerControlsWindow()
 		// reset the memory
 		Memory::Init();
 		// init the cpu again
-		Cpu::Init();
+		Cpu::Init(didLoadBios);
+		// init the timer
+		Timer::Init();
 		// reload the rom
 		Rom::Reload();
 		// reload the bios
@@ -614,6 +596,10 @@ static void StartMainLoop()
 		{
 			EmulationLoop();
 		}
+		else
+		{
+			Lcd::Render(Cpu::Cycles);
+		}
 
 		// flip buffers
 		SDL_GL_SwapWindow(window);
@@ -626,8 +612,6 @@ int main(int argc, char* args[])
 	// init SDL
 	if (InitSDL())
 	{
-		// init the Cpu
-		Cpu::Init();
 		// load rom
 		//Rom::Load("roms/Tetris.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
@@ -648,7 +632,12 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb");
 
 		// load bios
-		//Bios::Load("bios.bin");
+		didLoadBios = Bios::Load("bios.bin");
+
+		// init the Cpu
+		Cpu::Init(didLoadBios);
+		// init the timer
+		Timer::Init();
 		// init Lcd
 		Lcd::Init();
 		// execute the main loop
