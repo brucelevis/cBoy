@@ -275,7 +275,7 @@ void Cpu::COMPARE_8Bit(BYTE val, BYTE val2, int cycles)
 	// store the result of the calculation
 	BYTE result = (val - val2);
 
-	// reset the N flag
+	// set the N flag
 	SET_FLAG_N();
 
 	// set/unset the Z flag
@@ -295,6 +295,128 @@ void Cpu::RL(BYTE &val, bool checkForZero, int cycles)
 	// get the carry flag value
 	BYTE carryFlag = GET_FLAG_C();
 	// calculate the result
+	BYTE result = ((val << 1) + (carryFlag));
+
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	}
+	else
+	{
+		RESET_FLAG_Z();
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 7)) SET_FLAG_C(); else RESET_FLAG_C();
+
+	// rotate A left and put the old carry flag bit back into it
+	val = (result | carryFlag);
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate left (write to mem) (through carry)
+void Cpu::RL_Write(WORD address, bool checkForZero, int cycles)
+{
+	// get the carry flag value
+	BYTE carryFlag = GET_FLAG_C();
+	// calculate the result
+	BYTE result = ((Memory::ReadByte(address) << 1) + (carryFlag));
+
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	}
+	else
+	{
+		RESET_FLAG_Z();
+	}
+
+	// set the carry flag
+	if (Bit::Get(result, 7)) SET_FLAG_C(); else RESET_FLAG_C();
+
+	// write the result back to memory
+	Memory::Write(address, result);
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate right (through carry)
+void Cpu::RR(BYTE &val, bool checkForZero, int cycles)
+{
+	// get the carry flag value
+	BYTE carryFlag = GET_FLAG_C();
+	// calculate the result
+	BYTE result = ((val >> 1) + (carryFlag << 7));
+
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	}
+	else
+	{
+		RESET_FLAG_Z();
+	}
+
+	// set the carry flag
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
+
+	// set val to the result
+	val = result;
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate right (write to mem) (through carry)
+void Cpu::RR_Write(WORD address, bool checkForZero, int cycles)
+{
+	// get the carry flag value
+	BYTE carryFlag = GET_FLAG_C();
+	// calculate the result
+	BYTE result = ((Memory::ReadByte(address) >> 1) + (carryFlag << 7));
+
+	// reset the N & H flags
+	RESET_FLAG_N();
+	RESET_FLAG_H();
+
+	// if we should check for zero
+	if (checkForZero)
+	{
+		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	}
+	else
+	{
+		RESET_FLAG_Z();
+	}
+
+	// set the carry flag
+	if (Bit::Get(result, 0)) SET_FLAG_C(); else RESET_FLAG_C();
+
+	// write the result + carry flag back to memory
+	Memory::Write(address, (result | carryFlag));
+	// add the cycles
+	Cycles += cycles;
+}
+
+// rotate left (circular)
+void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
+{
+	// store the result of the calculation
 	BYTE result = (val << 1);
 
 	// reset the N & H flags
@@ -311,22 +433,29 @@ void Cpu::RL(BYTE &val, bool checkForZero, int cycles)
 		RESET_FLAG_Z();
 	}
 
-	// set the carry flag
-	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	// carry flag contains old bit 7 data
+	if (Bit::Get(val, 7))
+	{
+		SET_FLAG_C();
+	}
+	else
+	{
+		RESET_FLAG_C();
+	}
 
-	// rotate A left and put the old carry flag bit back into it
-	val = (result | carryFlag);
+	// set val to the result + carry		
+	val = (result | GET_FLAG_C());
 	// add the cycles
 	Cycles += cycles;
 }
 
-// rotate left (write to mem) (through carry)
-void Cpu::RL_Write(WORD address, bool checkForZero, int cycles)
+// rotate right (write to mem) (circular)
+void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
 {
-	// get the carry flag value
-	BYTE carryFlag = GET_FLAG_C();
-	// calculate the result
-	BYTE result = (Memory::ReadByte(address) << 1);
+	// the data
+	BYTE val = Memory::ReadByte(address);
+	// store the result of the calculation
+	BYTE result = (val << 1);
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -342,21 +471,26 @@ void Cpu::RL_Write(WORD address, bool checkForZero, int cycles)
 		RESET_FLAG_Z();
 	}
 
-	// set the carry flag
-	if (Bit::Get(result, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	// carry flag contains old bit 7 data
+	if (Bit::Get(val, 7))
+	{
+		SET_FLAG_C();
+	}
+	else
+	{
+		RESET_FLAG_C();
+	}
 
-	// write the result + carry flag back to memory
-	Memory::Write(address, (result | carryFlag));
+	// set val to the result + carry			
+	Memory::Write(address, (result | GET_FLAG_C()));
 	// add the cycles
 	Cycles += cycles;
 }
 
-// rotate right (through carry)
-void Cpu::RR(BYTE &val, bool checkForZero, int cycles)
+// rotate right (circular)
+void Cpu::RRC(BYTE &val, bool checkForZero, int cycles)
 {
-	// get the carry flag value
-	BYTE carryFlag = GET_FLAG_C();
-	// calculate the result
+	// store the result of the calculation
 	BYTE result = (val >> 1);
 
 	// reset the N & H flags
@@ -373,125 +507,11 @@ void Cpu::RR(BYTE &val, bool checkForZero, int cycles)
 		RESET_FLAG_Z();
 	}
 
-	// set the carry flag
-	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
-
-	// rotate A right and put the old carry flag bit back into it
-	val = (result | carryFlag);
-	// add the cycles
-	Cycles += cycles;
-}
-
-// rotate right (write to mem) (through carry)
-void Cpu::RR_Write(WORD address, bool checkForZero, int cycles)
-{
-	// get the carry flag value
-	BYTE carryFlag = GET_FLAG_C();
-	// calculate the result
-	BYTE result = (Memory::ReadByte(address) >> 1);
-
-	// reset the N & H flags
-	RESET_FLAG_N();
-	RESET_FLAG_H();
-
-	// if we should check for zero
-	if (checkForZero)
-	{
-		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
-	}
-	else
-	{
-		RESET_FLAG_Z();
-	}
-
-	// set the carry flag
-	if (Bit::Get(result, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
-
-	// write the result + carry flag back to memory
-	Memory::Write(address, (result | carryFlag));
-	// add the cycles
-	Cycles += cycles;
-}
-
-// rotate left (circular)
-void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
-{
-	// store the result of the calculation
-	BYTE result = ((val << 1) | (val >> 7));
-
-	// reset the N & H flags
-	RESET_FLAG_N();
-	RESET_FLAG_H();
-
-	// if we should check for zero
-	if (checkForZero)
-	{
-		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
-	}
-	else
-	{
-		RESET_FLAG_Z();
-	}
-
-	// rotate A left and put the carry flag bit back into it			
-	val = ((val << 1) | GET_FLAG_C());
-	// add the cycles
-	Cycles += cycles;
-}
-
-// rotate right (write to mem) (circular)
-void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
-{
-	// the data
-	BYTE val = Memory::ReadByte(address);
-	// store the result of the calculation
-	BYTE result = ((val << 1) | (val >> 7));
-
-	// reset the N & H flags
-	RESET_FLAG_N();
-	RESET_FLAG_H();
-
-	// if we should check for zero
-	if (checkForZero)
-	{
-		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
-	}
-	else
-	{
-		RESET_FLAG_Z();
-	}
-
-	// rotate A left and put the carry flag bit back into it			
-	Memory::Write(address, (result | GET_FLAG_C()));
-	// add the cycles
-	Cycles += cycles;
-}
-
-// rotate right (circular)
-void Cpu::RRC(BYTE &val, bool checkForZero, int cycles)
-{
-	// store the result of the calculation
-	BYTE result = ((val >> 1) | (val << 7));
-
-	// reset the N & H flags
-	RESET_FLAG_N();
-	RESET_FLAG_H();
-
-	// set carry flag
+	// carry flag contains old bit zero data
 	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// if we should check for zero
-	if (checkForZero)
-	{
-		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
-	}
-	else
-	{
-		RESET_FLAG_Z();
-	}
-
-	// rotate A right and put the carry flag bit back into it			
-	val = ((val >> 1) | GET_FLAG_C());
+	// set val to result + carry		
+	val = (result | GET_FLAG_C());
 	// add the cycles
 	Cycles += cycles;
 }
@@ -502,7 +522,7 @@ void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 	// the data
 	BYTE val = Memory::ReadByte(address);
 	// store the result of the calculation
-	BYTE result = ((val >> 1) | (val << 7));
+	BYTE result = (val >> 1);
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -518,7 +538,10 @@ void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 		RESET_FLAG_Z();
 	}
 
-	// rotate A left and put the carry flag bit back into it			
+	// carry flag contains old bit zero data
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
+
+	// set val to result + carry			
 	Memory::Write(address, (result | GET_FLAG_C()));
 	// add the cycles
 	Cycles += cycles;
@@ -537,9 +560,9 @@ void Cpu::SLA(BYTE &val, int cycles)
 	// set the Z flag if applicable
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::Get(val, 7)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// shift A left
+	// set val to the result
 	val = result;
 	// set LSB of val to 0
 	Bit::Reset(val, 0);
@@ -562,9 +585,9 @@ void Cpu::SLA_Write(WORD address, int cycles)
 	// set the Z flag if applicable
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 7) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::Get(val, 7)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// shift A left
+	// set val to the result
 	val = result;
 	// set LSB of val to 0
 	Bit::Reset(val, 0);
@@ -589,9 +612,9 @@ void Cpu::SRA(BYTE &val, int cycles)
 	// set the Z flag if applicable
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// shift A right
+	// set val to the result
 	val = result;
 	// set MSB back to its original value
 	if (oldMSB) Bit::Set(val, 7); else Bit::Reset(val, 7);
@@ -617,9 +640,9 @@ void Cpu::SRA_Write(WORD address, int cycles)
 	// set the Z flag if applicable
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// shift A right
+	// set val to the result
 	val = result;
 	// set MSB back to its original value
 	if (oldMSB) Bit::Set(val, 7); else Bit::Reset(val, 7);
@@ -631,7 +654,7 @@ void Cpu::SRA_Write(WORD address, int cycles)
 	Cycles += cycles;
 }
 
-// shift left (into carry) - MSB set to 0
+// shift right (into carry) - MSB set to 0
 void Cpu::SRL(BYTE &val, int cycles)
 {
 	// calculate the result
@@ -644,9 +667,9 @@ void Cpu::SRL(BYTE &val, int cycles)
 	// set the Z flag if applicable
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// shift A right
+	// set val to the result
 	val = result;
 	// set MSB to zero
 	Bit::Reset(val, 7);
@@ -655,7 +678,7 @@ void Cpu::SRL(BYTE &val, int cycles)
 	Cycles += cycles;
 }
 
-// shift left (into carry) write to mem - MSB set to 0
+// shift right (into carry) write to mem - MSB set to 0
 void Cpu::SRL_Write(WORD address, int cycles)
 {
 	// get the data
@@ -670,9 +693,9 @@ void Cpu::SRL_Write(WORD address, int cycles)
 	// set the Z flag if applicable
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// set the carry flag
-	if (Bit::Get(val, 0) != 0) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// shift A right
+	// set val to the result
 	val = result;
 	// set MSB to zero
 	Bit::Reset(val, 7);
@@ -1502,22 +1525,23 @@ void Cpu::ExecuteOpcode()
 	if (Operation.PendingInterruptEnabled)
 	{
 		// If the last instruction was to enable interrupts
-		if (Memory::ReadByte(PC - 1) != 0xFB)
-		{
+		//if (Memory::ReadByte(PC - 1) == 0xFB)
+		//{
 			Interrupt::MasterSwitch = true;
+			Log::Normal("!!!! ENABLING INTERRUPT MASTER SWITCH");
 			Operation.PendingInterruptEnabled = false;
-		}
+		//}
 	}
 
 	// disable interrupts if requested
 	if (Operation.PendingInterruptDisabled)
 	{
-		// If the last instruction was to enable interrupts
-		if (Memory::ReadByte(PC - 1) != 0xF3)
-		{
+		// If the last instruction was to disable interrupts
+		//if (Memory::ReadByte(PC - 1) == 0xF3)
+		//{
 			Interrupt::MasterSwitch = false;
 			Operation.PendingInterruptDisabled = false;
-		}
+		//}
 	}
 }
 
@@ -1831,49 +1855,74 @@ int Cpu::ExecuteNextOpcode()
 // save state
 void Cpu::SaveState()
 {
-	// save the below to a file
-	/*
+	// open/create the save state file
+	FILE *fp = fopen("state1.bin", "w");
 	// save registers
-	AF.reg;
-	BC.reg;
-	DE.reg;
-	HL.reg;
-	// save program counter
-	PC;
-	// save stack pointer
-	SP.reg;
-	// save cycles
-	Cycles = 0;
-	// save operations
-	Operation.PendingInterruptDisabled;
-	Operation.PendingInterruptEnabled;
-	Operation.Stop;
-	// save memory
-	*/
+	fprintf(fp, "%04X\n", AF.reg);
+	fprintf(fp, "%04X\n", BC.reg);
+	fprintf(fp, "%04X\n", DE.reg);
+	fprintf(fp, "%04X\n", HL.reg);
+	fprintf(fp, "%04X\n", PC);
+	fprintf(fp, "%04X\n", SP.reg);
+	// save misc
+	fprintf(fp, "%d\n", Interrupt::MasterSwitch);
+	fprintf(fp, "%d\n", Cycles);
+	fprintf(fp, "%d\n", Operation.PendingInterruptDisabled);
+	fprintf(fp, "%d\n", Operation.PendingInterruptEnabled);
+	fprintf(fp, "%d\n", Operation.Stop);
+	// save the memory
+	for (int i = 0x0000; i < 0x10000; i++)
+	{
+		fprintf(fp, "%02X\n", Memory::ReadByte(i));
+	}
+
+	// close the file
+	fclose(fp);
 }
 
 // load state
 void Cpu::LoadState()
 {
-	/*
-	// load the below from a file
-	// load registers
-	AF.reg = ;
-	BC.reg = ;
-	DE.reg = ;
-	HL.reg = ;
-	// load program counter
-	PC = ;
-	// load stack pointer
-	SP.reg = ;
-	// load cycles
-	Cycles = ;
-	// load operations
-	Operation.PendingInterruptDisabled = ;
-	Operation.PendingInterruptEnabled = ;
-	Operation.Stop = ;
-	// load memory
-	*/
+	// open the save state file
+	FILE *fp = fopen("state1.bin", "r");
+	// the value of the current data
+	char val[512];
+	// the current data index
+	WORD i = 0;
+
+	while(fscanf(fp, "%s\n", &val) != EOF)
+	{
+		if (i == 0)
+			AF.reg = (WORD)strtol(val, NULL, 16);
+		else if (i == 1)
+			BC.reg = (WORD)strtol(val, NULL, 16);
+		else if (i == 2)
+			DE.reg = (WORD)strtol(val, NULL, 16);
+		else if (i == 3)
+			HL.reg = (WORD)strtol(val, NULL, 16);
+		else if (i == 4)
+			PC = (WORD)strtol(val, NULL, 16);
+		else if (i == 5)
+			SP.reg = (WORD)strtol(val, NULL, 16);
+		else if (i == 6)
+			Interrupt::MasterSwitch = (int)strtol(val, NULL, 16);
+		else if (i == 7)
+			Cycles = (int)strtol(val, NULL, 16);
+		else if (i == 8)
+			Operation.PendingInterruptDisabled = (int)strtol(val, NULL, 16);
+		else if (i == 9)
+			Operation.PendingInterruptEnabled = (int)strtol(val, NULL, 16);
+		else if (i == 10)
+			Operation.Stop = (int)strtol(val, NULL, 16);
+		else if (i >= 11)
+			Memory::Write(0x0000 + (i - 11), (BYTE)strtol(val, NULL, 16));
+
+		// increment i
+		i++;
+	}
+
+	// close the file
+	fclose(fp);
 }
 
 // debugger
