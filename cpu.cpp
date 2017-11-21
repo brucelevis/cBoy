@@ -1888,7 +1888,7 @@ void Cpu::LoadState()
 	// the value of the current data
 	char val[512];
 	// the current data index
-	WORD i = 0;
+	int i = 0;
 
 	while(fscanf(fp, "%s\n", &val) != EOF)
 	{
