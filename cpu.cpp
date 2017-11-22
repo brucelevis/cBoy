@@ -966,7 +966,6 @@ int Cpu::Init(bool usingBios)
 	// reset cycles
 	Cycles = 0;
 	// reset operations
-	Operation.PendingInterruptDisabled = false;
 	Operation.PendingInterruptEnabled = false;
 	Operation.Stop = false;
 	Operation.Halt = false;
@@ -1515,7 +1514,7 @@ void Cpu::ExecuteOpcode()
 
 		case 0xF3: // DI
 		{
-			Operation.PendingInterruptDisabled = true;
+			Interrupt::MasterSwitch = false;
 			Cycles += 4;
 		}
 		break;
@@ -1540,23 +1539,6 @@ void Cpu::ExecuteOpcode()
 			Interrupt::MasterSwitch = true;
 			// disable pending interrupts
 			Operation.PendingInterruptEnabled = false;
-			// reset the interrupt counter
-			interruptCounter = 0;
-		}
-		// increment the interrupt counter
-		interruptCounter++;
-	}
-
-	// disable interrupts if requested
-	if (Operation.PendingInterruptDisabled)
-	{
-		// only enable the interrupt AFTER the next instruction has ran
-		if (interruptCounter == 2)
-		{
-			// enable the interrupt master switch
-			Interrupt::MasterSwitch = false;
-			// disable pending interrupts
-			Operation.PendingInterruptDisabled = false;
 			// reset the interrupt counter
 			interruptCounter = 0;
 		}
@@ -1878,7 +1860,6 @@ void Cpu::SaveState()
 	// save misc
 	fprintf(fp, "%d\n", Interrupt::MasterSwitch);
 	fprintf(fp, "%d\n", Cycles);
-	fprintf(fp, "%d\n", Operation.PendingInterruptDisabled);
 	fprintf(fp, "%d\n", Operation.PendingInterruptEnabled);
 	fprintf(fp, "%d\n", Operation.Stop);
 	// save the memory
@@ -1919,8 +1900,6 @@ void Cpu::LoadState()
 			Interrupt::MasterSwitch = (int)strtol(val, NULL, 16);
 		else if (i == 7)
 			Cycles = (int)strtol(val, NULL, 16);
-		else if (i == 8)
-			Operation.PendingInterruptDisabled = (int)strtol(val, NULL, 16);
 		else if (i == 9)
 			Operation.PendingInterruptEnabled = (int)strtol(val, NULL, 16);
 		else if (i == 10)

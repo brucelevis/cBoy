@@ -73,7 +73,6 @@ class Cpu
 
 	public:
 		struct Operations {
-			bool PendingInterruptDisabled;
 			bool PendingInterruptEnabled;
 			bool Stop;
 			bool Halt;
