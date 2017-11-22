@@ -45,28 +45,35 @@ void Interrupt::Request(int interruptId)
 // should we service the interrupt?
 int Interrupt::ShouldService()
 {
-	// If interrupts are enabled
-	if (MasterSwitch)
-	{
-		// get the request interrupt value
-		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
-		// get the interrupts enabled value
-		BYTE interruptsEnabled = Memory::ReadByte(INT_ENABLED_ADDRESS);
+	// get the request interrupt value
+	BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
+	// get the interrupts enabled value
+	BYTE interruptsEnabled = Memory::ReadByte(INT_ENABLED_ADDRESS);
 
-		// if the requested interupt isn't zero
-		if (requestedInterrupt > 0)
+	// if the requested interupt isn't zero
+	if (requestedInterrupt > 0)
+	{
+		// loop through the interrupts
+		for (int i = 0; i < 5; i++)
 		{
-			// loop through the interrupts
-			for (int i = 0; i < 5; i++)
+			// if the requested interrupt is on
+			if (Bit::Get(requestedInterrupt, i))
 			{
-				// if the requested interrupt is on
-				if (Bit::Get(requestedInterrupt, i))
+				// if interrupts are enabled
+				if (Bit::Get(interruptsEnabled, i))
 				{
-					// if interrupts are enabled
-					if (Bit::Get(interruptsEnabled, i))
+					// disable halt
+					Cpu::Operation.Halt = false;
+
+					// If interrupts are enabled
+					if (MasterSwitch)
 					{
 						// return the bit of the interrupt
 						return i;
+					}
+					else
+					{
+						return -1;
 					}
 				}
 			}
@@ -84,9 +91,7 @@ void Interrupt::Service()
 
 	// if we should service this interrupt
 	if (interruptId >= 0)
-	{	
-		// disable halt
-		Cpu::Operation.Halt = false;
+	{
 		// reset the requested interrupt
 		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
 		Bit::Reset(requestedInterrupt, interruptId);
