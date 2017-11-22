@@ -28,9 +28,11 @@ class Cpu
 		static void LoadState();
 
 	private:
-		static void ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry = false);
+		static void ADD_8Bit(BYTE &val, BYTE val2, int cycles);
+		static void ADC_8Bit(BYTE &val, BYTE val2, int cycles);
 		static void ADD_16Bit(WORD &val, WORD val2, int cycles);
-		static void SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry = false);
+		static void SUB_8Bit(BYTE &val, BYTE val2, int cycles);
+		static void SBC_8Bit(BYTE &val, BYTE val2, int cycles);
 		static void AND_8Bit(BYTE &val, BYTE val2, int cycles);
 		static void OR_8Bit(BYTE &val, BYTE val2, int cycles);
 		static void XOR_8Bit(BYTE &val, BYTE val2, int cycles);

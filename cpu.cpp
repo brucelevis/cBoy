@@ -58,12 +58,10 @@ static int interruptCounter = 0;
 static MemoryEditor memoryViewer;
 
 // add 8-bit
-void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
+void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles)
 {
-	// determine the value for addition
-	BYTE toAdd = (addCarry) ? (val2 + GET_FLAG_C()) : val2;
 	// store the result of the calculation
-	BYTE result = (val + toAdd);
+	BYTE result = (val + val2);
 
 	// reset the N flag
 	RESET_FLAG_N();
@@ -71,12 +69,45 @@ void Cpu::ADD_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// set/unset the Z flag
 	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, toAdd, 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
+	if (Bit::DidHalfCarry(val, val2, 0xF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
-	if (Bit::DidCarry((WORD)(val + toAdd), 0xFF)) SET_FLAG_C(); else RESET_FLAG_C();
+	if (Bit::DidCarry((WORD)(val + val2), 0xFF)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result
  	val = result;
+ 	// add the cycles
+	Cycles += cycles;
+}
+
+// add + carry 8-bit
+void Cpu::ADC_8Bit(BYTE &val, BYTE val2, int cycles)
+{
+	// get the value of the carry flag
+	BYTE carryFlag = GET_FLAG_C();
+	// should we set carry/half-carry?
+	bool setCarry = false;
+	bool setHalfCarry = false;
+	// store the result
+	BYTE result = (val + carryFlag + val2);
+
+	// reset the N flag
+	RESET_FLAG_N();
+	
+	// determine if we half carried
+	if (Bit::DidHalfCarry(val, carryFlag, 0xF)) setHalfCarry = true;
+	if (Bit::DidHalfCarry(val + carryFlag, val2, 0xF)) setHalfCarry = true;
+	// determine if we carried
+	if (Bit::DidCarry(val + carryFlag, 0xFF)) setCarry = true;
+	if (Bit::DidCarry(val + carryFlag + val2, 0xFF)) setCarry = true;
+
+	// set/unset the Z flag
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	// set/reset carry or half-carry
+	if (setCarry) SET_FLAG_C(); else RESET_FLAG_C();
+	if (setHalfCarry) SET_FLAG_H(); else RESET_FLAG_H();
+
+	// set val to the result
+	val = result;
  	// add the cycles
 	Cycles += cycles;
 }
@@ -102,12 +133,10 @@ void Cpu::ADD_16Bit(WORD &val, WORD val2, int cycles)
 }
 
 // sub 8-bit
-void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
+void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles)
 {
-	// determine the value for subtraction
-	BYTE toSubtract = (addCarry) ? (val2 + GET_FLAG_C()) : val2;
 	// store the result of the calculation
-	BYTE result = (val - toSubtract);
+	BYTE result = (val - val2);
 	
 	// set the N flag
 	SET_FLAG_N();
@@ -122,6 +151,39 @@ void Cpu::SUB_8Bit(BYTE &val, BYTE val2, int cycles, bool addCarry)
 	// set val to the result
 	val = result;
 	// add the cycles
+	Cycles += cycles;
+}
+
+// sub + carry 8-bit
+void Cpu::SBC_8Bit(BYTE &val, BYTE val2, int cycles)
+{
+	// get the value of the carry flag
+	BYTE carryFlag = GET_FLAG_C();
+	// should we set carry/half-carry?
+	bool setCarry = false;
+	bool setHalfCarry = false;
+	// store the result
+	BYTE result = (val - carryFlag - val2);
+
+	// set the N flag
+	SET_FLAG_N();
+	
+	// determine if we half carried
+	if ((val & 0xF) < (carryFlag & 0xF)) setHalfCarry = true;
+	if (((val - carryFlag) & 0xF) < (val2 & 0xF)) setHalfCarry = true;
+	// determine if we carried
+	if (val < carryFlag) setCarry = true;
+	if (val - carryFlag < val2) setCarry = true;
+
+	// set/unset the Z flag
+	if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+	// set/reset carry or half-carry
+	if (setCarry) SET_FLAG_C(); else RESET_FLAG_C();
+	if (setHalfCarry) SET_FLAG_H(); else RESET_FLAG_H();
+
+	// set val to the result
+	val = result;
+ 	// add the cycles
 	Cycles += cycles;
 }
 
@@ -1083,15 +1145,15 @@ void Cpu::ExecuteOpcode()
 		case 0x87: ADD_8Bit(AF.hi, AF.hi, 4); break; // ADD A,A
 		case 0xC6: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 4); PC++; break; // ADD A,d8
 		// 8-bit add + carry
-		case 0x88: ADD_8Bit(AF.hi, BC.hi, 4, true); break; // ADC A,B
-		case 0x89: ADD_8Bit(AF.hi, BC.lo, 4, true); break; // ADC A,C
-		case 0x8A: ADD_8Bit(AF.hi, DE.hi, 4, true); break; // ADC A,D
-		case 0x8B: ADD_8Bit(AF.hi, DE.lo, 4, true); break; // ADC A,E
-		case 0x8C: ADD_8Bit(AF.hi, HL.hi, 4, true); break; // ADC A,H
-		case 0x8D: ADD_8Bit(AF.hi, HL.lo, 4, true); break; // ADC A,L
-		case 0x8E: ADD_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8, true); break; // ADC A,(HL)
-		case 0x8F: ADD_8Bit(AF.hi, AF.hi, 4, true); break; // ADC A,A
-		case 0xCE: ADD_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // ADC A,d8
+		case 0x88: ADC_8Bit(AF.hi, BC.hi, 4); break; // ADC A,B
+		case 0x89: ADC_8Bit(AF.hi, BC.lo, 4); break; // ADC A,C
+		case 0x8A: ADC_8Bit(AF.hi, DE.hi, 4); break; // ADC A,D
+		case 0x8B: ADC_8Bit(AF.hi, DE.lo, 4); break; // ADC A,E
+		case 0x8C: ADC_8Bit(AF.hi, HL.hi, 4); break; // ADC A,H
+		case 0x8D: ADC_8Bit(AF.hi, HL.lo, 4); break; // ADC A,L
+		case 0x8E: ADC_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // ADC A,(HL)
+		case 0x8F: ADC_8Bit(AF.hi, AF.hi, 4); break; // ADC A,A
+		case 0xCE: ADC_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // ADC A,d8
 		// 16-bit add
 		case 0x09: ADD_16Bit(HL.reg, BC.reg, 8); break; // ADD HL,BC
 		case 0x19: ADD_16Bit(HL.reg, DE.reg, 8); break; // ADD HL,DE
@@ -1144,15 +1206,15 @@ void Cpu::ExecuteOpcode()
 		case 0x97: SUB_8Bit(AF.hi, AF.hi, 4); break; // SUB A
 		case 0xD6: SUB_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // SUB d8
 		// 8-bit sub + carry
-		case 0x98: SUB_8Bit(AF.hi, BC.hi, 4, true); break; // SBC A,B
-		case 0x99: SUB_8Bit(AF.hi, BC.lo, 4, true); break; // SBC A,C
-		case 0x9A: SUB_8Bit(AF.hi, DE.hi, 4, true); break; // SBC A,D
-		case 0x9B: SUB_8Bit(AF.hi, DE.lo, 4, true); break; // SBC A,E
-		case 0x9C: SUB_8Bit(AF.hi, HL.hi, 4, true); break; // SBC A,H
-		case 0x9D: SUB_8Bit(AF.hi, HL.lo, 4, true); break; // SBC A,L
-		case 0x9E: SUB_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8, true); break; // SBC A,(HL)
-		case 0x9F: SUB_8Bit(AF.hi, AF.hi, 4, true); break; // SBC A,A
-		case 0xDE: SUB_8Bit(AF.hi, Memory::ReadByte(PC), 8, true); PC++; break; // SBC A,d8
+		case 0x98: SBC_8Bit(AF.hi, BC.hi, 4); break; // SBC A,B
+		case 0x99: SBC_8Bit(AF.hi, BC.lo, 4); break; // SBC A,C
+		case 0x9A: SBC_8Bit(AF.hi, DE.hi, 4); break; // SBC A,D
+		case 0x9B: SBC_8Bit(AF.hi, DE.lo, 4); break; // SBC A,E
+		case 0x9C: SBC_8Bit(AF.hi, HL.hi, 4); break; // SBC A,H
+		case 0x9D: SBC_8Bit(AF.hi, HL.lo, 4); break; // SBC A,L
+		case 0x9E: SBC_8Bit(AF.hi, Memory::ReadByte(HL.reg), 8); break; // SBC A,(HL)
+		case 0x9F: SBC_8Bit(AF.hi, AF.hi, 4); break; // SBC A,A
+		case 0xDE: SBC_8Bit(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // SBC A,d8
 		// 8-bit and
 		case 0xA0: AND_8Bit(AF.hi, BC.hi, 4); break; // AND B
 		case 0xA1: AND_8Bit(AF.hi, BC.lo, 4); break; // AND C
