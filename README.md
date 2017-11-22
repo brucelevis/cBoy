@@ -6,9 +6,9 @@ This project is a "next step" project for me, after writing several [Chip8](http
 
 #### Screenshots:
 
-[url=https://allthepics.net/image/g2Hso][img]https://i.allthepics.net/2017/11/21/Screenshot-from-2017-11-21-17-07-10ccbc65c16126b60a.png[/img][/url]
+![Image 1](https://i.allthepics.net/2017/11/21/Screenshot-from-2017-11-21-17-07-10ccbc65c16126b60a.png)
 
-[url=https://allthepics.net/image/g28vL][img]https://i.allthepics.net/2017/11/21/Screenshot-from-2017-11-21-18-25-56c221288f58825380.png[/img][/url]
+![Image 2](https://i.allthepics.net/2017/11/21/Screenshot-from-2017-11-21-18-25-56c221288f58825380.png)
 
 #### Technology Used:
 
