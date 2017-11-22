@@ -1900,12 +1900,12 @@ void Cpu::LoadState()
 			Interrupt::MasterSwitch = (int)strtol(val, NULL, 16);
 		else if (i == 7)
 			Cycles = (int)strtol(val, NULL, 16);
-		else if (i == 9)
+		else if (i == 8)
 			Operation.PendingInterruptEnabled = (int)strtol(val, NULL, 16);
-		else if (i == 10)
+		else if (i == 9)
 			Operation.Stop = (int)strtol(val, NULL, 16);
-		else if (i >= 11)
-			Memory::Write(0x0000 + (i - 11), (BYTE)strtol(val, NULL, 16));
+		else if (i >= 10)
+			Memory::Write(0x0000 + (i - 10), (BYTE)strtol(val, NULL, 16));
 
 		// increment i
 		i++;
