@@ -30,6 +30,8 @@ Interrupt::Type Interrupt::InterruptList[4] = {
 
 // master switch is false initially
 bool Interrupt::MasterSwitch = false;
+// was the cpu in halt state
+static bool wasHalted = false;
 
 // request interrupt
 void Interrupt::Request(int interruptId)
@@ -62,6 +64,8 @@ int Interrupt::ShouldService()
 				// if interrupts are enabled
 				if (Bit::Get(interruptsEnabled, i))
 				{
+					// check if the cpu was halted
+					wasHalted = Cpu::Operation.Halt;
 					// disable halt
 					Cpu::Operation.Halt = false;
 
@@ -92,6 +96,8 @@ void Interrupt::Service()
 	// if we should service this interrupt
 	if (interruptId >= 0)
 	{
+		// interrupts take at least 20 cycles (+ 4 if in halt)
+		Cpu::Cycles += (wasHalted) ? 24 : 20;
 		// reset the requested interrupt
 		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
 		Bit::Reset(requestedInterrupt, interruptId);
@@ -100,6 +106,8 @@ void Interrupt::Service()
 		Cpu::PUSH(Cpu::GetPC());
 		// execute the interrupt
 		Cpu::SetPC(InterruptList[interruptId].address);
+		// reset the was halted bool
+		wasHalted = false;
 		// turn off the master interrupt switch
 		MasterSwitch = false;
 	}
