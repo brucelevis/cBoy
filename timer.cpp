@@ -20,49 +20,14 @@ typedef signed short SIGNED_WORD;
 // vars
 int Timer::TimerCounter = 0;
 int Timer::DividerCounter = 0;
-const int FREQUENCIES[4] = {1024, 16, 64, 256};
+static const int FREQUENCIES[4] = {1024, 16, 64, 256};
+static int didTimaOverflow = false;
 
 // init timer
 void Timer::Init()
 {
 	TimerCounter = FREQUENCIES[0];
 	DividerCounter = 0;
-}
-
-void Timer::Update(int clockCycles)
-{
-	// update the divider reg
-	UpdateDivider(clockCycles);
-
-	// if the clock is enabled
-	if (IsEnabled())
-	{
-		// decrement the timer
-		TimerCounter -= clockCycles;
-
-		// when the timer hits zero
-		if (TimerCounter <= 0)
-		{
-			// set the clock frequency
-			SetClockFrequency();
-
-			// TIMA overflow
-			if (Memory::ReadByte(TIMA_ADDRESS) >= 255)
-			{
-				// write the value of TMA to TIMA
-				Memory::Write(TIMA_ADDRESS, Memory::ReadByte(TMA_ADDRESS));
-				// request a timer interrupt
-				Interrupt::Request(Interrupt::IDS::TIMER);
-			}
-			else
-			{
-				// get the TIMA reg's current value
-				BYTE currentTIMA = Memory::ReadByte(TIMA_ADDRESS);
-				// write the new value to the tima reg
-				Memory::Write(TIMA_ADDRESS, currentTIMA++);
-			}
-		}
-	}
 }
 
 // check if the timer is enabled
@@ -99,10 +64,51 @@ void Timer::UpdateDivider(int clockCycles)
 	{
 		// reset the divider counter
 		DividerCounter = 0;
+		// increment the divider
+		Memory::Mem[DIVIDER_ADDRESS]++;
+	}
+}
 
-		// get the value of the divider reg
-		BYTE dividerReg = Memory::ReadByte(DIVIDER_ADDRESS);
-		// write the value of the divider reg plus one
-		Memory::Write(DIVIDER_ADDRESS, dividerReg++);
+// update the timer
+void Timer::Update(int clockCycles)
+{
+	// update the divider reg
+	UpdateDivider(clockCycles);
+
+	// if the clock is enabled
+	if (IsEnabled())
+	{
+		// decrement the timer
+		TimerCounter -= clockCycles;
+
+		// when the timer hits zero
+		if (TimerCounter <= 0)
+		{
+			// get the TIMA reg's current value
+			BYTE currentTIMA = Memory::ReadByte(TIMA_ADDRESS);
+
+			// TIMA overflow
+			if (Memory::ReadByte(TIMA_ADDRESS) >= 255)
+			{
+				didTimaOverflow = true;
+			}
+
+			// write the new value to the tima reg
+			Memory::Write(TIMA_ADDRESS, currentTIMA + 1);
+
+			// if TIMA overflowed
+			if (didTimaOverflow)
+			{
+				// write the value of TMA to TIMA
+				Memory::Write(TIMA_ADDRESS, Memory::ReadByte(TMA_ADDRESS));
+				// request a timer interrupt
+				Interrupt::Request(Interrupt::IDS::TIMER);
+				// reset the overflow bool
+				didTimaOverflow = false;
+			}
+
+			// set the clock frequency
+			SetClockFrequency();
+		}
 	}
 }

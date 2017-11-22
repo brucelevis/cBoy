@@ -11,6 +11,9 @@
 #include "include/lcd.h"
 #include "include/timer.h"
 
+//tmp
+#include "include/cpu.h"
+
 // definitions
 typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
@@ -60,11 +63,13 @@ void Memory::Write(WORD address, BYTE data)
 		// DMA
 		case 0xFF46:
 		{
+			// get the address
 			WORD address = (data << 8);
 
+			// write the data
 			for (WORD i = 0; i < 0xA0; i++)
 			{
-				Write(0xFE00 + i, ReadByte(address + i));
+				Mem[0xFE00 + i] = ReadByte(address + i);
 			}
 		}
 		break;
@@ -75,7 +80,7 @@ void Memory::Write(WORD address, BYTE data)
 			// get the current clock frequency
 			BYTE currentFrequency = Timer::GetClockFrequency();
 			// write the new TAC data
-			Mem[TAC_ADDRESS] = data;
+			Mem[address] = data;
 			// get the new clock frequency
 			BYTE newFrequency = Timer::GetClockFrequency();
 			// if the new frequency isn't equal to the current one
@@ -89,14 +94,14 @@ void Memory::Write(WORD address, BYTE data)
 		// reset divider if written to
 		case DIVIDER_ADDRESS:
 		{
-			Mem[DIVIDER_ADDRESS] = 0;
+			Mem[address] = 0;
 		}
 		break;
 
 		// reset current scanline if anything attempts to write to it
 		case LY_ADDRESS:
 		{
-			Mem[LY_ADDRESS] = 0x0;
+			Mem[address] = 0x0;
 		}
 		break;
 
@@ -104,34 +109,28 @@ void Memory::Write(WORD address, BYTE data)
 		case 0xFEA0 ... 0xFEFF:
 		{
 			// do nothing
-			Log::Critical("ATTEMPT TO WRITE TO PROTECTED MEMORY BLOCKED");
+			//Log::Critical("ATTEMPT TO WRITE TO PROTECTED MEMORY BLOCKED");
 		}
+		break;
+
+		// echo ram (1)
+		case 0xC000 ... 0xDE00:
+			Mem[address] = data;
+			Mem[address + 0x2000] = data;
+		break;
+
+		// echo ram (2)
+		case 0xE000 ... 0xFE00:
+			Mem[address] = data;
+			Mem[address - 0x2000] = data;
 		break;
 
 		// write
 		default:
 		{
-			// echo ram
-			if (address >= 0xC000 && address <= 0xDE00)
-			{
-				Mem[address] = data;
-				Mem[address + 0x2000] = data;
-			}
-			else if (address >= 0xE000 && address <= 0xFE00)
-			{
-				Mem[address] = data;
-				Mem[address - 0x2000] = data;
-			}
-
 			// wrte to memory
 			Mem[address] = data;
 		}
 		break;
 	}
-}
-
-// get memory
-BYTE * Memory::Get()
-{
-	return Mem;
 }

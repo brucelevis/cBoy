@@ -37,7 +37,7 @@ bool Rom::Load(const char *fileName)
 		loadResult = true;
 		// read the rom into memory
 		//fread(&Memory::Get()[0x00], 1, 0x3FFF, gbRom);
-		fread(&Memory::Get()[0x00], 1, 0x8000, gbRom);
+		fread(&Memory::Mem[0x00], 1, 0x8000, gbRom);
 
 		// Set the current rom name
 		currentRomFileName = fileName;

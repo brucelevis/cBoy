@@ -13,6 +13,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl.h"
 #include "imgui/imgui_custom_extensions.h"
+#include "tinyfiledialogs/tinyfiledialogs.h"
 #include "include/bios.h"
 #include "include/cpu.h"
 #include "include/interrupt.h"
@@ -28,7 +29,7 @@
 // emulator name
 #define EMULATOR_NAME "cBoy: GameBoy Emulator"
 // emulator settings
-#define MAX_CYCLES 70221 
+#define MAX_CYCLES 4194304 / 60 
 // are we in release mode?
 const bool RELEASE_MODE = false; 
 // should we step through instructions?
@@ -45,7 +46,7 @@ static int instructionsRan = 0;
 // has the user requested to quit the emulator?
 static bool shouldQuit = false;
 // the SDL window
-static SDL_Window* window = NULL;
+static SDL_Window *window = NULL;
 // the SDL GL context
 static SDL_GLContext glContext = NULL;
 
@@ -133,31 +134,17 @@ static void Close()
 // emulation loop
 static void EmulationLoop()
 {
-	// Cycles executed
-	int cyclesThisUpdate = 0;
 	// reset Cpu cycles
 	Cpu::Cycles = 0;
 
-	if (stepThrough)
-	{
-		// execute the next opcode
-		int cycles = Cpu::ExecuteNextOpcode(); 
-		cyclesThisUpdate += cycles;
-		// increment the instructions ran
-		instructionsRan++;
-
-		// update timers
-		Timer::Update(cycles);
-		// service interupts
-		Interrupt::Service();
-	}
-	else
+	// if we're not stepping through
+	if (!stepThrough)
 	{
 		// execute if within the max cycles for this update
-		while (cyclesThisUpdate < MAX_CYCLES)
+		while (Cpu::Cycles < MAX_CYCLES)
 		{
 			// determine if we should stop execution at a specific breakpoint
-			if (stopAtBreakpoint && breakpoint != 0 && Cpu::GetPC() == breakpoint)
+			if (stopAtBreakpoint && Cpu::GetPC() == breakpoint)
 			{
 				// enable step through mode
 				stepThrough = true;
@@ -165,20 +152,59 @@ static void EmulationLoop()
 				break;
 			}
 
-			// execute the next opcode
-			int cycles = Cpu::ExecuteNextOpcode(); 
-			cyclesThisUpdate += cycles;
-			// increment the instructions ran
-			instructionsRan++;
-
-			// update timers
-			Timer::Update(cycles);
-			// update graphics
-			Lcd::Render(cycles);
 			// service interupts
 			Interrupt::Service();
+			// execute the next opcode
+			Cpu::ExecuteOpcode();
+			// update timers
+			Timer::Update(Cpu::Cycles);
+			// update graphics
+			Lcd::Render(Cpu::Cycles);
+			// increment the instructions ran
+			instructionsRan++;
 		}
 	}
+	// stepping through
+	else
+	{
+		// service interupts
+		Interrupt::Service();
+		// execute the next opcode
+		Cpu::ExecuteOpcode();
+		// update timers
+		Timer::Update(Cpu::Cycles);
+		// increment the instructions ran
+		instructionsRan++;
+	}
+}
+
+// reset GameBoy
+static void ResetGameBoy(bool reloadRom)
+{
+	// we no longer want to stop at the breakpoint
+	stopAtBreakpoint = false;
+	// enable step through mode
+	stepThrough = true;
+	// reset the instructions ran
+	instructionsRan = 0;
+	// reset the memory
+	Memory::Init();
+	// init the cpu again
+	Cpu::Init(didLoadBios);
+	// init the timer
+	Timer::Init();
+	// reload the rom
+	if (reloadRom)
+	{
+		Rom::Reload();
+	}
+	// reload the bios
+	if (didLoadBios)
+	{
+		Bios::Reload();
+	}
+	// reset the lcd
+	Lcd::Reset();
 }
 
 // show the rom info window
@@ -229,101 +255,16 @@ static void ShowFileWindow()
 	// if the "open" button is clicked
 	if (ImGui::IsItemClicked())
 	{
-		//ImGui::OpenPopup("File Browser");
-
-		// open the file browser popup
-		// popen doesn't seem to contain valid data...		
-		/*
-		FILE *file = popen("zenity --file-selection --file-filter='*.gb *.bin'", "r");
-		if (file)
-		{
-			static char fileBuffer[0x8000] = {0};
-			fgets(fileBuffer, 0x8000, file);
-			pclose(file);
-		}
-		*/
-
-		// show a zenity file browser window, and write the file path to a file
-		// this works, but crashes when passed to rom::load()
-		/*
-		system("zenity --file-selection --file-filter='*.gb *.bin' > filePath.txt");
-		FILE *fileName = fopen("filePath.txt", "r");
-		fseek(fileName, 0L, SEEK_END);
-		long len = ftell(fileName);
-		rewind(fileName);
-
-		char ff = (char *)malloc(len + 1);
-		fread(ff, 1, len, fileName);
-
-		//fread(file, 1, 1024, fileName);
-		fclose(fileName);
-
-		printf("file len: %ld | path: %s\n", len, ff);
-		//Rom::Load(ff);
-		*/
-	}
-
-	// breakpoint error popup
-	if (ImGui::BeginPopupModal("File Browser", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
-	{
-		// set the window size
-		ImGui::SetWindowSize("File Browser", ImVec2(230, 210));
-
-		// invalid breakpoint text
-		//ImGuiExtensions::TextWithColors("{FF0000}Select Rom file (.gb, .bin)");
-
-		//if ((dir = opendir(cwd)))
-		//{
-		/*
-			while (ent == readdir(opendir(cwd)))
-			{
-				ImGui::Text("%s", ent->d_name);
-			}
-			closedir(dir);*/
-		//}
-		//else
-		//{
-		//	printf("could not open dir\n");
-		//}
-
-
-		/*
-		//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.6f));
-		//ImGui::TextUnformatted("Test file one."); ImGui::SameLine();
-		//ImGui::PopStyleColor();
-
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-			ImGui::Indent(-1700.f); ImGui::TextUnformatted("Test file one.");
-			ImGui::PopStyleColor();
-			ImGui::Unindent(-1700.f);
-		}*/
-		
-		// if the "ok" button is clicked
-		if (ImGui::IsItemClicked())
-		{
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-			ImGui::PopStyleColor();
-			//ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 255, 255, 255));
-			printf("text is clicked\n");
-		}
-
-		ImGui::NewLine();
-
-		// load button
-		ImGui::Button("Load", ImVec2(200, 0));
-
-		// if the "load" button is clicked
-		if (ImGui::IsItemClicked())
-		{
-			// load the rom
-
-			// close the popup
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
+		// valid file extensions
+		char const *validExtensions[2] = {"*.gb", "*.bin"};
+		// the filename
+		char const *fileName;
+		// open the file dialog
+		fileName = tinyfd_openFileDialog("Select Rom", "", 2, validExtensions, NULL, 0);
+		// reset the gameboy
+		ResetGameBoy(false);
+		// load the new game
+		Rom::Load(fileName);
 	}
 
 	// save state button
@@ -491,24 +432,7 @@ static void ShowDebuggerControlsWindow()
 	// see if the "reset" button is clicked
 	if (ImGui::IsItemClicked())
 	{
-		// we no longer want to stop at the breakpoint
-		stopAtBreakpoint = false;
-		// enable step through mode
-		stepThrough = true;
-		// reset the instructions ran
-		instructionsRan = 0;
-		// reset the memory
-		Memory::Init();
-		// init the cpu again
-		Cpu::Init(didLoadBios);
-		// init the timer
-		Timer::Init();
-		// reload the rom
-		Rom::Reload();
-		// reload the bios
-		Bios::Reload();
-		// reset the lcd
-		Lcd::Reset();
+		ResetGameBoy(true);
 	}
 
 	// display the number of instructions ran
@@ -538,7 +462,6 @@ static void StartMainLoop()
 			{
 				case SDL_QUIT: // user quit
 					shouldQuit = true;
-
 				break;
 
             	// key down event
@@ -613,26 +536,27 @@ int main(int argc, char* args[])
 	if (InitSDL())
 	{
 		// load rom
-		//Rom::Load("roms/Tetris.gb");
+		Rom::Load("roms/Tetris.gb");
+		//Rom::Load("roms/dr_mario.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 		//Rom::Load("roms/tests/big_scroller.gb");
 		//Rom::Load("roms/tests/bgbtest.gb");
 
 		// individual cpu instruction tests
-		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails      
-		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); 
-		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); // doesn't finish
-		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // doesn't finish
-		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb");
-		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb");
-		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // test this against the other emu
-		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb");
-		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb");
-		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb");
-		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb");
+		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails on DAA   
+		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); // failed, timer doesn't work, failed #4
+		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); //failed
+		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // passes!
+		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // passes!
+		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // passes!
+		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb"); // fails
 
 		// load bios
-		didLoadBios = Bios::Load("bios.bin");
+		//didLoadBios = Bios::Load("bios.bin");
 
 		// init the Cpu
 		Cpu::Init(didLoadBios);

@@ -15,20 +15,21 @@
 #include "include/lcd.h"
 #include "include/log.h"
 #include "include/memory.h"
+#include "include/timer.h"
 
 // definitions
 typedef unsigned char BYTE;
 typedef signed char SIGNED_BYTE;
 typedef unsigned short WORD;
 typedef signed short SIGNED_WORD;
-// set flag
+// set flags
 #define FLAG_Z 7
 #define FLAG_N 6
 #define FLAG_H 5
 #define FLAG_C 4
 // ## macros ## //
 
-// flags
+// flag macros
 #define GET_FLAG_Z() Bit::Get(AF.lo, FLAG_Z)
 #define GET_FLAG_N() Bit::Get(AF.lo, FLAG_N)
 #define GET_FLAG_H() Bit::Get(AF.lo, FLAG_H)
@@ -51,6 +52,8 @@ Cpu::Registers Cpu::DE = {};
 Cpu::Registers Cpu::HL = {};
 Cpu::Operations Cpu::Operation = {};
 int Cpu::Cycles = 0;
+// counter to enable pending interrupts
+static int interruptCounter = 0;
 // debug memory viewer
 static MemoryEditor memoryViewer;
 
@@ -265,6 +268,7 @@ void Cpu::WRITE_8Bit(WORD address, BYTE val, int cycles)
 {
 	// write val to address
 	Memory::Write(address, val);
+
 	// add the cycles
 	Cycles += cycles;
 }
@@ -347,6 +351,7 @@ void Cpu::RL_Write(WORD address, bool checkForZero, int cycles)
 
 	// write the result back to memory
 	Memory::Write(address, result);
+
 	// add the cycles
 	Cycles += cycles;
 }
@@ -409,6 +414,7 @@ void Cpu::RR_Write(WORD address, bool checkForZero, int cycles)
 
 	// write the result + carry flag back to memory
 	Memory::Write(address, (result | carryFlag));
+
 	// add the cycles
 	Cycles += cycles;
 }
@@ -898,6 +904,7 @@ void Cpu::PUSH(WORD data)
 	// get the hi and lo bytes
 	BYTE hi = (data >> 8);
 	BYTE lo = (data & 0xFF);
+
 	// write the data to the stack
 	Memory::Write(--SP.reg, hi);
 	Memory::Write(--SP.reg, lo);
@@ -962,8 +969,8 @@ int Cpu::Init(bool usingBios)
 	Operation.PendingInterruptDisabled = false;
 	Operation.PendingInterruptEnabled = false;
 	Operation.Stop = false;
+	Operation.Halt = false;
 	// init memory
-	//Memory::Write(0xFF00, 0xFF);
 	Memory::Write(0xFF05, 0x00);
 	Memory::Write(0xFF06, 0x00);
 	Memory::Write(0xFF07, 0x00);
@@ -994,7 +1001,7 @@ int Cpu::Init(bool usingBios)
 	{
 		Memory::Write(0xFF40, 0x91);
 	}	
-	Memory::Write(0xFF41, 0x84); // new (stat reg)
+	Memory::Write(0xFF41, 0x84);
 	Memory::Write(0xFF42, 0x00);
 	Memory::Write(0xFF43, 0x00);
 	Memory::Write(0xFF45, 0x00);
@@ -1014,15 +1021,14 @@ void Cpu::ExecuteOpcode()
 	// get the current Opcode
 	BYTE Opcode = Memory::ReadByte(PC);
 
-	Log::ToFile(PC, Opcode);
+	//Log::ToFile(PC, Opcode);
+	//Log::ExecutedOpcode(Opcode);
 
 	// increment the program counter
-	if (!Operation.Stop)
+	if (!Operation.Stop && !Operation.Halt)
 	{
 		PC++;
 	}
-
-	//Log::ExecutedOpcode(Opcode);
 
 	// handle the Opcode
 	switch(Opcode)
@@ -1037,7 +1043,7 @@ void Cpu::ExecuteOpcode()
 			Cycles += 12;
 		break;
 		case 0x76: // HALT
-			Operation.Stop = true;
+			Operation.Halt = true;
 			Cycles += 4;
 		break;
 		case 0x2F: // CPL
@@ -1210,6 +1216,7 @@ void Cpu::ExecuteOpcode()
 
 			// write the result back to memory
 			Memory::Write(HL.reg, result);
+
 			Cycles += 12;
 		}
 		break;
@@ -1251,6 +1258,7 @@ void Cpu::ExecuteOpcode()
 
 			// write the result back to memory
 			Memory::Write(HL.reg, result);
+
 			Cycles += 12;
 		}
 		break;
@@ -1339,7 +1347,7 @@ void Cpu::ExecuteOpcode()
 		case 0x7F: LOAD_8Bit(AF.hi, AF.hi, 4); break; // LD A,A
 		case 0xFA: LOAD_8Bit(AF.hi, Memory::ReadByte(Memory::ReadWord(PC)), 16); PC += 2; break; // LD A,(a16)
 		case 0xF2: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); break; // LD A,(C)
-		case 0xF0: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); /*Log::Critical("Loading data into a from address %04x", 0xFF00 + Memory::ReadByte(PC));*/ PC++; break; // LDH A,(a8)
+		case 0xF0: LOAD_8Bit(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); PC++; break; // LDH A,(a8)
 		// 16-bit load
 		case 0x01: LOAD_16Bit(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
 		case 0x11: LOAD_16Bit(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
@@ -1372,6 +1380,7 @@ void Cpu::ExecuteOpcode()
 			// write SP to memory
 			Memory::Write(nn, SP.hi);
 			Memory::Write(nn + 1, SP.lo);
+
 			// increment PC
 			PC += 2;
 			Cycles += 20;
@@ -1392,7 +1401,7 @@ void Cpu::ExecuteOpcode()
 		case 0x77: WRITE_8Bit(HL.reg, AF.hi, 8); break; // LD (HL),A
 		case 0xE2: WRITE_8Bit(0xFF00 + BC.lo, AF.hi, 12); break; // LD (C),A
 		case 0xEA: WRITE_8Bit(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
-		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); /*Log::Critical("Writing to address %04x", 0xFF00 + Memory::ReadByte(PC));*/ PC++; break; // LDH (a8),A
+		case 0xE0: WRITE_8Bit(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC++; break; // LDH (a8),A
 		// rotates
 		case 0x07: RLC(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: RRC(AF.hi, false, 4); break; // RRC, A
@@ -1423,7 +1432,7 @@ void Cpu::ExecuteOpcode()
 		case 0xC8: RETURN(GET_FLAG_Z(), 8); break; // RET Z
 		case 0xD0: RETURN(!GET_FLAG_C(), 8); break; // RET NC
 		case 0xD8: RETURN(GET_FLAG_C(), 8); break;  // RET C
-		case 0xD9: RETURN(true, 16); Interrupt::MasterSwitch = true; break; // RETI
+		case 0xD9: RETURN(true, 16); Interrupt::MasterSwitch = true; /*NOTE: This breaks tetris and dr.mario ?? enabling the interrupt master switch*/ break; // RETI
 		// restarts
 		case 0xC7: RESTART(0x00, 16); break; // RST 00H
 		case 0xCF: RESTART(0x08, 16); break; // RST 08H
@@ -1513,7 +1522,7 @@ void Cpu::ExecuteOpcode()
 
 		case 0xFB: // EI
 		{
-			Operation.PendingInterruptEnabled = true; // note: enabled on the next instruction
+			Operation.PendingInterruptEnabled = true;
 			Cycles += 4;
 		}
 		break;
@@ -1524,24 +1533,35 @@ void Cpu::ExecuteOpcode()
 	// enable interrupts if requested
 	if (Operation.PendingInterruptEnabled)
 	{
-		// If the last instruction was to enable interrupts
-		//if (Memory::ReadByte(PC - 1) == 0xFB)
-		//{
+		// only enable the interrupt AFTER the next instruction has ran
+		if (interruptCounter == 2)
+		{
+			// enable the interrupt master switch
 			Interrupt::MasterSwitch = true;
-			Log::Normal("!!!! ENABLING INTERRUPT MASTER SWITCH");
+			// disable pending interrupts
 			Operation.PendingInterruptEnabled = false;
-		//}
+			// reset the interrupt counter
+			interruptCounter = 0;
+		}
+		// increment the interrupt counter
+		interruptCounter++;
 	}
 
 	// disable interrupts if requested
 	if (Operation.PendingInterruptDisabled)
 	{
-		// If the last instruction was to disable interrupts
-		//if (Memory::ReadByte(PC - 1) == 0xF3)
-		//{
+		// only enable the interrupt AFTER the next instruction has ran
+		if (interruptCounter == 2)
+		{
+			// enable the interrupt master switch
 			Interrupt::MasterSwitch = false;
+			// disable pending interrupts
 			Operation.PendingInterruptDisabled = false;
-		//}
+			// reset the interrupt counter
+			interruptCounter = 0;
+		}
+		// increment the interrupt counter
+		interruptCounter++;
 	}
 }
 
@@ -1843,15 +1863,6 @@ void Cpu::ExecuteExtendedOpcode()
 	}
 }
 
-// execute cycle
-int Cpu::ExecuteNextOpcode()
-{
-	// Execute the next Opcode
-	ExecuteOpcode();
-
-	return Cycles;
-}
-
 // save state
 void Cpu::SaveState()
 {
@@ -1949,6 +1960,9 @@ void Cpu::Debugger()
 	ImGuiExtensions::TextWithColors("{FF0000}IE:   {FFFFFF}%02X", Memory::ReadByte(INT_ENABLED_ADDRESS)); ImGui::Unindent(80.f);
 	ImGuiExtensions::TextWithColors("{FF0000}PC: {FFFFFF}%04X", PC); ImGui::SameLine(); ImGui::SameLine(); ImGui::Indent(80.f);
 	ImGuiExtensions::TextWithColors("{FF0000}IF:   {FFFFFF}%02X", Memory::ReadByte(INT_REQUEST_ADDRESS)); ImGui::Unindent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}TMA:  {FFFFFF}%02X", Memory::ReadByte(TIMA_ADDRESS));  ImGui::SameLine();ImGui::Indent(80.f);
+	ImGuiExtensions::TextWithColors("{FF0000}DIV:  {FFFFFF}%02X", Memory::ReadByte(DIVIDER_ADDRESS)); ImGui::Unindent(80.f);
+	// flags
 	ImGui::Checkbox("Z", &FlagZ); ImGui::SameLine();
 	ImGui::Checkbox("N", &FlagN); ImGui::SameLine();
 	ImGui::Checkbox("H", &FlagH);
@@ -1991,9 +2005,21 @@ void Cpu::Debugger()
 		// print the value at the address
 		ImGuiExtensions::TextWithColors("{FF0000}%04X: {FFFFFF}%02X", i, Memory::ReadByte(i));
 	}
+
+	// print the category
+	ImGui::NewLine();
+	ImGuiExtensions::TextWithColors("{77FF77}WRAM");
+	ImGui::NewLine();
+
+	// work ram
+	for (WORD i = 0xDE00; i >= 0xC000; --i)
+	{
+		// print the value at the address
+		ImGuiExtensions::TextWithColors("{FF0000}%04X: {FFFFFF}%02X", i, Memory::ReadByte(i));
+	}
 	ImGui::End();
 
 	// memory viewer window
-	memoryViewer.DrawWindow("Memory Editor", Memory::Get(), 0x10000, 0x0000);
+	memoryViewer.DrawWindow("Memory Editor", Memory::Mem, 0x10000, 0x0000);
 	memoryViewer.GotoAddrAndHighlight(PC, PC);
 }

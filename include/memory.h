@@ -21,9 +21,8 @@ class Memory
 		static BYTE ReadByte(WORD address);
 		static WORD ReadWord(WORD address);
 		static void Write(WORD address, BYTE data);
-		static BYTE * Get();
 
-	private:
+	public:
 		static BYTE Mem[0x10000];
 };
 

@@ -39,11 +39,9 @@ class Lcd
 		static int DrawTiles();
 		static int DrawSprites();
 		static void DrawScanline();
+		static void DrawScreen();
 		static int Update(int cycles);
-		static void Render(int cycles);
-
-	private:
-		
+		static void Render(int cycles);		
 
 	private:
 		static BYTE Screen[144][160][3];

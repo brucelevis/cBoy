@@ -34,7 +34,7 @@ bool Bios::Load(const char *fileName)
 		// the bios was loaded successfully
 		loadResult = true;
 		// read the bios into memory
-		fread(&Memory::Get()[0x00], 1, 0x100, gbBios);
+		fread(&Memory::Mem[0x00], 1, 0x100, gbBios);
 		// set the bios filename
 		biosFileName = fileName;
 	}

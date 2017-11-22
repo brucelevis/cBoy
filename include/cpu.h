@@ -20,7 +20,6 @@ class Cpu
 		static int Init(bool usingBios);
 		static void ExecuteOpcode();
 		static void ExecuteExtendedOpcode();
-		static int ExecuteNextOpcode();
 		static WORD GetPC();
 		static void SetPC(WORD val);
 		static void PUSH(WORD data);
@@ -77,6 +76,7 @@ class Cpu
 			bool PendingInterruptDisabled;
 			bool PendingInterruptEnabled;
 			bool Stop;
+			bool Halt;
 		};
 		static Operations Operation;
 		static int Cycles;

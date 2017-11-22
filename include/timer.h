@@ -14,7 +14,6 @@ typedef unsigned short WORD;
 #define TAC_ADDRESS 0xFF07
 #define TMA_ADDRESS 0xFF06
 #define DIVIDER_ADDRESS 0xFF04
-#define CLOCK_SPEED 4194304
 
 // timer class
 class Timer
