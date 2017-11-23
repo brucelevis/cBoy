@@ -333,7 +333,7 @@ void Ops::Math::SixteenBit::Add(WORD &val, WORD val2, int cycles)
 void Ops::Math::SixteenBit::Dec(WORD &val, int cycles)
 {
 	// decrement val
-	val--;
+	val -= 1;
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -342,7 +342,7 @@ void Ops::Math::SixteenBit::Dec(WORD &val, int cycles)
 void Ops::Math::SixteenBit::Inc(WORD &val, int cycles)
 {
 	// increment val
-	val++;
+	val += 1;
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }

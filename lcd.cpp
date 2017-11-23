@@ -42,7 +42,7 @@ void Lcd::Reset()
 	// set the screen to white
 	for (int y = 0; y < 144; y++)
 	{
-		for (int x = 0; x < 160; x ++)
+		for (int x = 0; x < 160; x++)
 		{
 			Screen[y][x][0] = 224;
 			Screen[y][x][1] = 248;
@@ -325,7 +325,7 @@ int Lcd::Update(int cycles)
 	if (ScanlineCounter <= 0)
 	{
 		// increment the scanline
-		Memory::Mem[LY_ADDRESS]++;
+		Memory::Mem[LY_ADDRESS] += 1;
 		// get the current scanline value
 		BYTE currentScanline = Memory::ReadByte(LY_ADDRESS);
 

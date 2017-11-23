@@ -59,7 +59,7 @@ void Timer::UpdateDivider(int clockCycles)
 		// reset the divider counter
 		DividerCounter = 0;
 		// increment the divider
-		Memory::Mem[DIVIDER_ADDRESS]++;
+		Memory::Mem[DIVIDER_ADDRESS] += 1;
 	}
 }
 
@@ -82,7 +82,7 @@ void Timer::Update(int clockCycles)
 			BYTE currentTIMA = Memory::ReadByte(TIMA_ADDRESS);
 
 			// TIMA overflow
-			if (Memory::ReadByte(TIMA_ADDRESS) >= 255)
+			if (Memory::ReadByte(TIMA_ADDRESS) >= 0xFF)
 			{
 				didTimaOverflow = true;
 			}

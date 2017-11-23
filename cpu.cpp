@@ -240,7 +240,7 @@ void Cpu::ExecuteOpcode()
 	// increment the program counter
 	if (!Operation.Stop && !Operation.Halt)
 	{
-		PC++;
+		PC += 1;
 	}
 
 	// handle the Opcode
@@ -295,7 +295,7 @@ void Cpu::ExecuteOpcode()
 		case 0x85: Ops::Math::EightBit::Add(AF.hi, HL.lo, 4); break; // ADD A,L
 		case 0x86: Ops::Math::EightBit::Add(AF.hi, Memory::ReadByte(HL.reg), 8); break; // ADD A,(HL)
 		case 0x87: Ops::Math::EightBit::Add(AF.hi, AF.hi, 4); break; // ADD A,A
-		case 0xC6: Ops::Math::EightBit::Add(AF.hi, Memory::ReadByte(PC), 4); PC++; break; // ADD A,d8
+		case 0xC6: Ops::Math::EightBit::Add(AF.hi, Memory::ReadByte(PC), 4); PC += 1; break; // ADD A,d8
 		// 8-bit add + carry
 		case 0x88: Ops::Math::EightBit::AddCarry(AF.hi, BC.hi, 4); break; // ADC A,B
 		case 0x89: Ops::Math::EightBit::AddCarry(AF.hi, BC.lo, 4); break; // ADC A,C
@@ -305,7 +305,7 @@ void Cpu::ExecuteOpcode()
 		case 0x8D: Ops::Math::EightBit::AddCarry(AF.hi, HL.lo, 4); break; // ADC A,L
 		case 0x8E: Ops::Math::EightBit::AddCarry(AF.hi, Memory::ReadByte(HL.reg), 8); break; // ADC A,(HL)
 		case 0x8F: Ops::Math::EightBit::AddCarry(AF.hi, AF.hi, 4); break; // ADC A,A
-		case 0xCE: Ops::Math::EightBit::AddCarry(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // ADC A,d8
+		case 0xCE: Ops::Math::EightBit::AddCarry(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // ADC A,d8
 		// 16-bit add
 		case 0x09: Ops::Math::SixteenBit::Add(HL.reg, BC.reg, 8); break; // ADD HL,BC
 		case 0x19: Ops::Math::SixteenBit::Add(HL.reg, DE.reg, 8); break; // ADD HL,DE
@@ -327,7 +327,7 @@ void Cpu::ExecuteOpcode()
 			// add nn to SP
 			SP.reg = (WORD)(SP.reg + nn);
 			// increment the program counter
-			PC++;
+			PC += 1;
 			// increment cycles
 			Cycles += 16;
 		}
@@ -341,7 +341,7 @@ void Cpu::ExecuteOpcode()
 		case 0x95: Ops::Math::EightBit::Sub(AF.hi, HL.lo, 4); break; // SUB L
 		case 0x96: Ops::Math::EightBit::Sub(AF.hi, Memory::ReadByte(HL.reg), 8); break; // SUB (HL)
 		case 0x97: Ops::Math::EightBit::Sub(AF.hi, AF.hi, 4); break; // SUB A
-		case 0xD6: Ops::Math::EightBit::Sub(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // SUB d8
+		case 0xD6: Ops::Math::EightBit::Sub(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // SUB d8
 		// 8-bit sub + carry
 		case 0x98: Ops::Math::EightBit::SubCarry(AF.hi, BC.hi, 4); break; // SBC A,B
 		case 0x99: Ops::Math::EightBit::SubCarry(AF.hi, BC.lo, 4); break; // SBC A,C
@@ -351,7 +351,7 @@ void Cpu::ExecuteOpcode()
 		case 0x9D: Ops::Math::EightBit::SubCarry(AF.hi, HL.lo, 4); break; // SBC A,L
 		case 0x9E: Ops::Math::EightBit::SubCarry(AF.hi, Memory::ReadByte(HL.reg), 8); break; // SBC A,(HL)
 		case 0x9F: Ops::Math::EightBit::SubCarry(AF.hi, AF.hi, 4); break; // SBC A,A
-		case 0xDE: Ops::Math::EightBit::SubCarry(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // SBC A,d8
+		case 0xDE: Ops::Math::EightBit::SubCarry(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // SBC A,d8
 		// 8-bit and
 		case 0xA0: Ops::Math::EightBit::And(AF.hi, BC.hi, 4); break; // AND B
 		case 0xA1: Ops::Math::EightBit::And(AF.hi, BC.lo, 4); break; // AND C
@@ -361,7 +361,7 @@ void Cpu::ExecuteOpcode()
 		case 0xA5: Ops::Math::EightBit::And(AF.hi, HL.lo, 4); break; // AND L
 		case 0xA6: Ops::Math::EightBit::And(AF.hi, Memory::ReadByte(HL.reg), 8); break; // AND (HL)
 		case 0xA7: Ops::Math::EightBit::And(AF.hi, AF.hi, 4); break; // AND A
-		case 0xE6: Ops::Math::EightBit::And(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // AND d8		
+		case 0xE6: Ops::Math::EightBit::And(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // AND d8		
 		// 8-bit or
 		case 0xB0: Ops::Math::EightBit::Or(AF.hi, BC.hi, 4); break; // OR B
 		case 0xB1: Ops::Math::EightBit::Or(AF.hi, BC.lo, 4); break; // OR C
@@ -371,7 +371,7 @@ void Cpu::ExecuteOpcode()
 		case 0xB5: Ops::Math::EightBit::Or(AF.hi, HL.lo, 4); break; // OR L
 		case 0xB6: Ops::Math::EightBit::Or(AF.hi, Memory::ReadByte(HL.reg), 8); break; // OR (HL)
 		case 0xB7: Ops::Math::EightBit::Or(AF.hi, AF.hi, 4); break; // OR A
-		case 0xF6: Ops::Math::EightBit::Or(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // OR d8
+		case 0xF6: Ops::Math::EightBit::Or(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // OR d8
 		// 8-bit xor
 		case 0xA8: Ops::Math::EightBit::Xor(AF.hi, BC.hi, 4); break; // XOR B
 		case 0xA9: Ops::Math::EightBit::Xor(AF.hi, BC.lo, 4); break; // XOR C
@@ -381,7 +381,7 @@ void Cpu::ExecuteOpcode()
 		case 0xAD: Ops::Math::EightBit::Xor(AF.hi, HL.lo, 4); break; // XOR L
 		case 0xAE: Ops::Math::EightBit::Xor(AF.hi, Memory::ReadByte(HL.reg), 8); break; // XOR (HL)
 		case 0xAF: Ops::Math::EightBit::Xor(AF.hi, AF.hi, 4); break; // XOR A
-		case 0xEE: Ops::Math::EightBit::Xor(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // XOR d8
+		case 0xEE: Ops::Math::EightBit::Xor(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // XOR d8
 		// 8-bit dec
 		case 0x05: Ops::Math::EightBit::Dec(BC.hi, 4); break; // DEC B
 		case 0x0D: Ops::Math::EightBit::Dec(BC.lo, 4); break; // DEC C
@@ -419,19 +419,19 @@ void Cpu::ExecuteOpcode()
 		case 0xBD: Ops::Math::EightBit::Compare(AF.hi, HL.lo, 4); break; // CP L
 		case 0xBE: Ops::Math::EightBit::Compare(AF.hi, Memory::ReadByte(HL.reg), 8); break; // CP (HL)
 		case 0xBF: Ops::Math::EightBit::Compare(AF.hi, AF.hi, 4); break; // CP A
-		case 0xFE: Ops::Math::EightBit::Compare(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // CP,d8		
+		case 0xFE: Ops::Math::EightBit::Compare(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // CP,d8		
 		// 8-bit load
-		case 0x06: Ops::General::EightBit::Load(BC.hi, Memory::ReadByte(PC), 8); PC++; break; // LD B,d8
-		case 0x0E: Ops::General::EightBit::Load(BC.lo, Memory::ReadByte(PC), 8); PC++; break; // LD C,d8
-		case 0x16: Ops::General::EightBit::Load(DE.hi, Memory::ReadByte(PC), 8); PC++; break; // LD D,d8
-		case 0x1E: Ops::General::EightBit::Load(DE.lo, Memory::ReadByte(PC), 8); PC++; break; // LD E,d8
-		case 0x26: Ops::General::EightBit::Load(HL.hi, Memory::ReadByte(PC), 8); PC++; break; // LD H,d8
-		case 0x2E: Ops::General::EightBit::Load(HL.lo, Memory::ReadByte(PC), 8); PC++; break; // LD L,d8
-		case 0x3E: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(PC), 8); PC++; break; // LD A,d8 
+		case 0x06: Ops::General::EightBit::Load(BC.hi, Memory::ReadByte(PC), 8); PC += 1; break; // LD B,d8
+		case 0x0E: Ops::General::EightBit::Load(BC.lo, Memory::ReadByte(PC), 8); PC += 1; break; // LD C,d8
+		case 0x16: Ops::General::EightBit::Load(DE.hi, Memory::ReadByte(PC), 8); PC += 1; break; // LD D,d8
+		case 0x1E: Ops::General::EightBit::Load(DE.lo, Memory::ReadByte(PC), 8); PC += 1; break; // LD E,d8
+		case 0x26: Ops::General::EightBit::Load(HL.hi, Memory::ReadByte(PC), 8); PC += 1; break; // LD H,d8
+		case 0x2E: Ops::General::EightBit::Load(HL.lo, Memory::ReadByte(PC), 8); PC += 1; break; // LD L,d8
+		case 0x3E: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // LD A,d8 
 		case 0x0A: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(BC.reg), 8); break; // LD A,(BC)
 		case 0x1A: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(DE.reg), 8); break; // LD A,(DE)
-		case 0x2A: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg++; break; // LD A,(HL+)
-		case 0x3A: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg--; break; // LD A,(HL-)
+		case 0x2A: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg += 1; break; // LD A,(HL+)
+		case 0x3A: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(HL.reg), 8); HL.reg -= 1; break; // LD A,(HL-)
 		case 0x40: Ops::General::EightBit::Load(BC.hi, BC.hi, 4); break; // LD B,B
 		case 0x41: Ops::General::EightBit::Load(BC.hi, BC.lo, 4); break; // LD B,C
 		case 0x42: Ops::General::EightBit::Load(BC.hi, DE.hi, 4); break; // LD B,D
@@ -490,7 +490,7 @@ void Cpu::ExecuteOpcode()
 		case 0x7F: Ops::General::EightBit::Load(AF.hi, AF.hi, 4); break; // LD A,A
 		case 0xFA: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(Memory::ReadWord(PC)), 16); PC += 2; break; // LD A,(a16)
 		case 0xF2: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); break; // LD A,(C)
-		case 0xF0: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); PC++; break; // LDH A,(a8)
+		case 0xF0: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); PC += 1; break; // LDH A,(a8)
 		// 16-bit load
 		case 0x01: Ops::General::SixteenBit::Load(BC.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD BC,d16
 		case 0x11: Ops::General::SixteenBit::Load(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
@@ -512,7 +512,7 @@ void Cpu::ExecuteOpcode()
 			// load nn into HL
 			Ops::General::SixteenBit::Load(HL.reg, nn, 12);
 			// increment pc
-			PC++;
+			PC += 1;
 		}
 		break;
 		case 0xF9: Ops::General::SixteenBit::Load(SP.reg, HL.reg, 8); break; // LD SP,HL
@@ -532,9 +532,9 @@ void Cpu::ExecuteOpcode()
 		// 8-bit write
 		case 0x02: Ops::General::EightBit::Write(BC.reg, AF.hi, 8); break; // LD (BC),A
 		case 0x12: Ops::General::EightBit::Write(DE.reg, AF.hi, 8); break; // LD (DE),A
-		case 0x22: Ops::General::EightBit::Write(HL.reg, AF.hi, 12); HL.reg++; break; // LD (HL+),A
-		case 0x32: Ops::General::EightBit::Write(HL.reg, AF.hi, 12); HL.reg--; break; // LD (HL-),A
-		case 0x36: Ops::General::EightBit::Write(HL.reg, Memory::ReadByte(PC), 12); PC++; break; // LD (HL),d8
+		case 0x22: Ops::General::EightBit::Write(HL.reg, AF.hi, 12); HL.reg += 1; break; // LD (HL+),A
+		case 0x32: Ops::General::EightBit::Write(HL.reg, AF.hi, 12); HL.reg -= 1; break; // LD (HL-),A
+		case 0x36: Ops::General::EightBit::Write(HL.reg, Memory::ReadByte(PC), 12); PC += 1; break; // LD (HL),d8
 		case 0x70: Ops::General::EightBit::Write(HL.reg, BC.hi, 8); break; // LD (HL),B
 		case 0x71: Ops::General::EightBit::Write(HL.reg, BC.lo, 8); break; // LD (HL),C
 		case 0x72: Ops::General::EightBit::Write(HL.reg, DE.hi, 8); break; // LD (HL),D
@@ -544,7 +544,7 @@ void Cpu::ExecuteOpcode()
 		case 0x77: Ops::General::EightBit::Write(HL.reg, AF.hi, 8); break; // LD (HL),A
 		case 0xE2: Ops::General::EightBit::Write(0xFF00 + BC.lo, AF.hi, 12); break; // LD (C),A
 		case 0xEA: Ops::General::EightBit::Write(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
-		case 0xE0: Ops::General::EightBit::Write(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC++; break; // LDH (a8),A
+		case 0xE0: Ops::General::EightBit::Write(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC += 1; break; // LDH (a8),A
 		// rotates
 		case 0x07: Ops::Rotate::LeftCircular(AF.hi, false, 4); break; // RLC, A
 		case 0x0F: Ops::Rotate::RightCircular(AF.hi, false, 4); break; // RRC, A
@@ -649,7 +649,7 @@ void Cpu::ExecuteOpcode()
 			interruptCounter = 0;
 		}
 		// increment the interrupt counter
-		interruptCounter++;
+		interruptCounter += 1;
 	}
 }
 
@@ -657,7 +657,7 @@ void Cpu::ExecuteOpcode()
 void Cpu::ExecuteExtendedOpcode()
 {
 	BYTE Opcode = Memory::ReadByte(PC);
-	PC++;
+	PC += 1;
 
 	// handle the extended Opcode
 	switch(Opcode)
@@ -996,7 +996,7 @@ void Cpu::LoadState()
 			Memory::Write(0x0000 + (i - 10), (BYTE)strtol(val, NULL, 16));
 
 		// increment i
-		i++;
+		i += 1;
 	}
 
 	// close the file
