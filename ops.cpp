@@ -59,11 +59,10 @@ void Ops::Math::EightBit::AddCarry(BYTE &val, BYTE val2, int cycles)
 	if (Bit::DidCarry(val + carryFlag, 0xFF)) setCarry = true;
 	if (Bit::DidCarry(val + carryFlag + val2, 0xFF)) setCarry = true;
 
-	// if the result is zero
+	// set the flags if applicable
 	if (result == 0) Flags::Set::Z();
-	// set/reset carry or half-carry
-	if (setCarry) Flags::Set::C();
 	if (setHalfCarry) Flags::Set::H();
+	if (setCarry) Flags::Set::C();
 
 	// set val to the result
 	val = result;
@@ -77,12 +76,10 @@ void Ops::Math::EightBit::Sub(BYTE &val, BYTE val2, int cycles)
 	// store the result of the calculation
 	BYTE result = (val - val2);
 	
+	// Reset all flags
+	Flags::Reset::All();
 	// Set the N flag
 	Flags::Set::N();
-	// Reset the Z, H & C flags
-	Flags::Reset::Z();
-	Flags::Reset::H();
-	Flags::Reset::C();
 
 	// if the result is zero
 	if (result == 0) Flags::Set::Z();
@@ -108,12 +105,10 @@ void Ops::Math::EightBit::SubCarry(BYTE &val, BYTE val2, int cycles)
 	// store the result
 	BYTE result = (val - carryFlag - val2);
 
-	// set the N flag
+	// Reset all flags
+	Flags::Reset::All();
+	// Set the N flag
 	Flags::Set::N();
-	// reset the Z, H & C Flags
-	Flags::Reset::Z();
-	Flags::Reset::H();
-	Flags::Reset::C();
 	
 	// determine if we half carried
 	if ((val & 0xF) < (carryFlag & 0xF)) setHalfCarry = true;
@@ -232,12 +227,10 @@ void Ops::Math::EightBit::Compare(BYTE val, BYTE val2, int cycles)
 	// store the result of the calculation
 	BYTE result = (val - val2);
 
+	// reset all flags
+	Flags::Reset::All();
 	// set the N flag
 	Flags::Set::N();
-	// reset the Z, H & C flags
-	Flags::Reset::Z();
-	Flags::Reset::H();
-	Flags::Reset::C();
 
 	// if the result is zero
 	if (result == 0) Flags::Set::Z();
@@ -425,9 +418,9 @@ void Ops::Bits::SwapMemory(WORD address, int cycles)
 // test bits
 void Ops::Bits::Test(BYTE val, BYTE bit, int cycles)
 {
-	// reset the N & Z flags
-	Flags::Reset::N();
+	// reset the Z & N flags
 	Flags::Reset::Z();
+	Flags::Reset::N();
 	// set the H flag
 	Flags::Set::H();
 
@@ -443,9 +436,9 @@ void Ops::Bits::TestMemory(WORD address, BYTE bit, int cycles)
 {
 	// get the data
 	BYTE val = Memory::ReadByte(address);
-	// reset the N & Z flags
-	Flags::Reset::N();
+	// reset the Z & N flags
 	Flags::Reset::Z();
+	Flags::Reset::N();
 	// set the H flag
 	Flags::Set::H();
 
@@ -520,8 +513,8 @@ void Ops::Rotate::LeftCarry(BYTE &val, bool checkForZero, int cycles)
 	// set the carry flag
 	if (Bit::Get(val, 7)) Flags::Set::C();
 
-	// rotate A left and put the old carry flag bit back into it
-	val = (result | carryFlag);
+	// set val to the result
+	val = result;
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -586,8 +579,8 @@ void Ops::Rotate::RightCarryMemory(WORD address, bool checkForZero, int cycles)
 	// set the carry flag
 	if (Bit::Get(result, 0)) Flags::Set::C();
 
-	// write the result + carry flag back to memory
-	Memory::Write(address, (result | carryFlag));
+	// write the result back to memory
+	Memory::Write(address, result);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -628,7 +621,7 @@ void Ops::Rotate::LeftCircularMemory(WORD address, bool checkForZero, int cycles
 	// carry flag contains old bit 7 data
 	if (Bit::Get(val, 7)) Flags::Set::C();
 
-	// set val to the result + carry			
+	// write the result back to memory		
 	Memory::Write(address, result);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
