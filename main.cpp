@@ -198,11 +198,6 @@ static void ResetGameBoy(bool reloadRom)
 	{
 		Rom::Reload();
 	}
-	// reload the bios
-	if (didLoadBios)
-	{
-		Bios::Reload();
-	}
 	// reset the lcd
 	Lcd::Reset();
 }
@@ -268,6 +263,11 @@ static void ShowFileWindow()
 			ResetGameBoy(false);
 			// load the new game
 			Rom::Load(fileName);
+			// reload the bios
+			if (didLoadBios)
+			{
+				Bios::Reload();
+			}
 		}
 	}
 
@@ -437,6 +437,11 @@ static void ShowDebuggerControlsWindow()
 	if (ImGui::IsItemClicked())
 	{
 		ResetGameBoy(true);
+		// reload the bios
+		if (didLoadBios)
+		{
+			Bios::Reload();
+		}
 	}
 
 	// display the number of instructions ran
