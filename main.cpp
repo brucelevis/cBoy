@@ -187,12 +187,12 @@ static void ResetGameBoy(bool reloadRom)
 	stepThrough = true;
 	// reset the instructions ran
 	instructionsRan = 0;
+	// reset the timer
+	Timer::Reset();
 	// reset the memory
 	Memory::Init();
 	// init the cpu again
 	Cpu::Init(didLoadBios);
-	// reset the timer
-	Timer::Reset();
 	// reload the rom
 	if (reloadRom)
 	{
@@ -200,6 +200,7 @@ static void ResetGameBoy(bool reloadRom)
 	}
 	// reset the lcd
 	Lcd::Reset();
+	Lcd::DrawScreen();
 }
 
 // show the rom info window
