@@ -21,6 +21,7 @@ class Timer
 {
 	public:
 		static void Init();
+		static void Reset();
 		static void Update(int clockCycles);
 		static BYTE GetClockFrequency();
 		static void SetClockFrequency();

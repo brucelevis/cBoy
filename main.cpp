@@ -191,8 +191,8 @@ static void ResetGameBoy(bool reloadRom)
 	Memory::Init();
 	// init the cpu again
 	Cpu::Init(didLoadBios);
-	// init the timer
-	Timer::Init();
+	// reset the timer
+	Timer::Reset();
 	// reload the rom
 	if (reloadRom)
 	{

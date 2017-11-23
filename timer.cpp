@@ -24,6 +24,17 @@ void Timer::Init()
 	DividerCounter = 0;
 }
 
+//reset timer
+void Timer::Reset()
+{
+	// get the TAC value
+	BYTE TAC = Memory::ReadByte(TAC_ADDRESS);
+	// reset the value of the enabled bit
+	Bit::Reset(TAC, 2);
+	// Init the timer again
+	Timer::Init();
+}
+
 // check if the timer is enabled
 bool Timer::IsEnabled()
 {
