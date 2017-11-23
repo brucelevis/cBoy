@@ -257,6 +257,8 @@ void Ops::Math::EightBit::And(BYTE &val, BYTE val2, int cycles)
 
 	// reset all flags
 	Flags::Reset::All();
+	// set the H flag
+	Flags::Set::H();
 
 	// if the result is zero
 	if (result == 0) Flags::Set::Z();
@@ -854,6 +856,7 @@ void Ops::Flow::JumpImmediate(bool condition, int cycles)
 	// if the condition is true
 	if (condition)
 	{
+		// set the program counter
 		Cpu::Set::PC(Cpu::Get::PC() + (SIGNED_BYTE)Memory::ReadByte(Cpu::Get::PC()));
 		// add the correct extra cycles as the action took place
 		Cpu::Set::Cycles(4);
