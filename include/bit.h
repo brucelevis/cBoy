@@ -7,11 +7,8 @@
 #ifndef BIT_H
 #define BIT_H
 
-// definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD; 
+// includes
+#include "typedefs.h"
 
 // bit class
 class Bit 

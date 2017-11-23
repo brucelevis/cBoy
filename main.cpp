@@ -536,21 +536,22 @@ int main(int argc, char* args[])
 	if (InitSDL())
 	{
 		// load rom
-		Rom::Load("roms/Tetris.gb");
+		//Rom::Load("roms/Tetris.gb");
 		//Rom::Load("roms/dr_mario.gb");
+		//Rom::Load("roms/The Legend of Zelda - Link's Awakening.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 		//Rom::Load("roms/tests/big_scroller.gb");
 		//Rom::Load("roms/tests/bgbtest.gb");
 
 		// individual cpu instruction tests
 		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails on DAA   
-		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); // failed, timer doesn't work, failed #4
+		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); //failed
-		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // passes!
-		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
-		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb"); // fails
+		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb"); // fails - prints test name twice and never finishes
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb"); // fails

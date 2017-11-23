@@ -7,9 +7,8 @@
 #ifndef LOG_H
 #define LOG_H
 
-// definitions
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
+// includes
+#include "typedefs.h"
 
 // log class
 class Log

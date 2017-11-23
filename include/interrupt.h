@@ -7,11 +7,10 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
+// includes
+#include "typedefs.h"
+
 // definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD;
 #define INT_ENABLED_ADDRESS 0xFFFF
 #define INT_REQUEST_ADDRESS 0xFF0F
 

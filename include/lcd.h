@@ -8,13 +8,9 @@
 #define LCD_H
 
 // includes
-#include <SDL2/SDL.h>
+#include "typedefs.h"
 
 // definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD;
 #define LCDC_ADDRESS 0xFF40
 #define STAT_ADDRESS 0xFF41
 #define SCROLL_Y_ADDRESS 0xFF42

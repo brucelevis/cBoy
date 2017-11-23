@@ -7,8 +7,8 @@
 #ifndef ROM_H
 #define ROM_H
 
-// definitions
-typedef unsigned char BYTE;
+// includes
+#include "typedefs.h"
 
 // rom class
 class Rom

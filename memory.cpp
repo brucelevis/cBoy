@@ -11,15 +11,6 @@
 #include "include/lcd.h"
 #include "include/timer.h"
 
-//tmp
-#include "include/cpu.h"
-
-// definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD;
-
 // initialize vars
 BYTE Memory::Mem[0x10000] = {0};
 

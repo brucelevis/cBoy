@@ -11,12 +11,6 @@
 #include "include/log.h"
 #include "include/timer.h"
 
-// definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD;
-
 // vars
 int Timer::TimerCounter = 0;
 int Timer::DividerCounter = 0;

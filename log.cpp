@@ -9,9 +9,6 @@
 #include <cstdarg>
 #include "include/log.h"
 
-// definitions
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
 // open log output file
 FILE *logOutput = fopen("run.log","w");
 

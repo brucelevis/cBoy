@@ -7,9 +7,10 @@
 #ifndef TIMER_H
 #define TIMER_H
 
+// includes
+#include "typedefs.h"
+
 // definitions
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
 #define TIMA_ADDRESS 0xFF05
 #define TAC_ADDRESS 0xFF07
 #define TMA_ADDRESS 0xFF06

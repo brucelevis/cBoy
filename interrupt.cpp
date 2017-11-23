@@ -11,12 +11,6 @@
 #include "include/log.h"
 #include "include/memory.h"
 
-// definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD;
-
 // define the interrupts
 Interrupt::Type Interrupt::VBlank = {{.bit = 0, .address = 0x40}};
 Interrupt::Type Interrupt::Lcd = {{.bit = 1, .address = 0x48}};

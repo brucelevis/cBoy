@@ -12,9 +12,6 @@
 #include "include/memory.h"
 #include "include/log.h"
 
-// definitions
-//typedef unsigned char BYTE;
-
 // The current bios name
 const char *Bios::biosFileName = NULL;
 

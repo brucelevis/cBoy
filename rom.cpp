@@ -12,8 +12,6 @@
 #include "include/rom.h"
 #include "include/log.h"
 
-// definitions
-
 // The current rom name
 const char *Rom::currentRomFileName = NULL;
 //BYTE Rom::cartridgeMem[0x200000] = {0}; 

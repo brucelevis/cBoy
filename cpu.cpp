@@ -5,7 +5,8 @@
 */
 
 // includes
-#include <cstddef>
+#include <stdio.h>
+#include <stdlib.h>
 #include "imgui/imgui.h"
 #include "imgui/imgui_memory_editor.h"
 #include "imgui/imgui_custom_extensions.h"
@@ -17,11 +18,6 @@
 #include "include/memory.h"
 #include "include/timer.h"
 
-// definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD;
 // set flags
 #define FLAG_Z 7
 #define FLAG_N 6
@@ -122,7 +118,7 @@ void Cpu::ADD_16Bit(WORD &val, WORD val2, int cycles)
 	RESET_FLAG_N();
 
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, val2, 0x0FFF)) SET_FLAG_H(); else RESET_FLAG_H();
+	if (Bit::DidHalfCarry(val, val2, 0xFFF)) SET_FLAG_H(); else RESET_FLAG_H();
 	// determine if we carried
 	if (Bit::DidCarry((int)(val + val2), 0xFFFF)) SET_FLAG_C(); else RESET_FLAG_C();
 
@@ -485,7 +481,7 @@ void Cpu::RR_Write(WORD address, bool checkForZero, int cycles)
 void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
 {
 	// store the result of the calculation
-	BYTE result = (val << 1);
+	BYTE result = (val << 1) + GET_FLAG_C();
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -502,17 +498,10 @@ void Cpu::RLC(BYTE &val, bool checkForZero, int cycles)
 	}
 
 	// carry flag contains old bit 7 data
-	if (Bit::Get(val, 7))
-	{
-		SET_FLAG_C();
-	}
-	else
-	{
-		RESET_FLAG_C();
-	}
+	if (Bit::Get(val, 7)) SET_FLAG_C(); else RESET_FLAG_C();
 
-	// set val to the result + carry		
-	val = (result | GET_FLAG_C());
+	// set val to the result
+	val = result;
 	// add the cycles
 	Cycles += cycles;
 }
@@ -523,7 +512,7 @@ void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
 	// the data
 	BYTE val = Memory::ReadByte(address);
 	// store the result of the calculation
-	BYTE result = (val << 1);
+	BYTE result = (val << 1) + GET_FLAG_C();
 
 	// reset the N & H flags
 	RESET_FLAG_N();
@@ -540,17 +529,10 @@ void Cpu::RLC_Write(WORD address, bool checkForZero, int cycles)
 	}
 
 	// carry flag contains old bit 7 data
-	if (Bit::Get(val, 7))
-	{
-		SET_FLAG_C();
-	}
-	else
-	{
-		RESET_FLAG_C();
-	}
+	if (Bit::Get(val, 7)) SET_FLAG_C(); else RESET_FLAG_C();
 
 	// set val to the result + carry			
-	Memory::Write(address, (result | GET_FLAG_C()));
+	Memory::Write(address, result);
 	// add the cycles
 	Cycles += cycles;
 }
@@ -565,21 +547,20 @@ void Cpu::RRC(BYTE &val, bool checkForZero, int cycles)
 	RESET_FLAG_N();
 	RESET_FLAG_H();
 
+	// carry flag contains old bit zero data
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+		if (result + (GET_FLAG_C() << 7) == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
 		RESET_FLAG_Z();
 	}
 
-	// carry flag contains old bit zero data
-	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
-
 	// set val to result + carry		
-	val = (result | GET_FLAG_C());
+	val = (result + (GET_FLAG_C() << 7));
 	// add the cycles
 	Cycles += cycles;
 }
@@ -596,21 +577,20 @@ void Cpu::RRC_Write(WORD address, bool checkForZero, int cycles)
 	RESET_FLAG_N();
 	RESET_FLAG_H();
 
+	// carry flag contains old bit zero data
+	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
 	// if we should check for zero
 	if (checkForZero)
 	{
-		if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+		if (result + (GET_FLAG_C() << 7) == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
 	}
 	else
 	{
 		RESET_FLAG_Z();
 	}
 
-	// carry flag contains old bit zero data
-	if (Bit::Get(val, 0)) SET_FLAG_C(); else RESET_FLAG_C();
-
 	// set val to result + carry			
-	Memory::Write(address, (result | GET_FLAG_C()));
+	Memory::Write(address, (result + (GET_FLAG_C() << 7)));
 	// add the cycles
 	Cycles += cycles;
 }
@@ -1543,31 +1523,68 @@ void Cpu::ExecuteOpcode()
 					needs to be adjusted to 0x10 and the carry set
 				*/
 
+			/*
+			u32 reg_one = reg.a;
+	
+	//Add or subtract correction values based on Subtract Flag
+	if(!(reg.f & 0x40))
+	{
+		if((reg.f & 0x20) || ((reg_one & 0xF) > 0x09)) { reg_one += 0x06; }
+		if((reg.f & 0x10) || (reg_one > 0x9F)) { reg_one += 0x60; }
+	}
+
+	else 
+	{
+		if(reg.f & 0x20) { reg_one = (reg_one - 0x06) & 0xFF; }
+		if(reg.f & 0x10) { reg_one -= 0x60; }
+	}
+
+	//Carry
+	if(reg_one & 0x100) { reg.f |= 0x10; }
+	reg_one &= 0xFF;
+
+	//Half-Carry
+	reg.f &= ~0x20;
+
+	//Zero
+	if(reg_one == 0) { reg.f |= 0x80; }
+	else { reg.f &= ~0x80; }*/
+
 			
 			BYTE result = 0;
-			bool wasSet = false;
+			int af = AF.hi;
 
 			if (!GET_FLAG_N())
 			{
-				if (((AF.hi & 0x0F) > 0x9) || GET_FLAG_H())
+				if (((af & 0xF) > 0x09) || GET_FLAG_H())
 				{
-					result = (AF.hi + 0x6);
-					wasSet = true;
+					af = (af + 0x06);
 				}
-
-				if ((AF.hi > 0x99) || GET_FLAG_C())
+				if ((af > 0x9F) || GET_FLAG_C())
 				{
-					result = (AF.hi + 0x60);
-					wasSet = true;
+					af = (af + 0x60);
 				}
 			}
-
-			if (wasSet)
+			else
 			{
-				if (result == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
-
-				AF.hi = result;
+				if (GET_FLAG_H())
+				{
+					af = (af - 0x06) & 0xFF;
+				}
+				if (GET_FLAG_C())
+				{
+					af -= 0x60;
+				}
 			}
+
+			if (af == 0) SET_FLAG_Z(); else RESET_FLAG_Z();
+			//Carry
+			if(af & 0x100) SET_FLAG_C();// else RESET_FLAG_C();
+			RESET_FLAG_H();
+
+			af &= 0xFF;
+			AF.hi = af;
+			//AF.hi &= 0xFF;
 
 			Cycles += 4;
 			//printf("WARNING: DAA instruction not implemented\n");

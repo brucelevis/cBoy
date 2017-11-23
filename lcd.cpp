@@ -14,10 +14,6 @@
 #include "include/memory.h"
 
 // definitions
-typedef unsigned char BYTE;
-typedef signed char SIGNED_BYTE;
-typedef unsigned short WORD;
-typedef signed short SIGNED_WORD;
 #define LCD_CLOCK_CYCLES 456
 // vars
 int Lcd::ScanlineCounter = LCD_CLOCK_CYCLES;
