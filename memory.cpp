@@ -6,6 +6,7 @@
 
 // includes
 #include <cstdio>
+#include "include/cpu.h"
 #include "include/memory.h"
 #include "include/log.h"
 #include "include/lcd.h"
@@ -124,4 +125,29 @@ void Memory::Write(WORD address, BYTE data)
 		}
 		break;
 	}
+}
+
+// push
+void Memory::Push(WORD data)
+{
+	// get the hi and lo bytes
+	BYTE hi = (data >> 8);
+	BYTE lo = (data & 0xFF);
+
+	// write the data to the stack
+	Cpu::Set::SP(Cpu::Get::SP()->reg - 1);
+	Memory::Write(Cpu::Get::SP()->reg, hi);
+	Cpu::Set::SP(Cpu::Get::SP()->reg - 1);
+	Memory::Write(Cpu::Get::SP()->reg, lo);
+}
+
+// pop
+WORD Memory::Pop()
+{
+	// get the data
+	WORD data = Memory::ReadWord(Cpu::Get::SP()->reg);
+	// increment the stack pointer
+	Cpu::Set::SP(Cpu::Get::SP()->reg + 2);
+	// return the data
+	return data;
 }

@@ -144,7 +144,7 @@ static void EmulationLoop()
 		while (Cpu::Cycles < MAX_CYCLES)
 		{
 			// determine if we should stop execution at a specific breakpoint
-			if (stopAtBreakpoint && Cpu::GetPC() == breakpoint)
+			if (stopAtBreakpoint && Cpu::Get::PC() == breakpoint)
 			{
 				// enable step through mode
 				stepThrough = true;
@@ -261,10 +261,14 @@ static void ShowFileWindow()
 		char const *fileName;
 		// open the file dialog
 		fileName = tinyfd_openFileDialog("Select Rom", "", 2, validExtensions, NULL, 0);
-		// reset the gameboy
-		ResetGameBoy(false);
-		// load the new game
-		Rom::Load(fileName);
+		// if the filename isn't null
+		if (fileName != NULL)
+		{
+			// reset the gameboy
+			ResetGameBoy(false);
+			// load the new game
+			Rom::Load(fileName);
+		}
 	}
 
 	// save state button
@@ -536,7 +540,7 @@ int main(int argc, char* args[])
 	if (InitSDL())
 	{
 		// load rom
-		//Rom::Load("roms/Tetris.gb");
+		Rom::Load("roms/Tetris.gb");
 		//Rom::Load("roms/dr_mario.gb");
 		//Rom::Load("roms/The Legend of Zelda - Link's Awakening.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
@@ -550,7 +554,7 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // passes!
-		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb"); // fails - prints test name twice and never finishes
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // passes!

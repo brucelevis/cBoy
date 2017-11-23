@@ -97,9 +97,9 @@ void Interrupt::Service()
 		Bit::Reset(requestedInterrupt, interruptId);
 		Memory::Write(INT_REQUEST_ADDRESS, requestedInterrupt);
 		// push the program counter onto the stack
-		Cpu::PUSH(Cpu::GetPC());
+		Memory::Push(Cpu::Get::PC());
 		// execute the interrupt
-		Cpu::SetPC(InterruptList[interruptId].address);
+		Cpu::Set::PC(InterruptList[interruptId].address);
 		// reset the was halted bool
 		wasHalted = false;
 		// turn off the master interrupt switch
