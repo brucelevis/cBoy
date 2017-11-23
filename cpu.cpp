@@ -253,7 +253,8 @@ void Cpu::ExecuteOpcode()
 			Operation.Stop = true;
 			// TODO: check for button press
 			// TODO: halt display
-			Cycles += 12;
+			PC += 1;
+			Cycles += 4;
 		break;
 		case 0x76: // HALT
 			Operation.Halt = true;
@@ -295,7 +296,7 @@ void Cpu::ExecuteOpcode()
 		case 0x85: Ops::Math::EightBit::Add(AF.hi, HL.lo, 4); break; // ADD A,L
 		case 0x86: Ops::Math::EightBit::Add(AF.hi, Memory::ReadByte(HL.reg), 8); break; // ADD A,(HL)
 		case 0x87: Ops::Math::EightBit::Add(AF.hi, AF.hi, 4); break; // ADD A,A
-		case 0xC6: Ops::Math::EightBit::Add(AF.hi, Memory::ReadByte(PC), 4); PC += 1; break; // ADD A,d8
+		case 0xC6: Ops::Math::EightBit::Add(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // ADD A,d8
 		// 8-bit add + carry
 		case 0x88: Ops::Math::EightBit::AddCarry(AF.hi, BC.hi, 4); break; // ADC A,B
 		case 0x89: Ops::Math::EightBit::AddCarry(AF.hi, BC.lo, 4); break; // ADC A,C
@@ -532,8 +533,8 @@ void Cpu::ExecuteOpcode()
 		// 8-bit write
 		case 0x02: Ops::General::EightBit::Write(BC.reg, AF.hi, 8); break; // LD (BC),A
 		case 0x12: Ops::General::EightBit::Write(DE.reg, AF.hi, 8); break; // LD (DE),A
-		case 0x22: Ops::General::EightBit::Write(HL.reg, AF.hi, 12); HL.reg += 1; break; // LD (HL+),A
-		case 0x32: Ops::General::EightBit::Write(HL.reg, AF.hi, 12); HL.reg -= 1; break; // LD (HL-),A
+		case 0x22: Ops::General::EightBit::Write(HL.reg, AF.hi, 8); HL.reg += 1; break; // LD (HL+),A
+		case 0x32: Ops::General::EightBit::Write(HL.reg, AF.hi, 8); HL.reg -= 1; break; // LD (HL-),A
 		case 0x36: Ops::General::EightBit::Write(HL.reg, Memory::ReadByte(PC), 12); PC += 1; break; // LD (HL),d8
 		case 0x70: Ops::General::EightBit::Write(HL.reg, BC.hi, 8); break; // LD (HL),B
 		case 0x71: Ops::General::EightBit::Write(HL.reg, BC.lo, 8); break; // LD (HL),C
@@ -542,49 +543,49 @@ void Cpu::ExecuteOpcode()
 		case 0x74: Ops::General::EightBit::Write(HL.reg, HL.hi, 8); break; // LD (HL),H
 		case 0x75: Ops::General::EightBit::Write(HL.reg, HL.lo, 8); break; // LD (HL),L
 		case 0x77: Ops::General::EightBit::Write(HL.reg, AF.hi, 8); break; // LD (HL),A
-		case 0xE2: Ops::General::EightBit::Write(0xFF00 + BC.lo, AF.hi, 12); break; // LD (C),A
+		case 0xE2: Ops::General::EightBit::Write(0xFF00 + BC.lo, AF.hi, 8); break; // LD (C),A
 		case 0xEA: Ops::General::EightBit::Write(Memory::ReadWord(PC), AF.hi, 16); PC += 2; break; // LD (a16),A
 		case 0xE0: Ops::General::EightBit::Write(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC += 1; break; // LDH (a8),A
 		// rotates
-		case 0x07: Ops::Rotate::LeftCircular(AF.hi, false, 4); break; // RLC, A
-		case 0x0F: Ops::Rotate::RightCircular(AF.hi, false, 4); break; // RRC, A
-		case 0x17: Ops::Rotate::LeftCarry(AF.hi, false, 4); break; // RL, A
-		case 0x1F: Ops::Rotate::RightCarry(AF.hi, false, 4); break; // RR, A
+		case 0x07: Ops::Rotate::LeftCircular(AF.hi, false, 8); break; // RLC, A
+		case 0x0F: Ops::Rotate::RightCircular(AF.hi, false, 8); break; // RRC, A
+		case 0x17: Ops::Rotate::LeftCarry(AF.hi, false, 8); break; // RL, A
+		case 0x1F: Ops::Rotate::RightCarry(AF.hi, false, 8); break; // RR, A
 		// immediate jumps
-		case 0x18: Ops::Flow::JumpImmediate(true, 12); break; // JR r8
+		case 0x18: Ops::Flow::JumpImmediate(true, 8); break; // JR r8
 		case 0x20: Ops::Flow::JumpImmediate(!Flags::Get::Z(), 8); break; // JR NZ,r8
 		case 0x28: Ops::Flow::JumpImmediate(Flags::Get::Z(), 8); break; // JR Z,r8
 		case 0x30: Ops::Flow::JumpImmediate(!Flags::Get::C(), 8); break; // JR NC,r8
 		case 0x38: Ops::Flow::JumpImmediate(Flags::Get::C(), 8); break; // JR C,r8
 		// jumps
-		case 0xC3: Ops::Flow::Jump(true, 16); break; // JP a16
+		case 0xC3: Ops::Flow::Jump(true, 12); break; // JP a16
 		case 0xC2: Ops::Flow::Jump(!Flags::Get::Z(), 12); break; // JP NZ,a16
 		case 0xCA: Ops::Flow::Jump(Flags::Get::Z(), 12); break; // JP Z,a16
 		case 0xD2: Ops::Flow::Jump(!Flags::Get::C(), 12); break; // JP NC,a16
 		case 0xDA: Ops::Flow::Jump(Flags::Get::C(), 12); break; // JP C,a16
 		case 0xE9: PC = HL.reg; Cycles += 4; break; // JP,HL
 		// calls
-		case 0xCD: Ops::Flow::Call(true, 24); break; // CALL a16
+		case 0xCD: Ops::Flow::Call(true, 12); break; // CALL a16
 		case 0xC4: Ops::Flow::Call(!Flags::Get::Z(), 12); break; // CALL NZ,a16
 		case 0xCC: Ops::Flow::Call(Flags::Get::Z(), 12); break; // CALL Z,a16
 		case 0xD4: Ops::Flow::Call(!Flags::Get::C(), 12); break; // CALL NC,a16
 		case 0xDC: Ops::Flow::Call(Flags::Get::C(), 12); break; // CALL C,a16
 		// returns
-		case 0xC9: Ops::Flow::Return(true, 16); break; // RET
+		case 0xC9: Ops::Flow::Return(true, 4); break; // RET
 		case 0xC0: Ops::Flow::Return(!Flags::Get::Z(), 8); break; // RET NZ
 		case 0xC8: Ops::Flow::Return(Flags::Get::Z(), 8); break; // RET Z
 		case 0xD0: Ops::Flow::Return(!Flags::Get::C(), 8); break; // RET NC
 		case 0xD8: Ops::Flow::Return(Flags::Get::C(), 8); break;  // RET C
-		case 0xD9: Ops::Flow::Return(true, 16); Interrupt::MasterSwitch = true; /*NOTE: This breaks dr.mario ?? enabling the interrupt master switch*/ break; // RETI
+		case 0xD9: Ops::Flow::Return(true, 4); Interrupt::MasterSwitch = true; /*NOTE: This breaks dr.mario ?? enabling the interrupt master switch*/ break; // RETI
 		// restarts
-		case 0xC7: Ops::Flow::Restart(0x0000, 16); break; // RST 00H
-		case 0xCF: Ops::Flow::Restart(0x0008, 16); break; // RST 08H
-		case 0xD7: Ops::Flow::Restart(0x0010, 16); break; // RST 10H
-		case 0xDF: Ops::Flow::Restart(0x0018, 16); break; // RST 18H
-		case 0xE7: Ops::Flow::Restart(0x0020, 16); break; // RST 20H
-		case 0xEF: Ops::Flow::Restart(0x0028, 16); break; // RST 28H
-		case 0xF7: Ops::Flow::Restart(0x0030, 16); break; // RST 30H
-		case 0xFF: Ops::Flow::Restart(0x0038, 16); break; // RST 38H
+		case 0xC7: Ops::Flow::Restart(0x0000, 32); break; // RST 00H
+		case 0xCF: Ops::Flow::Restart(0x0008, 32); break; // RST 08H
+		case 0xD7: Ops::Flow::Restart(0x0010, 32); break; // RST 10H
+		case 0xDF: Ops::Flow::Restart(0x0018, 32); break; // RST 18H
+		case 0xE7: Ops::Flow::Restart(0x0020, 32); break; // RST 20H
+		case 0xEF: Ops::Flow::Restart(0x0028, 32); break; // RST 28H
+		case 0xF7: Ops::Flow::Restart(0x0030, 32); break; // RST 30H
+		case 0xFF: Ops::Flow::Restart(0x0038, 32); break; // RST 38H
 		// push
 		case 0xC5: Memory::Push(BC.reg); Cycles += 16; break; // PUSH BC
 		case 0xD5: Memory::Push(DE.reg); Cycles += 16; break; // PUSH DE
@@ -624,6 +625,19 @@ void Cpu::ExecuteOpcode()
 				or they can both be over 9, think of 0x99 + 0x11, before adjustment it's 0xAA, 
 				needs to be adjusted to 0x10 and the carry set
 				*/
+
+			int u = 0;
+			if (Flags::Get::H() || (!Flags::Get::N() && (AF.hi & 0xf) > 9)) {
+				u = 6;
+			}
+			if (Flags::Get::C() || (!Flags::Get::N() && AF.hi > 0x99)) {
+				u |= 0x60;
+				Flags::Set::C();
+			}
+
+			AF.hi += (Flags::Get::N()) ? -u : u;
+			if (AF.hi == 0) Flags::Set::Z(); else Flags::Reset::Z();
+			Flags::Reset::H();
 
 			Cycles += 4;
 			//printf("WARNING: DAA instruction not implemented\n");

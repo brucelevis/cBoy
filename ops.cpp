@@ -835,7 +835,7 @@ void Ops::Flow::Jump(bool condition, int cycles)
 	{
 		Cpu::Set::PC(Memory::ReadWord(Cpu::Get::PC()));
 		// add the correct extra cycles as the action took place
-		Cpu::Set::Cycles(cycles);
+		Cpu::Set::Cycles(4);
 		return;
 	}
 
@@ -875,7 +875,7 @@ void Ops::Flow::Call(bool condition, int cycles)
 		// call the instruction at nn
 		Cpu::Set::PC(Memory::ReadWord(Cpu::Get::PC()));
 		// add the correct extra cycles as the action took place
-		Cpu::Set::Cycles(cycles);
+		Cpu::Set::Cycles(12);
 		return;
 	}
 
