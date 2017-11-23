@@ -42,6 +42,7 @@ class Interrupt
 		static Type VBlank;
 		static Type Lcd;
 		static Type Timer;
+		static Type Serial;
 		static Type Joypad;
 };
 

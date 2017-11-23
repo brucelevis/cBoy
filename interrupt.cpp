@@ -15,6 +15,7 @@
 Interrupt::Type Interrupt::VBlank = {{.bit = 0, .address = 0x40}};
 Interrupt::Type Interrupt::Lcd = {{.bit = 1, .address = 0x48}};
 Interrupt::Type Interrupt::Timer = {{.bit = 2, .address = 0x50}};
+Interrupt::Type Interrupt::Serial = {{.bit = 3, .address = 0x58}};
 Interrupt::Type Interrupt::Joypad = {{.bit = 4, .address = 0x60}};
 
 // interrupt list
