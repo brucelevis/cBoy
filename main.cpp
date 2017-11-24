@@ -163,7 +163,7 @@ static void EmulationLoop()
 			// update timers
 			Timer::Update(cycles);
 			// update graphics
-			Lcd::Render(cycles);
+			Lcd::Update(cycles);
 			// increment the instructions ran
 			instructionsRan++;
 		}
@@ -178,15 +178,17 @@ static void EmulationLoop()
 		// execute the next opcode
 		Cpu::ExecuteOpcode();
 		// get the value of the current cycle only
-		int cycles = Cpu::Get::Cycles() - currentCycle;
+		int cycles = (Cpu::Get::Cycles() - currentCycle);
 		// update timers
 		Timer::Update(cycles);
 		// update graphics
-		Lcd::Render(cycles);
-
+		Lcd::Update(cycles);
 		// increment the instructions ran
 		instructionsRan++;
 	}
+
+	// draw the screen
+	Lcd::Render();
 }
 
 // reset GameBoy
@@ -211,7 +213,7 @@ static void ResetGameBoy(bool reloadRom)
 	}
 	// reset the lcd
 	Lcd::Reset();
-	Lcd::DrawScreen();
+	Lcd::UpdateTexture();
 }
 
 // show the rom info window
@@ -513,9 +515,6 @@ static void StartMainLoop()
 			}
 		}
 
-		// clear the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// don't show the imgui stuff in release mode
 		if (debuggerActive)
 		{
@@ -551,27 +550,27 @@ int main(int argc, char* args[])
 	{
 		// load rom
 		//Rom::Load("roms/Tetris.gb");
-		Rom::Load("roms/dr_mario.gb");
+		//Rom::Load("roms/dr_mario.gb");
 		//Rom::Load("roms/The Legend of Zelda - Link's Awakening.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 		//Rom::Load("roms/tests/big_scroller.gb");
 		//Rom::Load("roms/tests/bgbtest.gb");
 
 		// individual cpu instruction tests
-		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails on DAA   
+		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); //failed
 		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // passes!
-		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
+		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb"); // fails - prints test name twice and never finishes
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb"); // fails
 
 		// load bios
-		//didLoadBios = Bios::Load("bios.bin");
+		didLoadBios = Bios::Load("bios.bin");
 
 		// init the Cpu
 		Cpu::Init(didLoadBios);

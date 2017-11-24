@@ -35,8 +35,8 @@ void Lcd::Init()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glEnable(GL_TEXTURE_2D);
 
-	// draw one frame
-	DrawScreen();
+	// update the texture
+	UpdateTexture();
 }
 
 // reset the lcd
@@ -87,7 +87,7 @@ int Lcd::SetLCDStatus()
 		Bit::Set(stat, 0);
 		Bit::Reset(stat, 1);
 		// write the mode to memory
-		Memory::Write(STAT_ADDRESS, stat);
+		Memory::Write(STAT_ADDRESS, stat | 0x80);
 		return 0;
 	}
 
@@ -165,7 +165,7 @@ int Lcd::SetLCDStatus()
 	}
 
 	// update the stat reg
-	Memory::Write(STAT_ADDRESS, stat);
+	Memory::Write(STAT_ADDRESS, stat | 0x80);
 
 	return 0;
 }
@@ -349,8 +349,8 @@ int Lcd::Update(int cycles)
 		{
 			// reset the scanline
 			Memory::Write(LY_ADDRESS, 0x0);
-			// draw the screen
-			DrawScreen();
+			// update the texture
+			UpdateTexture();
 		}
 
 		// reset the scanline counter
@@ -360,19 +360,16 @@ int Lcd::Update(int cycles)
 	return 0;
 }
 
-// update the screen
-void Lcd::DrawScreen()
+// update the texture
+void Lcd::UpdateTexture()
 {
 	// draw the image
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, Screen);
 }
 
 // render the LCD
-void Lcd::Render(int cycles)
+void Lcd::Render()
 {
-	// update the LCD
-	Update(cycles);
-
 	// draw the textured quad
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex2f(0, 0);
