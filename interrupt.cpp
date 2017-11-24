@@ -53,28 +53,16 @@ int Interrupt::ShouldService()
 		// loop through the interrupts
 		for (int i = 0; i < 5; i++)
 		{
-			// if the requested interrupt is on
-			if (Bit::Get(requestedInterrupt, i))
+			// if the requested interrupt is on, in the request and enabled registers
+			if (Bit::Get(requestedInterrupt, i) && Bit::Get(interruptsEnabled, i))
 			{
-				// if interrupts are enabled
-				if (Bit::Get(interruptsEnabled, i))
-				{
-					// check if the cpu was halted
-					wasHalted = Cpu::Operation.Halt;
-					// disable halt
-					Cpu::Operation.Halt = false;
+				// check if the cpu was halted
+				wasHalted = Cpu::Get::Halt();
+				// disable halt
+				Cpu::Set::Halt(false);
 
-					// If interrupts are enabled
-					if (MasterSwitch)
-					{
-						// return the bit of the interrupt
-						return i;
-					}
-					else
-					{
-						return -1;
-					}
-				}
+				// If interrupts are enabled
+				if (MasterSwitch) return i; else return -1;
 			}
 		}
 	}
@@ -97,13 +85,13 @@ void Interrupt::Service()
 		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
 		Bit::Reset(requestedInterrupt, interruptId);
 		Memory::Write(INT_REQUEST_ADDRESS, requestedInterrupt);
-		// push the program counter onto the stack
-		Memory::Push(Cpu::Get::PC());
-		// execute the interrupt
-		Cpu::Set::PC(InterruptList[interruptId].address);
 		// reset the was halted bool
 		wasHalted = false;
 		// turn off the master interrupt switch
 		MasterSwitch = false;
+		// push the program counter onto the stack
+		Memory::Push(Cpu::Get::PC());
+		// execute the interrupt
+		Cpu::Set::PC(InterruptList[interruptId].address);
 	}
 }

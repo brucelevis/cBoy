@@ -214,7 +214,7 @@ int Cpu::Init(bool usingBios)
 	{
 		Memory::Write(0xFF40, 0x91);
 	}	
-	Memory::Write(0xFF41, 0x84);
+	Memory::Write(0xFF41, 0x85);
 	Memory::Write(0xFF42, 0x00);
 	Memory::Write(0xFF43, 0x00);
 	Memory::Write(0xFF45, 0x00);
@@ -224,6 +224,7 @@ int Cpu::Init(bool usingBios)
 	Memory::Write(0xFF4A, 0x00);
 	Memory::Write(0xFF4B, 0x00);
 	Memory::Write(0xFFFF, 0x00);
+	Memory::Write(0xFF00, 0xFF);
 
 	return 0;
 }
