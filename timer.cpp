@@ -67,10 +67,10 @@ void Timer::UpdateDivider(int clockCycles)
 	// when the divider counter overflows
 	if (DividerCounter > 255)
 	{
-		// reset the divider counter
-		DividerCounter = 0;
 		// increment the divider
 		Memory::Mem[DIVIDER_ADDRESS] += 1;
+		// reset the divider counter
+		DividerCounter = 0;
 	}
 }
 

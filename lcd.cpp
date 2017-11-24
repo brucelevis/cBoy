@@ -98,11 +98,11 @@ int Lcd::SetLCDStatus()
 	{
 		// set the next mode
 		nextMode = 1;
-		// check if we should request an interrupt
-		requestInterrupt = Bit::Get(stat, 4);
 		// set the mode
 		Bit::Set(stat, 0);
 		Bit::Reset(stat, 1);
+		// check if we should request an interrupt
+		requestInterrupt = Bit::Get(stat, 4);
 	}
 	else
 	{
@@ -111,11 +111,11 @@ int Lcd::SetLCDStatus()
 		{
 			// set the next mode
 			nextMode = 2;
-			// check if we should request an interrupt
-			requestInterrupt = Bit::Get(stat, 5);
 			// set the mode
 			Bit::Set(stat, 1);
 			Bit::Reset(stat, 0);
+			// check if we should request an interrupt
+			requestInterrupt = Bit::Get(stat, 5);
 		}
 		// mode 3
 		else if (ScanlineCounter >= modeRange[3])
@@ -131,17 +131,18 @@ int Lcd::SetLCDStatus()
 		{
 			// set the next mode
 			nextMode = 0;
-			// check if we should request an interrupt
-			requestInterrupt = Bit::Get(stat, 3);
 			// set the mode
 			Bit::Reset(stat, 1);
 			Bit::Reset(stat, 0);
+			// check if we should request an interrupt
+			requestInterrupt = Bit::Get(stat, 3);
 		}
 	}
 
 	// if we're in a new mode, request the appropriate interrupt
 	if (requestInterrupt && (nextMode != currentMode))
 	{
+		Log::Critical("current mode is %d", currentMode);
 		Interrupt::Request(Interrupt::IDS::LCD);
 	}
 
@@ -193,7 +194,7 @@ static int GetColour(WORD address, BYTE colourNum)
 // draw tiles
 int Lcd::DrawTiles()
 {
-	// get the required values from teh 
+	// get the required values 
 	BYTE lcdControl = Memory::ReadByte(LCDC_ADDRESS);
 	WORD tileData = Bit::Get(lcdControl, 4) ? 0x8000 : 0x8800;
 	WORD tileMemory = Bit::Get(lcdControl, 3) ? 0x9C00 : 0x9800;

@@ -154,12 +154,16 @@ static void EmulationLoop()
 
 			// service interupts
 			Interrupt::Service();
+			// store the current cycle
+			int currentCycle = Cpu::Get::Cycles();
 			// execute the next opcode
 			Cpu::ExecuteOpcode();
+			// get the value of the current cycle only
+			int cycles = (Cpu::Get::Cycles() - currentCycle);
 			// update timers
-			Timer::Update(Cpu::Cycles);
+			Timer::Update(cycles);
 			// update graphics
-			Lcd::Render(Cpu::Cycles);
+			Lcd::Render(cycles);
 			// increment the instructions ran
 			instructionsRan++;
 		}
@@ -169,10 +173,17 @@ static void EmulationLoop()
 	{
 		// service interupts
 		Interrupt::Service();
+		// store the current cycle
+		int currentCycle = Cpu::Get::Cycles();
 		// execute the next opcode
 		Cpu::ExecuteOpcode();
+		// get the value of the current cycle only
+		int cycles = Cpu::Get::Cycles() - currentCycle;
 		// update timers
-		Timer::Update(Cpu::Cycles);
+		Timer::Update(cycles);
+		// update graphics
+		Lcd::Render(cycles);
+
 		// increment the instructions ran
 		instructionsRan++;
 	}
@@ -525,14 +536,7 @@ static void StartMainLoop()
 		}
 
 		// execute the emulation loop
-		if (!stepThrough)
-		{
-			EmulationLoop();
-		}
-		else
-		{
-			Lcd::Render(Cpu::Cycles);
-		}
+		if (!stepThrough) EmulationLoop();
 
 		// flip buffers
 		SDL_GL_SwapWindow(window);
@@ -546,8 +550,8 @@ int main(int argc, char* args[])
 	if (InitSDL())
 	{
 		// load rom
-		Rom::Load("roms/Tetris.gb");
-		//Rom::Load("roms/dr_mario.gb");
+		//Rom::Load("roms/Tetris.gb");
+		Rom::Load("roms/dr_mario.gb");
 		//Rom::Load("roms/The Legend of Zelda - Link's Awakening.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
 		//Rom::Load("roms/tests/big_scroller.gb");
