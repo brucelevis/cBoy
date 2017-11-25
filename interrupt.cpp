@@ -85,13 +85,13 @@ void Interrupt::Service()
 		BYTE requestedInterrupt = Memory::ReadByte(INT_REQUEST_ADDRESS);
 		Bit::Reset(requestedInterrupt, interruptId);
 		Memory::Write(INT_REQUEST_ADDRESS, requestedInterrupt);
-		// reset the was halted bool
-		wasHalted = false;
-		// turn off the master interrupt switch
-		MasterSwitch = false;
 		// push the program counter onto the stack
 		Memory::Push(Cpu::Get::PC());
 		// execute the interrupt
 		Cpu::Set::PC(InterruptList[interruptId].address);
+		// reset the was halted bool
+		wasHalted = false;
+		// turn off the master interrupt switch
+		MasterSwitch = false;
 	}
 }

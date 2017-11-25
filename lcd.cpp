@@ -47,9 +47,9 @@ void Lcd::Reset()
 	{
 		for (int x = 0; x < 160; x++)
 		{
-			Screen[y][x][0] = 224;
-			Screen[y][x][1] = 248;
-			Screen[y][x][2] = 208;
+			Screen[y][x][0] = 155;
+			Screen[y][x][1] = 188;
+			Screen[y][x][2] = 15;
 		}
 	}
 }
@@ -261,10 +261,10 @@ int Lcd::DrawTiles()
 		// set the rgb value depending on the color
 		switch(color)
 		{
-			case 0: r = 224; g = 248; b = 208; break; // 00 - white
-			case 1: r = 136; g = 192; b = 112; break; // 01 - light grey
-			case 2: r = 52; g = 104; b = 86; break; // 02 - dark grey
-			case 3: r = 8; g = 24; b = 32; break; // 03 - black
+			case 0: r = 155; g = 188; b = 15; break; // 00 - white
+			case 1: r = 139; g = 172; b = 15; break; // 01 - light grey
+			case 2: r = 48; g = 98; b = 48; break; // 02 - dark grey
+			case 3: r = 15; g = 56; b = 15; break; // 03 - black
 		}
 
 		// check the scanline

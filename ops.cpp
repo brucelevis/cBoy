@@ -500,17 +500,14 @@ void Ops::Bits::ResetMemory(WORD address, BYTE bit, int cycles)
 // rotate left (through carry)
 void Ops::Rotate::LeftCarry(BYTE &val, bool checkForZero, int cycles)
 {
-	// get the carry flag value
-	BYTE carryFlag = Flags::Get::C();
 	// calculate the result
-	BYTE result = ((val << 1) + (carryFlag));
-
+	BYTE result = ((val << 1) | Flags::Get::C());
 	// reset all flags
 	Flags::Reset::All();
 
-	// if we should check for zero
-	if (checkForZero && result == 0) Flags::Set::Z();
-	// set the carry flag
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 7 to carry flag
 	if (Bit::Get(val, 7)) Flags::Set::C();
 
 	// set val to the result
@@ -522,21 +519,22 @@ void Ops::Rotate::LeftCarry(BYTE &val, bool checkForZero, int cycles)
 // rotate left (through carry) (memory)
 void Ops::Rotate::LeftCarryMemory(WORD address, bool checkForZero, int cycles)
 {
-	// get the carry flag value
-	BYTE carryFlag = Flags::Get::C();
+	// get the data
+	BYTE val = Memory::ReadByte(address);
 	// calculate the result
-	BYTE result = ((Memory::ReadByte(address) << 1) + (carryFlag));
-
+	BYTE result = ((val << 1) | Flags::Get::C());
 	// reset all flags
 	Flags::Reset::All();
 
-	// if we should check for zero
-	if (checkForZero && result == 0) Flags::Set::Z();
-	// set the carry flag
-	if (Bit::Get(result, 7)) Flags::Set::C();
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 7 to carry flag
+	if (Bit::Get(val, 7)) Flags::Set::C();
 
-	// write the result back to memory
-	Memory::Write(address, result);
+	// set val to the result
+	val = result;
+	// write the data back to memory
+	Memory::Write(address, val);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -544,17 +542,14 @@ void Ops::Rotate::LeftCarryMemory(WORD address, bool checkForZero, int cycles)
 // rotate right (through carry)
 void Ops::Rotate::RightCarry(BYTE &val, bool checkForZero, int cycles)
 {
-	// get the carry flag value
-	BYTE carryFlag = Flags::Get::C();
 	// calculate the result
-	BYTE result = ((val >> 1) + (carryFlag << 7));
-
+	BYTE result = ((val >> 1) | Flags::Get::C());
 	// reset all flags
 	Flags::Reset::All();
 
-	// if we should check for zero
-	if (checkForZero && result == 0) Flags::Set::Z();
-	// set the carry flag
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 0 to carry flag
 	if (Bit::Get(val, 0)) Flags::Set::C();
 
 	// set val to the result
@@ -566,21 +561,22 @@ void Ops::Rotate::RightCarry(BYTE &val, bool checkForZero, int cycles)
 // rotate right (through carry) (memory)
 void Ops::Rotate::RightCarryMemory(WORD address, bool checkForZero, int cycles)
 {
-	// get the carry flag value
-	BYTE carryFlag = Flags::Get::C();
+	// get the data
+	BYTE val = Memory::ReadByte(address);
 	// calculate the result
-	BYTE result = ((Memory::ReadByte(address) >> 1) + (carryFlag << 7));
-
+	BYTE result = ((val >> 1) | Flags::Get::C());
 	// reset all flags
 	Flags::Reset::All();
 
-	// if we should check for zero
-	if (checkForZero && result == 0) Flags::Set::Z();
-	// set the carry flag
-	if (Bit::Get(result, 0)) Flags::Set::C();
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 0 to carry flag
+	if (Bit::Get(val, 0)) Flags::Set::C();
 
-	// write the result back to memory
-	Memory::Write(address, result);
+	// set val to the result
+	val = result;
+	// write the data back to memory
+	Memory::Write(address, val);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -588,17 +584,16 @@ void Ops::Rotate::RightCarryMemory(WORD address, bool checkForZero, int cycles)
 // rotate left (circular)
 void Ops::Rotate::LeftCircular(BYTE &val, bool checkForZero, int cycles)
 {
-	// store the result of the calculation
-	BYTE result = (val << 1) + Flags::Get::C();
-
+	// calculate the result
+	BYTE result = ((val << 1) | (val >> 7));
 	// reset all flags
 	Flags::Reset::All();
 
-	// if we should check for zero
-	if (checkForZero && result == 0) Flags::Set::Z();
-	// carry flag contains old bit 7 data
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 7 to carry flag
 	if (Bit::Get(val, 7)) Flags::Set::C();
-
+	
 	// set val to the result
 	val = result;
 	// add the cycles
@@ -608,21 +603,22 @@ void Ops::Rotate::LeftCircular(BYTE &val, bool checkForZero, int cycles)
 // rotate left (circular) (memory)
 void Ops::Rotate::LeftCircularMemory(WORD address, bool checkForZero, int cycles)
 {
-	// the data
+	// get the data
 	BYTE val = Memory::ReadByte(address);
-	// store the result of the calculation
-	BYTE result = (val << 1) + Flags::Get::C();
-
+	// calculate the result
+	BYTE result = ((val << 1) | (val >> 7));
 	// reset all flags
 	Flags::Reset::All();
 
-	// if we should check for zero
-	if (checkForZero && result == 0) Flags::Set::Z();
-	// carry flag contains old bit 7 data
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 7 to carry flag
 	if (Bit::Get(val, 7)) Flags::Set::C();
-
-	// write the result back to memory		
-	Memory::Write(address, result);
+	
+	// set val to the result
+	val = result;
+	// write the data back to memory
+	Memory::Write(address, val);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -630,19 +626,18 @@ void Ops::Rotate::LeftCircularMemory(WORD address, bool checkForZero, int cycles
 // rotate right (circular)
 void Ops::Rotate::RightCircular(BYTE &val, bool checkForZero, int cycles)
 {
-	// store the result of the calculation
-	BYTE result = (val >> 1);
-
+	// calculate the result
+	BYTE result = ((val >> 1) | (val << 7));
 	// reset all flags
 	Flags::Reset::All();
 
-	// carry flag contains old bit zero data
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 0 to carry flag
 	if (Bit::Get(val, 0)) Flags::Set::C();
-	// if we should check for zero
-	if (checkForZero && (result + (Flags::Get::C() << 7)) == 0) Flags::Set::Z();
-
-	// set val to result + carry		
-	val = (result + (Flags::Get::C() << 7));
+	
+	// set val to the result
+	val = result;
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -650,21 +645,22 @@ void Ops::Rotate::RightCircular(BYTE &val, bool checkForZero, int cycles)
 // rotate right (circular) (memory)
 void Ops::Rotate::RightCircularMemory(WORD address, bool checkForZero, int cycles)
 {
-	// the data
+	// get the data
 	BYTE val = Memory::ReadByte(address);
-	// store the result of the calculation
-	BYTE result = (val >> 1);
-
+	// calculate the result
+	BYTE result = ((val >> 1) | (val << 7));
 	// reset all flags
 	Flags::Reset::All();
 
-	// carry flag contains old bit zero data
+	// check for zero
+	if (checkForZero && (result == 0)) Flags::Set::Z();
+	// old bit 0 to carry flag
 	if (Bit::Get(val, 0)) Flags::Set::C();
-	// if we should check for zero
-	if (checkForZero && (result + (Flags::Get::C() << 7)) == 0) Flags::Set::Z();
-
-	// set val to result + carry			
-	Memory::Write(address, (result + (Flags::Get::C() << 7)));
+	
+	// set val to the result
+	val = result;
+	// write the data to memory
+	Memory::Write(address, val);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -677,19 +673,16 @@ void Ops::Shift::Left(BYTE &val, int cycles)
 {
 	// calculate the result
 	BYTE result = (val << 1);
-
 	// reset all flags
 	Flags::Reset::All();
 
-	// set the Z flag if applicable
+	// check for zero
 	if (result == 0) Flags::Set::Z();
-	// set the carry flag
+	// old bit 7 to carry flag
 	if (Bit::Get(val, 7)) Flags::Set::C();
 
 	// set val to the result
 	val = result;
-	// set LSB of val to 0
-	Bit::Reset(val, 0);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -701,20 +694,17 @@ void Ops::Shift::LeftMemory(WORD address, int cycles)
 	BYTE val = Memory::ReadByte(address);
 	// calculate the result
 	BYTE result = (val << 1);
-
 	// reset all flags
 	Flags::Reset::All();
 
-	// set the Z flag if applicable
+	// check for zero
 	if (result == 0) Flags::Set::Z();
-	// set the carry flag
+	// old bit 7 to carry flag
 	if (Bit::Get(val, 7)) Flags::Set::C();
 
 	// set val to the result
 	val = result;
-	// set LSB of val to 0
-	Bit::Reset(val, 0);
-	// write the result back to memory
+	// write the data to memory
 	Memory::Write(address, val);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
@@ -723,22 +713,21 @@ void Ops::Shift::LeftMemory(WORD address, int cycles)
 // shift right (into carry) - MSB doesn't change
 void Ops::Shift::Right(BYTE &val, int cycles)
 {
+	// get the old MSB
+	BYTE oldMSB = Bit::Get(val, 7);
 	// calculate the result
 	BYTE result = (val >> 1);
-	// get the old MSB data
-	BYTE oldMSB = Bit::Get(val, 7);
-
 	// reset all flags
 	Flags::Reset::All();
 
-	// set the Z flag if applicable
+	// check for zero
 	if (result == 0) Flags::Set::Z();
-	// set the carry flag
+	// old bit 0 to carry flag
 	if (Bit::Get(val, 0)) Flags::Set::C();
 
 	// set val to the result
 	val = result;
-	// set MSB back to its original value
+	// set val's MSB to what it was previously
 	if (oldMSB) Bit::Set(val, 7); else Bit::Reset(val, 7);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
@@ -749,25 +738,23 @@ void Ops::Shift::RightMemory(WORD address, int cycles)
 {
 	// get the data
 	BYTE val = Memory::ReadByte(address);
+	// get the old MSB
+	BYTE oldMSB = Bit::Get(val, 7);
 	// calculate the result
 	BYTE result = (val >> 1);
-	// get the old MSB data
-	BYTE oldMSB = Bit::Get(val, 7);
-
 	// reset all flags
 	Flags::Reset::All();
 
-	// set the Z flag if applicable
+	// check for zero
 	if (result == 0) Flags::Set::Z();
-	// set the carry flag
+	// old bit 0 to carry flag
 	if (Bit::Get(val, 0)) Flags::Set::C();
 
 	// set val to the result
 	val = result;
-	// set MSB back to its original value
+	// set val's MSB to what it was previously
 	if (oldMSB) Bit::Set(val, 7); else Bit::Reset(val, 7);
-
-	// write the result back to memory
+	// write the data to memory
 	Memory::Write(address, val);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
@@ -778,19 +765,16 @@ void Ops::Shift::RightCarry(BYTE &val, int cycles)
 {
 	// calculate the result
 	BYTE result = (val >> 1);
-
 	// reset all flags
 	Flags::Reset::All();
 
-	// set the Z flag if applicable
+	// check for zero
 	if (result == 0) Flags::Set::Z();
-	// set the carry flag
+	// old bit 0 to carry flag
 	if (Bit::Get(val, 0)) Flags::Set::C();
 
 	// set val to the result
 	val = result;
-	// set MSB to zero
-	Bit::Reset(val, 7);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
@@ -799,23 +783,20 @@ void Ops::Shift::RightCarry(BYTE &val, int cycles)
 void Ops::Shift::RightCarryMemory(WORD address, int cycles)
 {
 	// get the data
-	BYTE val = (Memory::ReadByte(address));
+	BYTE val = Memory::ReadByte(address);
 	// calculate the result
 	BYTE result = (val >> 1);
-
 	// reset all flags
 	Flags::Reset::All();
 
-	// set the Z flag if applicable
+	// check for zero
 	if (result == 0) Flags::Set::Z();
-	// set the carry flag
+	// old bit 0 to carry flag
 	if (Bit::Get(val, 0)) Flags::Set::C();
 
 	// set val to the result
 	val = result;
-	// set MSB to zero
-	Bit::Reset(val, 7);
-	// write the data back to memory
+	// write the data to memory
 	Memory::Write(address, val);
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
