@@ -265,11 +265,11 @@ static void ShowFileWindow()
 	if (ImGui::IsItemClicked())
 	{
 		// valid file extensions
-		char const *validExtensions[2] = {"*.gb", "*.bin"};
+		char const *validExtensions[4] = {"*.gb", "*.GB", "*.bin", "*.BIN"};
 		// the filename
 		char const *fileName;
 		// open the file dialog
-		fileName = tinyfd_openFileDialog("Select Rom", "", 2, validExtensions, NULL, 0);
+		fileName = tinyfd_openFileDialog("Select Rom", "", 4, validExtensions, NULL, 0);
 		// if the filename isn't null
 		if (fileName != NULL)
 		{
@@ -559,18 +559,18 @@ int main(int argc, char* args[])
 		// individual cpu instruction tests
 		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); // passes!
-		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); //failed
-		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // passes!
-		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // passes!
-		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // passes!
-		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // fails
+		Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb"); // fails - prints test name twice and never finishes
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb"); // fails
-		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // passes!
+		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb"); // fails
 
 		// load bios
-		didLoadBios = Bios::Load("bios.bin");
+		//didLoadBios = Bios::Load("bios.bin");
 
 		// init the Cpu
 		Cpu::Init(didLoadBios);
