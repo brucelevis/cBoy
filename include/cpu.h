@@ -22,7 +22,8 @@ class Cpu
 		static void LoadState();
 
 	public:
-		struct Operations {
+		struct Operations 
+		{
 			bool PendingInterruptEnabled;
 			bool Stop;
 			bool Halt;
@@ -31,9 +32,11 @@ class Cpu
 		static int Cycles;
 
 	private:
-		union Registers {
+		union Registers 
+		{
 			WORD reg;
-			struct {
+			struct 
+			{
 				BYTE lo;
 				BYTE hi;
 			};

@@ -105,6 +105,11 @@ void Memory::Write(WORD address, BYTE data)
 		}
 		break;
 
+		// unmapped
+		case 0xFF4C ... 0xFF7F:
+			// do nothing
+		break;
+
 		// echo ram (1)
 		case 0xC000 ... 0xDE00:
 			Mem[address] = data;
@@ -136,16 +141,16 @@ void Memory::Push(WORD data)
 
 	// write the data to the stack
 	Cpu::Set::SP(Cpu::Get::SP()->reg - 1);
-	Memory::Write(Cpu::Get::SP()->reg, hi);
+	Write(Cpu::Get::SP()->reg, hi);
 	Cpu::Set::SP(Cpu::Get::SP()->reg - 1);
-	Memory::Write(Cpu::Get::SP()->reg, lo);
+	Write(Cpu::Get::SP()->reg, lo);
 }
 
 // pop
 WORD Memory::Pop()
 {
 	// get the data
-	WORD data = Memory::ReadWord(Cpu::Get::SP()->reg);
+	WORD data = ReadWord(Cpu::Get::SP()->reg);
 	// increment the stack pointer
 	Cpu::Set::SP(Cpu::Get::SP()->reg + 2);
 	// return the data

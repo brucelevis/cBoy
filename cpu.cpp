@@ -249,45 +249,12 @@ void Cpu::ExecuteOpcode()
 	{
 		// misc
 		case 0x00: Cycles += 4; break; // nop
-		case 0x10: // STOP 0
-			// Halt CPU & LCD display until button pressed
-			Operation.Stop = true;
-			// TODO: check for button press
-			// TODO: halt display
-			PC += 1;
-			Cycles += 4;
-		break;
-		case 0x76: // HALT
-			Operation.Halt = true;
-			Cycles += 4;
-		break;
-		case 0x2F: // CPL
-			// set the N & H flags
-			Flags::Set::N();
-			Flags::Set::H();
-			// compliment A
-			AF.hi ^= 0xFF; 
-			Cycles += 4;
-		break; 
-		case 0x37: // SCF
-			// reset the N & H flags
-			Flags::Reset::N();
-			Flags::Reset::H();
-			// set the carry flag
-			Flags::Set::C();
-			Cycles += 4;
-		break;
-		case 0x3F: // CCF
-			// reset the N & H flags
-			Flags::Reset::N();
-			Flags::Reset::H();
-
-			// flip the carry flag
-			if (Flags::Get::C()) Flags::Reset::C(); else Flags::Set::C();
-
-			Cycles += 4;
-		break; 
-		case 0xCB: ExecuteExtendedOpcode(); /*Log::Critical("Executing extended opcode");*/ Cycles += 4; break; // PREFIX CB
+		case 0x10: Ops::General::Stop(4); PC += 1; break; // STOP 0
+		case 0x76: Ops::General::Halt(4); break; // HALT
+		case 0x2F: Ops::General::ComplementA(AF.hi, 4); break; // CPL, A
+		case 0x37: Ops::General::SetCarryFlag(4); break; // SCF
+		case 0x3F: Ops::General::ComplementCarryFlag(4); break; // CCF
+		case 0xCB: ExecuteExtendedOpcode(); Cycles += 4; break; // PREFIX CB
 		// 8-bit add
 		case 0x80: Ops::Math::EightBit::Add(AF.hi, BC.hi, 4); break; // ADD A,B
 		case 0x81: Ops::Math::EightBit::Add(AF.hi, BC.lo, 4); break; // ADD A,C
@@ -313,27 +280,7 @@ void Cpu::ExecuteOpcode()
 		case 0x19: Ops::Math::SixteenBit::Add(HL.reg, DE.reg, 8); break; // ADD HL,DE
 		case 0x29: Ops::Math::SixteenBit::Add(HL.reg, HL.reg, 8); break; // ADD HL,HL
 		case 0x39: Ops::Math::SixteenBit::Add(HL.reg, SP.reg, 8); break; // ADD HL,SP
-		case 0xE8: // ADD SP,r8
-		{
-			// reset all flags
-			Flags::Reset::All();
-
-			// The value (r8)
-			SIGNED_BYTE nn = (SIGNED_BYTE)Memory::ReadByte(PC);
-
-			// determine if we half carried
-			if ((SP.reg & 0xF) + (nn & 0xF) > 0xF) Flags::Set::H();
-			// determine if we carried
-			if ((SP.reg & 0xFF) + nn > 0xFF) Flags::Set::C();
-
-			// add nn to SP
-			SP.reg = (WORD)(SP.reg + nn);
-			// increment the program counter
-			PC += 1;
-			// increment cycles
-			Cycles += 16;
-		}
-		break;
+		case 0xE8: Ops::Math::AddStackPointerR8(16); PC += 1; break; // ADD SP,r8
 		// 8-bit sub
 		case 0x90: Ops::Math::EightBit::Sub(AF.hi, BC.hi, 4); break; // SUB B
 		case 0x91: Ops::Math::EightBit::Sub(AF.hi, BC.lo, 4); break; // SUB C
@@ -498,39 +445,9 @@ void Cpu::ExecuteOpcode()
 		case 0x11: Ops::General::SixteenBit::Load(DE.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD DE,d16
 		case 0x21: Ops::General::SixteenBit::Load(HL.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD HL,d16
 		case 0x31: Ops::General::SixteenBit::Load(SP.reg, Memory::ReadWord(PC), 12); PC += 2; break; // LD SP,d16
-		case 0xF8: // LD HL,SP+r8
-		{
-			// reset all flags
-			Flags::Reset::All();
-
-			// SP + r8
-			WORD nn = (WORD)(SP.reg + (SIGNED_BYTE)Memory::ReadByte(PC));
-
-			// determine if we half carried
-			if (((HL.reg & 0xF) + (nn & 0xF)) > 0xF) Flags::Set::H();
-			// determine if we carried
-			if (((HL.reg & 0xFF) + (nn)) > 0xFF) Flags::Set::C();
-			
-			// load nn into HL
-			Ops::General::SixteenBit::Load(HL.reg, nn, 12);
-			// increment pc
-			PC += 1;
-		}
-		break;
+		case 0xF8: Ops::General::LoadHLSPR8(12); PC += 1; break; // LD HL,SP+r8
 		case 0xF9: Ops::General::SixteenBit::Load(SP.reg, HL.reg, 8); break; // LD SP,HL
-		case 0x08: // LD (a16),SP
-		{
-			// get the value of a16
-			WORD nn = Memory::ReadWord(PC);
-			// write SP to memory
-			Memory::Write(nn, SP.hi);
-			Memory::Write(nn + 1, SP.lo);
-
-			// increment PC
-			PC += 2;
-			Cycles += 20;
-		}
-		break;
+		case 0x08: Ops::General::LoadSPA16(20); PC += 2; break; // LD (a16),SP
 		// 8-bit write
 		case 0x02: Ops::General::EightBit::Write(BC.reg, AF.hi, 8); break; // LD (BC),A
 		case 0x12: Ops::General::EightBit::Write(DE.reg, AF.hi, 8); break; // LD (DE),A
@@ -598,56 +515,10 @@ void Cpu::ExecuteOpcode()
 		case 0xE1: HL.reg = Memory::Pop(); Cycles += 12; break; // POP HL
 		case 0xF1: AF.reg = (Memory::Pop() & ~0xF); Cycles += 12; break; // POP AF 
 		// special instructions
-		case 0x27: // DAA
-		{
-			/*
-			Decimal adjust register A.
-			This instruction adjusts register A so that the
-			correct representation of Binary Coded Decimal (BCD)
-			is obtained.
-
-			When this instruction is executed, the A register is BCD corrected using 
-			the contents of the flags. The exact process is the following: 
-				if the least significant four bits of A contain a non-BCD digit 
-				(i. e. it is greater than 9) or the H flag is set, 
-				then $06 is added to the register. 
-				Then the four most significant bits are checked. 
-				If this more significant digit also happens to be greater than 9
-				or the C flag is set, then $60 is added.
-
-			NOTES:
-				sadly the gameboy throws additional spanners
-				oh, it's not check your 0xF0  0x09, you're checking the wrong nibble
-				and the > 0x90/>0x09 checks only happen on the gameboy when N is not set
-				if I rememeber correctly
-
-				Note that *both* the H and C flags can be set, yours would overwrite the result
-
-				or they can both be over 9, think of 0x99 + 0x11, before adjustment it's 0xAA, 
-				needs to be adjusted to 0x10 and the carry set
-				*/
-
-			int u = 0;
-			if (Flags::Get::H() || (!Flags::Get::N() && (AF.hi & 0xf) > 9)) {
-				u = 6;
-			}
-			if (Flags::Get::C() || (!Flags::Get::N() && AF.hi > 0x99)) {
-				u |= 0x60;
-				Flags::Set::C();
-			}
-
-			AF.hi += (Flags::Get::N()) ? -u : u;
-			if (AF.hi == 0) Flags::Set::Z(); else Flags::Reset::Z();
-			Flags::Reset::H();
-
-			Cycles += 4;
-			//printf("WARNING: DAA instruction not implemented\n");
-		}
-		break;
-
+		case 0x27: Ops::Math::DAA(4); break; // DAA
 		case 0xF3: Interrupt::MasterSwitch = false; Cycles += 4; break; // DI
 		case 0xFB: Operation.PendingInterruptEnabled = true; Cycles += 4; break; // EI
-		default: printf("op not implemented 0x%02X", Opcode); break;
+		default: Log::UnimplementedOpcode(Opcode); break;
 	}
 
 	// enable interrupts if requested

@@ -44,6 +44,10 @@ class Ops
 						static void Dec(WORD &val, int cycles);
 						static void Inc(WORD &val, int cycles);
 				};
+
+				// general math
+				static void AddStackPointerR8(int cycles);
+				static void DAA(int cycles);
 		};
 
 		// general
@@ -64,6 +68,15 @@ class Ops
 					public:
 						static void Load(WORD &val, WORD val2, int cycles);
 				};
+
+				// general methods
+				static void Stop(int cycles);
+				static void Halt(int cycles);
+				static void ComplementA(BYTE &val, int cycles);
+				static void SetCarryFlag(int cycles);
+				static void ComplementCarryFlag(int cycles);
+				static void LoadHLSPR8(int cycles);
+				static void LoadSPA16(int cycles);
 		};
 
 		// flow

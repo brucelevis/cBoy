@@ -343,6 +343,60 @@ void Ops::Math::SixteenBit::Inc(WORD &val, int cycles)
 }
 
 
+// # General Math Functions # //
+
+// add SP, r8
+void Ops::Math::AddStackPointerR8(int cycles)
+{
+	// get r8
+	SIGNED_BYTE r8 = (SIGNED_BYTE)Memory::ReadByte(Cpu::Get::PC());
+	// calculate the result
+	WORD result = (Cpu::Get::SP()->reg + r8);
+
+	// reset all flags
+	Flags::Reset::All();
+	// check for half carry
+	if (((Cpu::Get::SP()->reg & 0xF) + (r8 & 0xF)) > 0xF) Flags::Set::H();
+	// check for carry
+	if (((Cpu::Get::SP()->reg & 0xFF) + r8) > 0xFF) Flags::Set::C();
+
+	// set SP to the result
+	Cpu::Set::SP(result);
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
+// daa
+void Ops::Math::DAA(int cycles)
+{
+	// a/f
+	BYTE a = Cpu::Get::AF()->hi;
+
+	// if the N flag isn't set
+	if (!Flags::Get::N())
+	{
+		if (Flags::Get::C() || a > 0x99) a += 0x60; Flags::Set::C();
+		if (Flags::Get::H() || (a & 0x0F) > 0x9) a += 0x6;
+	}
+	else
+	{
+		if (Flags::Get::C()) a -= 0x60;
+		if (Flags::Get::H()) a -= 0x6;
+	}
+
+	// check for zero
+	if (a == 0) Flags::Set::Z();
+	// reset the H flag
+	Flags::Reset::H();
+
+	// update AF
+	BYTE f = Cpu::Get::AF()->lo;
+	Cpu::Set::AF((a << 8) | f);
+
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
 // # Eight Bit General Functions # //
 
 
@@ -364,7 +418,11 @@ void Ops::General::EightBit::Write(WORD address, BYTE val, int cycles)
 	Cpu::Set::Cycles(cycles);
 }
 
+
 // # Sixteen Bit General Functions # //
+
+
+// load
 void Ops::General::SixteenBit::Load(WORD &val, WORD val2, int cycles)
 {
 	// set val to val2
@@ -373,6 +431,97 @@ void Ops::General::SixteenBit::Load(WORD &val, WORD val2, int cycles)
 	Cpu::Set::Cycles(cycles);
 }
 
+
+// # General Functions # //
+
+// stop
+void Ops::General::Stop(int cycles)
+{
+	// stop the cpu
+	Cpu::Set::Stop(true);
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
+// halt
+void Ops::General::Halt(int cycles)
+{
+	// halt the cpu
+	Cpu::Set::Halt(true);
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
+// complement A
+void Ops::General::ComplementA(BYTE &val, int cycles)
+{
+	// set the N & H flags
+	Flags::Set::N();
+	Flags::Set::H();
+	// compliment val
+	val ^= 0xFF;
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
+// set carry flag
+void Ops::General::SetCarryFlag(int cycles)
+{
+	// reset the N & H flags
+	Flags::Reset::N();
+	Flags::Reset::H();
+	// set the carry flag
+	Flags::Set::C();
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
+// complement carry flag
+void Ops::General::ComplementCarryFlag(int cycles)
+{
+	// reset the N & H flags
+	Flags::Reset::N();
+	Flags::Reset::H();
+
+	// flip the carry flag
+	if (Flags::Get::C()) Flags::Reset::C(); else Flags::Set::C();
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
+// LD HL,SP+r8
+void Ops::General::LoadHLSPR8(int cycles)
+{
+	// get r8
+	SIGNED_BYTE r8 = (SIGNED_BYTE)Memory::ReadByte(Cpu::Get::PC());
+	// calculate the result
+	WORD result = (Cpu::Get::SP()->reg + r8);
+
+	// reset all flags
+	Flags::Reset::All();
+
+	// check for half carry
+	if (((Cpu::Get::HL()->reg & 0xF) + (result & 0xF)) > 0xF) Flags::Set::H();
+	// check for carry
+	if (((Cpu::Get::HL()->reg & 0xFF) + result) > 0xFF) Flags::Set::C();
+
+	// set HL to the result
+	Cpu::Set::HL(result);
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
+
+// ld a16, sp
+void Ops::General::LoadSPA16(int cycles)
+{
+	// get a16
+	WORD a16 = Memory::ReadWord(Cpu::Get::PC());
+	// write 
+	Memory::Write(a16, Cpu::Get::SP()->hi);
+	Memory::Write(a16 + 1, Cpu::Get::SP()->lo);
+	// add the cycles
+	Cpu::Set::Cycles(cycles);
+}
 
 // # Bit General Functions # //
 
@@ -801,6 +950,7 @@ void Ops::Shift::RightCarryMemory(WORD address, int cycles)
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
 }
+
 
 // # Flow Functions # //
 
