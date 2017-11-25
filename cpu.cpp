@@ -338,8 +338,8 @@ void Cpu::ExecuteOpcode()
 		case 0x1D: Ops::Math::EightBit::Dec(DE.lo, 4); break; // DEC E
 		case 0x25: Ops::Math::EightBit::Dec(HL.hi, 4); break; // DEC H
 		case 0x2D: Ops::Math::EightBit::Dec(HL.lo, 4); break; // DEC L
-		case 0x3D: Ops::Math::EightBit::Dec(AF.hi, 4); break; // DEC A
 		case 0x35: Ops::Math::EightBit::DecMemory(HL.reg, 12); break; // DEC (HL)
+		case 0x3D: Ops::Math::EightBit::Dec(AF.hi, 4); break; // DEC A
 		// 16-bit dec
 		case 0x0B: Ops::Math::SixteenBit::Dec(BC.reg, 8); break; // DEC BC
 		case 0x1B: Ops::Math::SixteenBit::Dec(DE.reg, 8); break; // DEC DE
@@ -494,7 +494,7 @@ void Cpu::ExecuteOpcode()
 		case 0xC8: Ops::Flow::Return(Flags::Get::Z(), 8); break; // RET Z
 		case 0xD0: Ops::Flow::Return(!Flags::Get::C(), 8); break; // RET NC
 		case 0xD8: Ops::Flow::Return(Flags::Get::C(), 8); break;  // RET C
-		case 0xD9: Ops::Flow::Return(true, 4); Interrupt::MasterSwitch = true; /*NOTE: This breaks dr.mario ?? enabling the interrupt master switch*/ break; // RETI
+		case 0xD9: Ops::Flow::Return(true, 4); Interrupt::MasterSwitch = true; break; // RETI
 		// restarts
 		case 0xC7: Ops::Flow::Restart(0x0000, 32); break; // RST 00H
 		case 0xCF: Ops::Flow::Restart(0x0008, 32); break; // RST 08H
@@ -555,8 +555,8 @@ void Cpu::ExecuteExtendedOpcode()
 		case 0x33: Ops::Bits::Swap(DE.lo, 8); break; // SWAP E
 		case 0x34: Ops::Bits::Swap(HL.hi, 8); break; // SWAP H
 		case 0x35: Ops::Bits::Swap(HL.lo, 8); break; // SWAP L
-		case 0x37: Ops::Bits::Swap(AF.hi, 8); break; // SWAP A
 		case 0x36: Ops::Bits::SwapMemory(HL.reg, 16); break; // SWAP (HL)
+		case 0x37: Ops::Bits::Swap(AF.hi, 8); break; // SWAP A
 		// rotate left circular
 		case 0x00: Ops::Rotate::LeftCircular(BC.hi, 8, true); break; // RLC B
 		case 0x01: Ops::Rotate::LeftCircular(BC.lo, 8, true); break; // RLC C

@@ -369,7 +369,7 @@ void Ops::Math::AddStackPointerR8(int cycles)
 // daa
 void Ops::Math::DAA(int cycles)
 {
-	// a/f
+	// get the value of a
 	BYTE a = Cpu::Get::AF()->hi;
 
 	// if the N flag isn't set
