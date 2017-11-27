@@ -55,7 +55,7 @@ BYTE Timer::GetClockFrequency()
 void Timer::SetClockFrequency()
 {
 	// set the timer counter to the correct frequency
-	TimerCounter = FREQUENCIES[GetClockFrequency()];
+	TimerCounter += FREQUENCIES[GetClockFrequency()];
 }
 
 // update divider
