@@ -38,7 +38,7 @@ class Interrupt
 				BYTE address;
 			};
 		};
-		static Type InterruptList[4];
+		static Type InterruptList[5];
 		static Type VBlank;
 		static Type Lcd;
 		static Type Timer;

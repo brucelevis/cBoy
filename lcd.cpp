@@ -354,7 +354,7 @@ int Lcd::Update(int cycles)
 		}
 
 		// reset the scanline counter
-		ScanlineCounter = LCD_CLOCK_CYCLES;
+		ScanlineCounter += LCD_CLOCK_CYCLES;
 	}
 
 	return 0;

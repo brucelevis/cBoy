@@ -27,7 +27,36 @@ void Memory::Init()
 // read memory
 BYTE Memory::ReadByte(WORD address)
 {
-	return Mem[address];
+	BYTE val = Mem[address];
+
+	// handle special cases
+	switch(address)
+	{
+		case 0xFF10: // NR10
+		case 0xFF11: // NR11
+		case 0xFF12: // NR12
+		case 0xFF14: // NR14
+		case 0xFF16: // NR21
+		case 0xFF17: // NR22
+		case 0xFF19: // NR24
+		case 0xFF1A: // NR30
+		case 0xFF1B: // NR31
+		case 0xFF1C: // NR32
+		case 0xFF1E: // NR33
+		case 0xFF20: // NR41
+		case 0xFF21: // NR42
+		case 0xFF22: // NR43
+		case 0xFF23: // NR30
+		case 0xFF24: // NR50
+		case 0xFF25: // NR51
+		case 0xFF26: // NR52
+			val = 0xFF;
+		break;
+
+		default: break;
+	}
+
+	return val;
 }
 
 // read word
@@ -39,6 +68,7 @@ WORD Memory::ReadWord(WORD address)
 // write memory
 void Memory::Write(WORD address, BYTE data)
 {
+	Log::Critical("Writing %02X to address %04X", data, address);
 	// handle memory writing
 	switch(address)
 	{
@@ -66,13 +96,18 @@ void Memory::Write(WORD address, BYTE data)
 		}
 		break;
 
+		// interrupt request address
+		case 0xFF0F:
+			Mem[0xFF0F] = (data | 0xE0);
+		break;
+
 		// update timer settings
 		case TAC_ADDRESS:
 		{
 			// get the current clock frequency
 			BYTE currentFrequency = Timer::GetClockFrequency();
-			// write the new TAC data
-			Mem[address] = data;
+			// write the new TAC data (upper 5 bits are fixed to one)
+			Mem[address] = (data | 0xF8);
 			// get the new clock frequency
 			BYTE newFrequency = Timer::GetClockFrequency();
 			// if the new frequency isn't equal to the current one

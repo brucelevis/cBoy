@@ -68,8 +68,8 @@ void Log::UnimplementedOpcode(BYTE opcode)
 }
 
 // log to file
-void Log::ToFile(WORD pc, BYTE opcode)
+void Log::ToFile(WORD pc, BYTE opcode, BYTE fZ, BYTE fN, BYTE fH, BYTE fC)
 {
 	//fprintf(logOutput, "%04X: 0x%02X\n", pc, opcode);
-	fprintf(logOutput, "%04X:%04X\n", pc, opcode);
+	fprintf(logOutput, "%04X:%04X:%d%d%d%d\n", pc, opcode, fZ, fN, fH, fC);
 }

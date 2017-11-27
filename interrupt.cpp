@@ -19,8 +19,8 @@ Interrupt::Type Interrupt::Serial = {{.bit = 3, .address = 0x58}};
 Interrupt::Type Interrupt::Joypad = {{.bit = 4, .address = 0x60}};
 
 // interrupt list
-Interrupt::Type Interrupt::InterruptList[4] = {
-	Interrupt::VBlank, Interrupt::Lcd, Interrupt::Timer, Interrupt::Joypad
+Interrupt::Type Interrupt::InterruptList[5] = {
+	Interrupt::VBlank, Interrupt::Lcd, Interrupt::Timer, Interrupt::Serial, Interrupt::Joypad
 };
 
 // master switch is false initially
