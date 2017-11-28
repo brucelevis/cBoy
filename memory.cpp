@@ -11,6 +11,7 @@
 #include "include/log.h"
 #include "include/lcd.h"
 #include "include/timer.h"
+#include "include/rom.h"
 
 // initialize vars
 BYTE Memory::Mem[0x10000] = {0};
@@ -68,7 +69,8 @@ WORD Memory::ReadWord(WORD address)
 // write memory
 void Memory::Write(WORD address, BYTE data)
 {
-	Log::Critical("Writing %02X to address %04X", data, address);
+	//Log::Critical("Writing %02X to address %04X", data, address);
+	
 	// handle memory writing
 	switch(address)
 	{
@@ -142,6 +144,11 @@ void Memory::Write(WORD address, BYTE data)
 
 		// unmapped
 		case 0xFF4C ... 0xFF7F:
+			// copy rom back over bios
+			if (data == 0x1)
+			{
+				Rom::Reload();
+			}
 			// do nothing
 		break;
 
