@@ -14,9 +14,11 @@
 #include "include/memory.h"
 #include "include/unitTest.h"
 
+// handy macros
 #define testPassed(name, phase) Log::Normal("%s %s passed", name, phase);
 #define assert(expected, got, testName, testPhase) if (expected != got){ Log::Critical("%s - %s failed. Expected output of %02X, got %02X", testName, testPhase, expected, got); return;} else testPassed(testName, testPhase);
 
+// check for valid flags
 static void assertFlags(BYTE fZ, BYTE fN, BYTE fH, BYTE fC, const char *testName, const char *testPhase)
 {
 	BYTE flagZ_Val = Flags::Get::Z();
@@ -32,10 +34,14 @@ static void assertFlags(BYTE fZ, BYTE fN, BYTE fH, BYTE fC, const char *testName
 	}
 }
 
+// test phases
 const char *testPhase1 = "Test phase 1";
 const char *testPhase2 = "Test phase 2";
 const char *testPhase3 = "Test phase 3";
 
+// # Eight Bit Tests # //
+
+// test eight bit add
 void UnitTest::Test::EightBit::Add()
 {
 	// the test name
@@ -83,6 +89,64 @@ void UnitTest::Test::EightBit::Add()
 	Cpu::Set::AF(0xFF << 8 | Cpu::Get::AF()->lo);
 	// set the instruction to 0x80 (ADD A,B)
 	Memory::Write(0x00, 0x80);
+	// set B to 0x00
+	Cpu::Set::BC(0x00 << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0xFF, Cpu::Get::AF()->hi, testName, testPhase3);
+	// check if the flags were ok
+	assertFlags(0, 0, 0, 0, testName, testPhase3); // no flags should be set
+}
+
+// test eight bit add carry
+void UnitTest::Test::EightBit::AddCarry()
+{
+	// the test name
+	const char *testName = "Test::EightBit::AddCarry()";
+
+	// # PHASE 1 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set A to 0x01
+	Cpu::Set::AF(0x01 << 8 | Cpu::Get::AF()->lo);
+	// set the instruction to 0x88 (ADC A,B)
+	Memory::Write(0x00, 0x88);
+	// set B to 0xFF
+	Cpu::Set::BC(0xFF << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0x00, Cpu::Get::AF()->hi, testName, testPhase1);
+	// check if the flags were ok
+	assertFlags(1, 0, 1, 1, testName, testPhase1); // flags Z, H and C should be set
+
+	// # PHASE 2 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set A to 0x05
+	Cpu::Set::AF(0x05 << 8 | Cpu::Get::AF()->lo);
+	// set the instruction to 0xCE (ADC A,d8)
+	Memory::Write(0x00, 0xCE);
+	// set d8 to 0xFF
+	Memory::Write(0x01, 0xFF);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0x05, Cpu::Get::AF()->hi, testName, testPhase2);
+	// check if the flags were ok
+	assertFlags(0, 0, 1, 1, testName, testPhase2); // flags H and C should be set
+
+	// # PHASE 3 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set A to 0xFF
+	Cpu::Set::AF(0xFE << 8 | Cpu::Get::AF()->lo);
+	// set the instruction to 0x88 (ADC A,B)
+	Memory::Write(0x00, 0x88);
 	// set B to 0x00
 	Cpu::Set::BC(0x00 << 8 | Cpu::Get::BC()->lo);
 	// execute the opcode
