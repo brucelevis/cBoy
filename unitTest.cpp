@@ -15,11 +15,11 @@
 #include "include/unitTest.h"
 
 // handy macros
-#define testPassed(name, phase) Log::Normal("%s %s passed", name, phase);
-#define assert(expected, got, testName, testPhase) if (expected != got){ Log::Critical("%s - %s failed. Expected output of %02X, got %02X", testName, testPhase, expected, got); return;} else testPassed(testName, testPhase);
+#define testPassed(name, phase) Log::Normal("%s Test phase %d passed", name, phase);
+#define assert(expected, got, testName, testPhase) if (expected != got){ Log::Critical("%s - Test phase %d failed. Expected output of %02X, got %02X", testName, testPhase, expected, got); return;} else testPassed(testName, testPhase);
 
 // check for valid flags
-static void assertFlags(BYTE fZ, BYTE fN, BYTE fH, BYTE fC, const char *testName, const char *testPhase)
+static void assertFlags(BYTE fZ, BYTE fN, BYTE fH, BYTE fC, const char *testName, unsigned int testPhase)
 {
 	BYTE flagZ_Val = Flags::Get::Z();
 	BYTE flagN_Val = Flags::Get::N();
@@ -29,15 +29,10 @@ static void assertFlags(BYTE fZ, BYTE fN, BYTE fH, BYTE fC, const char *testName
 	// if any of the flag values don't match, we failed the test
 	if ((flagZ_Val != fZ) || (flagN_Val != flagN_Val) || (flagH_Val != fH) || (flagC_Val != fC))
 	{
-		Log::Critical("%s - %s flag test failed. Expected Flags of Z:%d, N:%d, H:%d, C:%d - Got: Z:%d, N:%d, H:%d, C:%d", testName, testPhase, fZ, fN, fH, fC, flagZ_Val, flagN_Val, flagH_Val, flagC_Val);
+		Log::Critical("%s - Test phase %d: flag test failed. Expected Flags of Z:%d, N:%d, H:%d, C:%d - Got: Z:%d, N:%d, H:%d, C:%d", testName, testPhase, fZ, fN, fH, fC, flagZ_Val, flagN_Val, flagH_Val, flagC_Val);
 		return;
 	}
 }
-
-// test phases
-const char *testPhase1 = "Test phase 1";
-const char *testPhase2 = "Test phase 2";
-const char *testPhase3 = "Test phase 3";
 
 // # Eight Bit Tests # //
 
@@ -60,9 +55,9 @@ void UnitTest::Test::EightBit::Add()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0x00, Cpu::Get::AF()->hi, testName, testPhase1);
+	assert(0x00, Cpu::Get::AF()->hi, testName, 1);
 	// check if the flags were ok
-	assertFlags(1, 0, 1, 1, testName, testPhase1); // flags Z, H and C should be set
+	assertFlags(1, 0, 1, 1, testName, 1); // flags Z, H and C should be set
 
 	// # PHASE 2 # //
 
@@ -77,9 +72,9 @@ void UnitTest::Test::EightBit::Add()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0x04, Cpu::Get::AF()->hi, testName, testPhase2);
+	assert(0x04, Cpu::Get::AF()->hi, testName, 2);
 	// check if the flags were ok
-	assertFlags(0, 0, 1, 1, testName, testPhase2); // flags H and C should be set
+	assertFlags(0, 0, 1, 1, testName, 2); // flags H and C should be set
 
 	// # PHASE 3 # //
 
@@ -94,9 +89,9 @@ void UnitTest::Test::EightBit::Add()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0xFF, Cpu::Get::AF()->hi, testName, testPhase3);
+	assert(0xFF, Cpu::Get::AF()->hi, testName, 3);
 	// check if the flags were ok
-	assertFlags(0, 0, 0, 0, testName, testPhase3); // no flags should be set
+	assertFlags(0, 0, 0, 0, testName, 3); // no flags should be set
 }
 
 // test eight bit add carry
@@ -118,9 +113,9 @@ void UnitTest::Test::EightBit::AddCarry()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0x00, Cpu::Get::AF()->hi, testName, testPhase1);
+	assert(0x00, Cpu::Get::AF()->hi, testName, 1);
 	// check if the flags were ok
-	assertFlags(1, 0, 1, 1, testName, testPhase1); // flags Z, H and C should be set
+	assertFlags(1, 0, 1, 1, testName, 1); // flags Z, H and C should be set
 
 	// # PHASE 2 # //
 
@@ -135,9 +130,9 @@ void UnitTest::Test::EightBit::AddCarry()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0x05, Cpu::Get::AF()->hi, testName, testPhase2);
+	assert(0x05, Cpu::Get::AF()->hi, testName, 2);
 	// check if the flags were ok
-	assertFlags(0, 0, 1, 1, testName, testPhase2); // flags H and C should be set
+	assertFlags(0, 0, 1, 1, testName, 2); // flags H and C should be set
 
 	// # PHASE 3 # //
 
@@ -152,9 +147,9 @@ void UnitTest::Test::EightBit::AddCarry()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0xFF, Cpu::Get::AF()->hi, testName, testPhase3);
+	assert(0xFF, Cpu::Get::AF()->hi, testName, 3);
 	// check if the flags were ok
-	assertFlags(0, 0, 0, 0, testName, testPhase3); // no flags should be set
+	assertFlags(0, 0, 0, 0, testName, 3); // no flags should be set
 }
 
 // test eight bit sub
@@ -176,9 +171,9 @@ void UnitTest::Test::EightBit::Sub()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0x02, Cpu::Get::AF()->hi, testName, testPhase1);
+	assert(0x02, Cpu::Get::AF()->hi, testName, 1);
 	// check if the flags were ok
-	assertFlags(0, 1, 1, 1, testName, testPhase1); // flags N, H and C should be set
+	assertFlags(0, 1, 1, 1, testName, 1); // flags N, H and C should be set
 
 	// # PHASE 2 # //
 
@@ -193,9 +188,9 @@ void UnitTest::Test::EightBit::Sub()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0x00, Cpu::Get::AF()->hi, testName, testPhase2);
+	assert(0x00, Cpu::Get::AF()->hi, testName, 2);
 	// check if the flags were ok
-	assertFlags(1, 1, 0, 0, testName, testPhase2); // flags Z and N should be set
+	assertFlags(1, 1, 0, 0, testName, 2); // flags Z and N should be set
 
 	// # PHASE 3 # //
 
@@ -210,7 +205,7 @@ void UnitTest::Test::EightBit::Sub()
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0xFF, Cpu::Get::AF()->hi, testName, testPhase3);
+	assert(0xFF, Cpu::Get::AF()->hi, testName, 3);
 	// check if the flags were ok
-	assertFlags(0, 1, 0, 0, testName, testPhase3); // flag N should be set
+	assertFlags(0, 1, 0, 0, testName, 3); // flag N should be set
 }

@@ -21,6 +21,8 @@ class UnitTest
 				{
 					public:
 						static void Add();
+						static void AddCarry();
+						static void Sub();
 				};
 		};
 };
