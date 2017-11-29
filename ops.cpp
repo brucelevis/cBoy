@@ -44,8 +44,8 @@ void Ops::Math::EightBit::AddCarry(BYTE &val, BYTE val2, int cycles)
 	// get the value of the carry flag
 	BYTE carryFlag = Flags::Get::C();
 	// should we set carry/half-carry?
-	bool setCarry = false;
 	bool setHalfCarry = false;
+	bool setCarry = false;
 	// store the result
 	BYTE result = (val + carryFlag + val2);
 
@@ -100,8 +100,8 @@ void Ops::Math::EightBit::SubCarry(BYTE &val, BYTE val2, int cycles)
 	// get the value of the carry flag
 	BYTE carryFlag = Flags::Get::C();
 	// should we set carry/half-carry?
-	bool setCarry = false;
 	bool setHalfCarry = false;
+	bool setCarry = false;
 	// store the result
 	BYTE result = (val - carryFlag - val2);
 
@@ -355,6 +355,7 @@ void Ops::Math::AddStackPointerR8(int cycles)
 
 	// reset all flags
 	Flags::Reset::All();
+
 	// check for half carry
 	if (((Cpu::Get::SP()->reg & 0xF) + (r8 & 0xF)) > 0xF) Flags::Set::H();
 	// check for carry
@@ -458,7 +459,7 @@ void Ops::General::ComplementA(BYTE &val, int cycles)
 	// set the N & H flags
 	Flags::Set::N();
 	Flags::Set::H();
-	// compliment val
+	// complement val
 	val ^= 0xFF;
 	// add the cycles
 	Cpu::Set::Cycles(cycles);
@@ -650,7 +651,7 @@ void Ops::Bits::ResetMemory(WORD address, BYTE bit, int cycles)
 void Ops::Rotate::LeftCarry(BYTE &val, bool checkForZero, int cycles)
 {
 	// calculate the result
-	BYTE result = ((val << 1) | (Flags::Get::C() >> 7));
+	BYTE result = ((val << 1) | (Flags::Get::C()));
 	// reset all flags
 	Flags::Reset::All();
 
@@ -671,7 +672,7 @@ void Ops::Rotate::LeftCarryMemory(WORD address, bool checkForZero, int cycles)
 	// get the data
 	BYTE val = Memory::ReadByte(address);
 	// calculate the result
-	BYTE result = ((val << 1) | (Flags::Get::C() >> 7));
+	BYTE result = ((val << 1) | (Flags::Get::C()));
 	// reset all flags
 	Flags::Reset::All();
 
@@ -692,7 +693,7 @@ void Ops::Rotate::LeftCarryMemory(WORD address, bool checkForZero, int cycles)
 void Ops::Rotate::RightCarry(BYTE &val, bool checkForZero, int cycles)
 {
 	// calculate the result
-	BYTE result = ((val >> 1) | (Flags::Get::C() << 7));
+	BYTE result = ((val >> 1) | (Flags::Get::C()));
 	// reset all flags
 	Flags::Reset::All();
 
@@ -713,7 +714,7 @@ void Ops::Rotate::RightCarryMemory(WORD address, bool checkForZero, int cycles)
 	// get the data
 	BYTE val = Memory::ReadByte(address);
 	// calculate the result
-	BYTE result = ((val >> 1) | (Flags::Get::C() << 7));
+	BYTE result = ((val >> 1) | (Flags::Get::C()));
 	// reset all flags
 	Flags::Reset::All();
 
