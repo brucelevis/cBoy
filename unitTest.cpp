@@ -209,3 +209,61 @@ void UnitTest::Test::EightBit::Sub()
 	// check if the flags were ok
 	assertFlags(0, 1, 0, 0, testName, 3); // flag N should be set
 }
+
+// test eight bit sub
+void UnitTest::Test::EightBit::SubCarry()
+{
+	// the test name
+	const char *testName = "Test::EightBit::SubCarry()";
+
+	// # PHASE 1 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set A to 0x01
+	Cpu::Set::AF(0x01 << 8 | Cpu::Get::AF()->lo);
+	// set the instruction to 0x98 (SBC A,B)
+	Memory::Write(0x00, 0x98);
+	// set B to 0xFF
+	Cpu::Set::BC(0xFF << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0x02, Cpu::Get::AF()->hi, testName, 1);
+	// check if the flags were ok
+	assertFlags(0, 1, 1, 1, testName, 1); // flags N, H and C should be set
+
+	// # PHASE 2 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set A to 0x01
+	Cpu::Set::AF(0x01 << 8 | Cpu::Get::AF()->lo);
+	// set the instruction to 0xDE (SBC A,d8)
+	Memory::Write(0x00, 0xDE);
+	// set d8 to 0x01
+	Memory::Write(0x01, 0x01);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0xFF, Cpu::Get::AF()->hi, testName, 2);
+	// check if the flags were ok
+	assertFlags(0, 1, 1, 1, testName, 2); // flags N, H & C should be set
+
+	// # PHASE 3 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set A to 0xFF
+	Cpu::Set::AF(0xFF << 8 | Cpu::Get::AF()->lo);
+	// set the instruction to 0x98 (SBC A,B)
+	Memory::Write(0x00, 0x98);
+	// set B to 0x00
+	Cpu::Set::BC(0x00 << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0xFE, Cpu::Get::AF()->hi, testName, 3);
+	// check if the flags were ok
+	assertFlags(0, 1, 0, 0, testName, 3); // flag N should be set
+}

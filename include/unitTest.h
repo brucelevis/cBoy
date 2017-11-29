@@ -23,6 +23,7 @@ class UnitTest
 						static void Add();
 						static void AddCarry();
 						static void Sub();
+						static void SubCarry();
 				};
 		};
 };
