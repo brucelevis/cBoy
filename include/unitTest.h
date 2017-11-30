@@ -28,6 +28,7 @@ class UnitTest
 						static void Inc();
 						static void Compare();
 						static void And();
+						static void Or();
 				};
 		};
 };
