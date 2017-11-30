@@ -371,3 +371,61 @@ void UnitTest::Test::EightBit::Inc()
 	// check if the flags were ok
 	assertFlags(0, 0, 0, 0, testName, 3); // no flags should be set
 }
+
+// test eight bit compare
+void UnitTest::Test::EightBit::Compare()
+{
+	// the test name
+	const char *testName = "Test::EightBit::Compare()";
+
+	// # PHASE 1 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0xB8 (CP A,B)
+	Memory::Write(0x00, 0xB8);
+	// set A to 0xFF
+	Cpu::Set::AF(0xFF << 8 | Cpu::Get::AF()->lo);
+	// set B to 0xFF
+	Cpu::Set::BC(0xFF << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed (dummy, just here for reference)
+	assert(0x00, 0x00, testName, 1);
+	// check if the flags were ok
+	assertFlags(1, 1, 0, 0, testName, 1); // flags Z and N should be set
+
+	// # PHASE 2 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0xFE (CP A,d8)
+	Memory::Write(0x00, 0xFE);
+	// set A to 0xFF
+	Cpu::Set::AF(0xFE << 8 | Cpu::Get::AF()->lo);
+	// set d8 to 0xFF
+	Memory::Write(0x01, 0xFF);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed (dummy, just here for reference)
+	assert(0x00, 0x00, testName, 2);
+	// check if the flags were ok
+	assertFlags(0, 1, 1, 1, testName, 2); // flags N, H and C should be set
+
+	// # PHASE 3 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0xB8 (CP A,B)
+	Memory::Write(0x00, 0xB8);
+	// set A to 0xFF
+	Cpu::Set::AF(0x50 << 8 | Cpu::Get::AF()->lo);
+	// set B to 0xFF
+	Cpu::Set::BC(0xFF << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed (dummy, just here for reference)
+	assert(0x00, 0x00, testName, 3);
+	// check if the flags were ok
+	assertFlags(0, 1, 1, 1, testName, 3); // flags N, H and C should be set
+}
