@@ -29,6 +29,7 @@ class UnitTest
 						static void Compare();
 						static void And();
 						static void Or();
+						static void Xor();
 				};
 		};
 };

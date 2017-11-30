@@ -545,3 +545,61 @@ void UnitTest::Test::EightBit::Or()
 	// check if the flags were ok
 	assertFlags(1, 0, 0, 0, testName, 3); // flag Z should be set
 }
+
+// test eight bit xor
+void UnitTest::Test::EightBit::Xor()
+{
+	// the test name
+	const char *testName = "Test::EightBit::Xor()";
+
+	// # PHASE 1 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0xA8 (XOR A,B)
+	Memory::Write(0x00, 0xA8);
+	// set A to 0xFF
+	Cpu::Set::AF(0xFF << 8 | Cpu::Get::AF()->lo);
+	// set B to 0x90
+	Cpu::Set::BC(0x90 << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed (dummy, just here for reference)
+	assert(0x6F, Cpu::Get::AF()->hi, testName, 1);
+	// check if the flags were ok
+	assertFlags(0, 0, 0, 0, testName, 1); // no flags should be set
+
+	// # PHASE 2 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0xEE (XOR A,d8)
+	Memory::Write(0x00, 0xEE);
+	// set A to 0xF2
+	Cpu::Set::AF(0xF2 << 8 | Cpu::Get::AF()->lo);
+	// set d8 to 0x02
+	Memory::Write(0x01, 0x02);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed (dummy, just here for reference)
+	assert(0xF0, Cpu::Get::AF()->hi, testName, 2);
+	// check if the flags were ok
+	assertFlags(0, 0, 0, 0, testName, 2); // no flags should be set
+
+	// # PHASE 3 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0xA8 (OR A,B)
+	Memory::Write(0x00, 0xA8);
+	// set A to 0xFF
+	Cpu::Set::AF(0xFF << 8 | Cpu::Get::AF()->lo);
+	// set B to 0xFF
+	Cpu::Set::BC(0xFF << 8 | Cpu::Get::BC()->lo);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed (dummy, just here for reference)
+	assert(0x00, Cpu::Get::AF()->hi, testName, 3);
+	// check if the flags were ok
+	assertFlags(1, 0, 0, 0, testName, 3); // flag Z should be set
+}
