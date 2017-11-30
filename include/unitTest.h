@@ -27,6 +27,7 @@ class UnitTest
 						static void Dec();
 						static void Inc();
 						static void Compare();
+						static void And();
 				};
 		};
 };
