@@ -24,6 +24,8 @@ class UnitTest
 						static void AddCarry();
 						static void Sub();
 						static void SubCarry();
+						static void Dec();
+						static void Inc();
 				};
 		};
 };
