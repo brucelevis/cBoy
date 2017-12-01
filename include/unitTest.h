@@ -31,6 +31,12 @@ class UnitTest
 						static void Or();
 						static void Xor();
 				};
+
+				class SixteenBit
+				{
+					public:
+						static void Add();
+				};
 		};
 };
 

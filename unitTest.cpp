@@ -603,3 +603,48 @@ void UnitTest::Test::EightBit::Xor()
 	// check if the flags were ok
 	assertFlags(1, 0, 0, 0, testName, 3); // flag Z should be set
 }
+
+
+// # Sixteen Bit Tests # //
+
+// test sixteen bit add
+void UnitTest::Test::SixteenBit::Add()
+{
+	// the test name
+	const char *testName = "Test::SixteenBit::Add()";
+
+	// # PHASE 1 # //
+	Flags::Reset::Z();
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0x09 (ADD HL,BC)
+	Memory::Write(0x00, 0x09);
+	// set HL to 0xFFFF
+	Cpu::Set::HL(0xFFFF);
+	// set BC to 0x0001
+	Cpu::Set::BC(0x0001);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0x0000, Cpu::Get::HL()->reg, testName, 1);
+	// check if the flags were ok
+	assertFlags(0, 0, 1, 1, testName, 1); // flags H and C should be set
+
+	// # PHASE 2 # //
+
+	// set pc to 0x00
+	Cpu::Set::PC(0x00);
+	// set the instruction to 0x09 (ADD HL,BC)
+	Memory::Write(0x00, 0x09);
+	// set HL to 0x0000
+	Cpu::Set::HL(0x0000);
+	// set BC to 0x0001
+	Cpu::Set::BC(0x0001);
+	// execute the opcode
+	Cpu::ExecuteOpcode();
+	// check if the test passed
+	assert(0x0001, Cpu::Get::HL()->reg, testName, 2);
+	// check if the flags were ok
+	assertFlags(0, 0, 0, 0, testName, 2); // no flags should be set
+}
