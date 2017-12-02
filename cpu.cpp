@@ -472,7 +472,7 @@ void Cpu::ExecuteOpcode()
 		case 0xDF: Ops::Flow::Restart(0x18, 32); break; // RST 18H
 		case 0xE0: Ops::General::EightBit::Write(0xFF00 + Memory::ReadByte(PC), AF.hi, 12); PC += 1; break; // LDH (FF00 + a8),A
 		case 0xE1: HL.reg = Memory::Pop(); Cycles += 12; break; // POP HL
-		case 0xE2: Ops::General::EightBit::Write(0xFF00 + Memory::ReadByte(BC.lo), AF.hi, 8); PC += 1; break; // LD (C),A
+		case 0xE2: Ops::General::EightBit::Write(0xFF00 + Memory::ReadByte(BC.lo), AF.hi, 8); break; // LD (C),A
 		case 0xE5: Memory::Push(HL.reg); Cycles += 16; break; // PUSH HL
 		case 0xE6: Ops::Math::EightBit::And(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // AND A,d8
 		case 0xE7: Ops::Flow::Restart(0x20, 32); break; // RST 20H
@@ -483,7 +483,7 @@ void Cpu::ExecuteOpcode()
 		case 0xEF: Ops::Flow::Restart(0x28, 32); break; // RST 28H
 		case 0xF0: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(0xFF00 + Memory::ReadByte(PC)), 12); PC += 1; break; // LDH A,(FF00 + a8)
 		case 0xF1: AF.reg = (Memory::Pop() & ~0xF); Cycles += 12; break; // POP AF
-		case 0xF2: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); PC += 1; break; // LD A,(FF00 + C)
+		case 0xF2: Ops::General::EightBit::Load(AF.hi, Memory::ReadByte(0xFF00 + BC.lo), 8); break; // LD A,(FF00 + C)
 		case 0xF3: Interrupt::MasterSwitch = false; Cycles += 4; break; // DI
 		case 0xF5: Memory::Push(AF.reg); Cycles += 16; break; // PUSH AF
 		case 0xF6: Ops::Math::EightBit::Or(AF.hi, Memory::ReadByte(PC), 8); PC += 1; break; // OR A,d8

@@ -11,6 +11,7 @@
 #include "include/bit.h"
 #include "include/cpu.h"
 #include "include/flags.h"
+#include "include/log.h"
 #include "include/memory.h"
 #include "include/ops.h"
 
@@ -143,8 +144,7 @@ void Ops::Math::EightBit::Dec(BYTE &val, int cycles)
 	// set/unset the Z flag
 	if (result == 0) Flags::Set::Z();
 	// determine if we half carried 
-	if ((val & 0xF) < (1 & 0xF)) Flags::Set::H();
-
+	if ((result & 0xF) == 0xF) Flags::Set::H();
 	// set val to the result
 	val = result;
  	// add the cycles
@@ -167,7 +167,7 @@ void Ops::Math::EightBit::DecMemory(WORD address, int cycles)
 	// if the result is zero
 	if (result == 0) Flags::Set::Z();
 	// determine if we half carried
-	if ((data & 0xF) < (1 & 0xF)) Flags::Set::H();
+	if ((result & 0xF) == 0xF) Flags::Set::H();
 
 	// write the result back to memory
 	Memory::Write(address, result);
@@ -189,7 +189,7 @@ void Ops::Math::EightBit::Inc(BYTE &val, int cycles)
 	// if the result is zero
 	if (result == 0) Flags::Set::Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(val, 1, 0xF)) Flags::Set::H();
+	if ((result & 0xF) == 0) Flags::Set::H();
 
 	// set val to the result
 	val = result;
@@ -213,7 +213,7 @@ void Ops::Math::EightBit::IncMemory(WORD address, int cycles)
 	// if the result is zero
 	if (result == 0) Flags::Set::Z();
 	// determine if we half carried
-	if (Bit::DidHalfCarry(data, 1, 0xF)) Flags::Set::H();
+	if ((result & 0xF) == 0) Flags::Set::H();
 
 	// write the result back to memory
 	Memory::Write(address, result);
