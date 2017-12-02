@@ -70,7 +70,7 @@ void Timer::UpdateDivider(int clockCycles)
 		// increment the divider
 		Memory::Mem[DIVIDER_ADDRESS] += 1;
 		// reset the divider counter
-		DividerCounter -= clockCycles;
+		DividerCounter -= 256;
 	}
 }
 
