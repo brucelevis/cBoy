@@ -234,19 +234,16 @@ int Cpu::Init(bool usingBios)
 // execute Opcode
 void Cpu::ExecuteOpcode()
 {
-	// get the current Opcode
 	BYTE Opcode = Memory::ReadByte(PC);
 
 	//Log::ToFile(PC, Opcode, Flags::Get::Z(), Flags::Get::N(), Flags::Get::H(), Flags::Get::C());
 	//Log::ExecutedOpcode(Opcode);
 
-	// increment the program counter
 	if (!Operation.Stop && !Operation.Halt)
 	{
 		PC += 1;
 	}
 
-	// handle the Opcode
 	switch(Opcode)
 	{
 		case 0x00: Cycles += 4; break; // NOP
@@ -503,14 +500,11 @@ void Cpu::ExecuteOpcode()
 		// only enable the interrupt AFTER the next instruction has ran
 		if (interruptCounter == 2)
 		{
-			// enable the interrupt master switch
 			Interrupt::MasterSwitch = true;
-			// reset the interrupt counter
 			interruptCounter = 0;
-			// disable pending interrupts
 			Operation.PendingInterruptEnabled = false;
 		}
-		// increment the interrupt counter
+
 		interruptCounter += 1;
 	}
 }
@@ -521,7 +515,6 @@ void Cpu::ExecuteExtendedOpcode()
 	BYTE Opcode = Memory::ReadByte(PC);
 	PC += 1;
 
-	// handle the extended Opcode
 	switch(Opcode)
 	{
 		// 8-bit swap

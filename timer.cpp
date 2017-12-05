@@ -31,17 +31,15 @@ void Timer::Reset()
 	BYTE TAC = Memory::ReadByte(TAC_ADDRESS);
 	// reset the value of the enabled bit
 	Bit::Reset(TAC, 2);
-	// Init the timer again
+	Memory::Write(TAC_ADDRESS, TAC);
 	Timer::Init();
 }
 
 // check if the timer is enabled
 bool Timer::IsEnabled()
 {
-	// get the value of the TAC register
-	BYTE TAC = Memory::ReadByte(TAC_ADDRESS);
 	// return the value of the enabled bit
-	return Bit::Get(TAC, 2);
+	return Bit::Get(Memory::ReadByte(TAC_ADDRESS), 2);
 }
 
 // get the timer clock frequency
@@ -54,22 +52,17 @@ BYTE Timer::GetClockFrequency()
 // set the clock frequency
 void Timer::SetClockFrequency()
 {
-	// set the timer counter to the correct frequency
-	TimerCounter += FREQUENCIES[GetClockFrequency()];
+	TimerCounter = FREQUENCIES[GetClockFrequency()];
 }
 
 // update divider
 void Timer::UpdateDivider(int clockCycles)
 {
-	// increment the divider counter
 	DividerCounter += clockCycles;
 
-	// when the divider counter overflows
 	if (DividerCounter > 255)
 	{
-		// increment the divider
 		Memory::Mem[DIVIDER_ADDRESS] += 1;
-		// reset the divider counter
 		DividerCounter -= 256;
 	}
 }
@@ -77,23 +70,19 @@ void Timer::UpdateDivider(int clockCycles)
 // update the timer
 void Timer::Update(int clockCycles)
 {
-	// update the divider reg
 	UpdateDivider(clockCycles);
 
-	// if the clock is enabled
 	if (IsEnabled())
 	{
-		// decrement the timer
 		TimerCounter -= clockCycles;
 
-		// when the timer hits zero
 		if (TimerCounter <= 0)
 		{
 			// get the TIMA reg's current value
 			BYTE currentTIMA = Memory::ReadByte(TIMA_ADDRESS);
 
 			// TIMA overflow
-			if (currentTIMA == 0xFF)
+			if (currentTIMA == 0x00)
 			{
 				didTimaOverflow = true;
 			}
@@ -101,18 +90,13 @@ void Timer::Update(int clockCycles)
 			// write the new value to the tima reg
 			Memory::Write(TIMA_ADDRESS, currentTIMA + 1);
 
-			// if TIMA overflowed
 			if (didTimaOverflow)
 			{
-				// write the value of TMA to TIMA
 				Memory::Write(TIMA_ADDRESS, Memory::ReadByte(TMA_ADDRESS));
-				// request a timer interrupt
 				Interrupt::Request(Interrupt::IDS::TIMER);
-				// reset the overflow bool
 				didTimaOverflow = false;
 			}
 
-			// set the clock frequency
 			SetClockFrequency();
 		}
 	}

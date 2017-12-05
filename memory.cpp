@@ -106,13 +106,11 @@ void Memory::Write(WORD address, BYTE data)
 		// update timer settings
 		case TAC_ADDRESS:
 		{
-			// get the current clock frequency
 			BYTE currentFrequency = Timer::GetClockFrequency();
 			// write the new TAC data (upper 5 bits are fixed to one)
 			Mem[address] = (data | 0xF8);
-			// get the new clock frequency
 			BYTE newFrequency = Timer::GetClockFrequency();
-			// if the new frequency isn't equal to the current one
+
 			if (newFrequency != currentFrequency)
 			{
 				Timer::SetClockFrequency();
@@ -127,20 +125,11 @@ void Memory::Write(WORD address, BYTE data)
 		}
 		break;
 
-		// reset current scanline if anything attempts to write to it
-		case LY_ADDRESS:
-		{
-			Mem[address] = 0x0;
-		}
-		break;
+		// LY is read-only
+		case LY_ADDRESS: break;
 
 		// disable writes to protected memory
-		case 0xFEA0 ... 0xFEFF:
-		{
-			// do nothing
-			//Log::Critical("ATTEMPT TO WRITE TO PROTECTED MEMORY BLOCKED");
-		}
-		break;
+		case 0xFEA0 ... 0xFEFF: break;
 
 		// unmapped
 		case 0xFF4C ... 0xFF7F:
@@ -167,7 +156,6 @@ void Memory::Write(WORD address, BYTE data)
 		// write
 		default:
 		{
-			// wrte to memory
 			Mem[address] = data;
 		}
 		break;
@@ -191,10 +179,8 @@ void Memory::Push(WORD data)
 // pop
 WORD Memory::Pop()
 {
-	// get the data
 	WORD data = ReadWord(Cpu::Get::SP()->reg);
-	// increment the stack pointer
 	Cpu::Set::SP(Cpu::Get::SP()->reg + 2);
-	// return the data
+
 	return data;
 }
