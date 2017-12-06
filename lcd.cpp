@@ -52,6 +52,8 @@ void Lcd::Reset()
 			Screen[y][x][2] = 15;
 		}
 	}
+
+	ScanlineCounter = LCD_CLOCK_CYCLES;
 }
 
 // check if the LCD is enabled
@@ -82,12 +84,14 @@ int Lcd::SetLCDStatus()
 		// reset the scanline counter
 		ScanlineCounter = LCD_CLOCK_CYCLES;
 		// reset the scanline
-		Memory::Write(LY_ADDRESS, 0);
+		Memory::Mem[LY_ADDRESS] = 0x00;
 		// set mode 1
 		Bit::Set(stat, 0);
 		Bit::Reset(stat, 1);
+		// 
+		stat &= 0xF8;
 		// write the mode to memory
-		Memory::Write(STAT_ADDRESS, stat | 0x80);
+		Memory::Write(STAT_ADDRESS, stat);
 		return 0;
 	}
 
@@ -142,7 +146,6 @@ int Lcd::SetLCDStatus()
 	// if we're in a new mode, request the appropriate interrupt
 	if (requestInterrupt && (nextMode != currentMode))
 	{
-		Log::Critical("current mode is %d", currentMode);
 		Interrupt::Request(Interrupt::IDS::LCD);
 	}
 
@@ -152,7 +155,7 @@ int Lcd::SetLCDStatus()
 		// set bit 2 on the stat register
 		Bit::Set(stat, 2);
 
-		// if bit 2 is set (above) and bit 6 is set, request an interrupt
+		// if bit 6 is set, request an interrupt
 		if (Bit::Get(stat, 6))
 		{
 			Interrupt::Request(Interrupt::IDS::LCD);
@@ -164,7 +167,6 @@ int Lcd::SetLCDStatus()
 		Bit::Reset(stat, 2);
 	}
 
-	// update the stat reg
 	Memory::Write(STAT_ADDRESS, stat | 0x80);
 
 	return 0;
@@ -322,38 +324,34 @@ int Lcd::Update(int cycles)
 	// if the screen isn't enabled, return
 	if (!IsLCDEnabled()) return 0;
 
-	// decrement the scanline counter
 	ScanlineCounter -= cycles;
 
-	// if the scanline counter hits zero
 	if (ScanlineCounter <= 0)
 	{
-		// increment the scanline
 		Memory::Mem[LY_ADDRESS] += 1;
-		// get the current scanline value
 		BYTE currentScanline = Memory::ReadByte(LY_ADDRESS);
 
+		// we can draw the scanline
+		if (currentScanline < 144)
+		{
+			DrawScanline();
+			UpdateTexture();
+		}
 		// we've hit vblank
 		if (currentScanline == 144)
 		{
 			// request the vblank interrupt
 			Interrupt::Request(Interrupt::VBLANK);
 		}
-		// we can draw the scanline
-		if (currentScanline < 144)
-		{
-			DrawScanline();
-		}
 		// time to reset the scanline
 		if (currentScanline > 153)
 		{
 			// reset the scanline
-			Memory::Write(LY_ADDRESS, 0x0);
+			Memory::Mem[LY_ADDRESS] = 0x00;
 			// update the texture
-			UpdateTexture();
+			//UpdateTexture();
 		}
 
-		// reset the scanline counter
 		ScanlineCounter += LCD_CLOCK_CYCLES;
 	}
 
@@ -363,14 +361,12 @@ int Lcd::Update(int cycles)
 // update the texture
 void Lcd::UpdateTexture()
 {
-	// draw the image
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 160, 144, 0, GL_RGB, GL_UNSIGNED_BYTE, Screen);
 }
 
 // render the LCD
 void Lcd::Render()
 {
-	// draw the textured quad
 	glBegin(GL_QUADS);
 	glTexCoord2f(0, 0); glVertex2f(0, 0);
 	glTexCoord2f(0, 1); glVertex2f(0, 144);

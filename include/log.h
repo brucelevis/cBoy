@@ -20,7 +20,7 @@ class Log
 		static void Critical(const char *fmt, ...);
 		static void ExecutedOpcode(BYTE opcode);
 		static void UnimplementedOpcode(BYTE opcode);
-		static void ToFile(WORD pc, BYTE opcode, BYTE fZ, BYTE fN, BYTE fH, BYTE fC);
+		static void ToFile(WORD pc, BYTE opcode);
 };
 
 #endif

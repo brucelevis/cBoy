@@ -7,6 +7,7 @@
 // includes
 #include <cstdio>
 #include <cstdarg>
+#include "include/cpu.h"
 #include "include/log.h"
 
 // open log output file
@@ -68,8 +69,8 @@ void Log::UnimplementedOpcode(BYTE opcode)
 }
 
 // log to file
-void Log::ToFile(WORD pc, BYTE opcode, BYTE fZ, BYTE fN, BYTE fH, BYTE fC)
+void Log::ToFile(WORD pc, BYTE opcode)
 {
 	//fprintf(logOutput, "%04X: 0x%02X\n", pc, opcode);
-	fprintf(logOutput, "%04X:%04X:%d%d%d%d\n", pc, opcode, fZ, fN, fH, fC);
+	fprintf(logOutput, "%04X:%04X:%04X:%04X:%04X:%04X:%04X\n", pc, opcode, Cpu::Get::AF()->reg, Cpu::Get::BC()->reg, Cpu::Get::DE()->reg, Cpu::Get::HL()->reg, Cpu::Get::SP()->reg);
 }
