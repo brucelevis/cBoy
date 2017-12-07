@@ -12,13 +12,11 @@
 #include "include/flags.h"
 #include "include/cpu.h"
 
-// set flags
+// definitions
 #define FLAG_Z 7
 #define FLAG_N 6
 #define FLAG_H 5
 #define FLAG_C 4
-// ## macros ## //
-
 
 // # getters #
 
@@ -67,8 +65,8 @@ void Flags::Set::C()
 void Flags::Set::All()
 {
 	Bit::Set(Cpu::Get::AF()->lo, FLAG_Z);
-	Bit::Set(Cpu::Get::AF()->lo, FLAG_H);
 	Bit::Set(Cpu::Get::AF()->lo, FLAG_N);
+	Bit::Set(Cpu::Get::AF()->lo, FLAG_H);
 	Bit::Set(Cpu::Get::AF()->lo, FLAG_C);
 }
 
@@ -97,7 +95,7 @@ void Flags::Reset::C()
 void Flags::Reset::All()
 {
 	Bit::Reset(Cpu::Get::AF()->lo, FLAG_Z);
-	Bit::Reset(Cpu::Get::AF()->lo, FLAG_H);
 	Bit::Reset(Cpu::Get::AF()->lo, FLAG_N);
+	Bit::Reset(Cpu::Get::AF()->lo, FLAG_H);
 	Bit::Reset(Cpu::Get::AF()->lo, FLAG_C);
 }

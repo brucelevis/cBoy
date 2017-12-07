@@ -10,10 +10,6 @@
 // includes
 #include "typedefs.h"
 
-// definitions
-#define INT_ENABLED_ADDRESS 0xFFFF
-#define INT_REQUEST_ADDRESS 0xFF0F
-
 // interrupts class
 class Interrupt
 {

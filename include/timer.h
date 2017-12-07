@@ -10,12 +10,6 @@
 // includes
 #include "typedefs.h"
 
-// definitions
-#define TIMA_ADDRESS 0xFF05
-#define TAC_ADDRESS 0xFF07
-#define TMA_ADDRESS 0xFF06
-#define DIVIDER_ADDRESS 0xFF04
-
 // timer class
 class Timer
 {

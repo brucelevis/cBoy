@@ -141,15 +141,15 @@ void UnitTest::Test::EightBit::AddCarry()
 	// set the instruction to 0x88 (ADC A,B)
 	Memory::Write(0x00, 0x88);
 	// set A to 0xFF
-	Cpu::Set::AF(0xFE << 8 | Cpu::Get::AF()->lo);
+	Cpu::Set::AF(0xFF << 8 | Cpu::Get::AF()->lo);
 	// set B to 0x00
-	Cpu::Set::BC(0x00 << 8 | Cpu::Get::BC()->lo);
+	Cpu::Set::BC(0x02 << 8 | Cpu::Get::BC()->lo);
 	// execute the opcode
 	Cpu::ExecuteOpcode();
 	// check if the test passed
-	assert(0xFF, Cpu::Get::AF()->hi, testName, 3);
+	assert(0x02, Cpu::Get::AF()->hi, testName, 3);
 	// check if the flags were ok
-	assertFlags(0, 0, 0, 0, testName, 3); // no flags should be set
+	assertFlags(0, 0, 1, 0, testName, 3); // flag H should be set
 }
 
 // test eight bit sub

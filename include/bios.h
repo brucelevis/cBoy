@@ -7,8 +7,8 @@
 #ifndef BIOS_H
 #define BIOS_H
 
-// definitions
-typedef unsigned char BYTE;
+// includes
+#include "typedefs.h"
 
 // bios class
 class Bios

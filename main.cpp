@@ -22,7 +22,9 @@
 #include "include/memory.h"
 #include "include/rom.h"
 #include "include/timer.h"
+#include "include/unitTest.h"
 
+#define DO_UNIT_TESTS false
 // screen dimensions
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -54,7 +56,7 @@ static SDL_GLContext glContext = NULL;
 static bool InitSDL()
 {
 	// if SDL initialized successfully
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) >= 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) >= 0)
 	{
 		// set the Open GL version
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -152,8 +154,6 @@ static void EmulationLoop()
 				break;
 			}
 
-			// service interupts
-			Interrupt::Service();
 			// store the current cycle
 			int currentCycle = Cpu::Get::Cycles();
 			// execute the next opcode
@@ -164,6 +164,8 @@ static void EmulationLoop()
 			Timer::Update(cycles);
 			// update graphics
 			Lcd::Update(cycles);
+			// service interupts
+			Interrupt::Service();
 			// increment the instructions ran
 			instructionsRan++;
 		}
@@ -171,8 +173,6 @@ static void EmulationLoop()
 	// stepping through
 	else
 	{
-		// service interupts
-		Interrupt::Service();
 		// store the current cycle
 		int currentCycle = Cpu::Get::Cycles();
 		// execute the next opcode
@@ -183,6 +183,8 @@ static void EmulationLoop()
 		Timer::Update(cycles);
 		// update graphics
 		Lcd::Update(cycles);
+		// service interupts
+		Interrupt::Service();
 		// increment the instructions ran
 		instructionsRan++;
 	}
@@ -550,6 +552,7 @@ int main(int argc, char* args[])
 	{
 		// load rom
 		//Rom::Load("roms/Tetris.gb");
+		//Rom::Load("roms/Tetris-USA.gb");
 		//Rom::Load("roms/dr_mario.gb");
 		//Rom::Load("roms/The Legend of Zelda - Link's Awakening.gb");
 		//Rom::Load("roms/tests/cpu_instrs.gb");
@@ -560,13 +563,13 @@ int main(int argc, char* args[])
 		//Rom::Load("roms/tests/cpu_instrs/01-special.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/02-interrupts.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/03-op sp,hl.gb"); // fails
-		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // fails
-		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // fails
-		Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // fails
-		//Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/04-op r,imm.gb"); // passes!
+		//Rom::Load("roms/tests/cpu_instrs/05-op rp.gb"); // passes!
+		//Rom::Load("roms/tests/cpu_instrs/06-ld r,r.gb"); // passes!
+		Rom::Load("roms/tests/cpu_instrs/07-jr,jp,call,ret,rst.gb"); // fails
 		//Rom::Load("roms/tests/cpu_instrs/08-misc instrs.gb"); // fails - prints test name twice and never finishes
 		//Rom::Load("roms/tests/cpu_instrs/09-op r,r.gb"); // fails
-		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // fails
+		//Rom::Load("roms/tests/cpu_instrs/10-bit ops.gb"); // passes!
 		//Rom::Load("roms/tests/cpu_instrs/11-op a,(hl).gb"); // fails
 
 		// load bios
@@ -578,6 +581,24 @@ int main(int argc, char* args[])
 		Timer::Init();
 		// init Lcd
 		Lcd::Init();
+
+		// start unit tests
+		if (DO_UNIT_TESTS)
+		{
+			UnitTest::Test::EightBit::Add();
+			UnitTest::Test::EightBit::AddCarry();
+			UnitTest::Test::EightBit::Sub();
+			UnitTest::Test::EightBit::SubCarry();
+			UnitTest::Test::EightBit::Dec();
+			UnitTest::Test::EightBit::Inc();
+			UnitTest::Test::EightBit::Compare();
+			UnitTest::Test::EightBit::And();
+			UnitTest::Test::EightBit::Or();
+			UnitTest::Test::EightBit::Xor();
+			//
+			UnitTest::Test::SixteenBit::Add();
+		}	
+
 		// execute the main loop
 		StartMainLoop();
 	}

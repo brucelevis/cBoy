@@ -75,17 +75,15 @@ void Memory::Write(WORD address, BYTE data)
 	switch(address)
 	{
 		// Get serial port output
-		case 0xFF02:
+		case SERIAL_PORT_ADDRESS:
 		{
-			if (data == 0x81)
-			{
-				printf("%c", ReadByte(0xFF01));
-			}
+			if (data == 0x81) //printf("%c", ReadByte(0xFF01));
+			Mem[address] = data;
 		}
 		break;
 
 		// DMA
-		case 0xFF46:
+		case DMA_ADDRESS:
 		{
 			// get the address
 			WORD address = (data << 8);
@@ -99,8 +97,8 @@ void Memory::Write(WORD address, BYTE data)
 		break;
 
 		// interrupt request address
-		case 0xFF0F:
-			Mem[0xFF0F] = (data | 0xE0);
+		case INT_REQUEST_ADDRESS:
+			Mem[address] = (data | 0xE0);
 		break;
 
 		// update timer settings
@@ -128,11 +126,14 @@ void Memory::Write(WORD address, BYTE data)
 		// LY is read-only
 		case LY_ADDRESS: break;
 
+		//case STAT_ADDRESS: Mem[address] = 0x85; break;
+		//case LCDC_ADDRESS: Mem[address] = data | 0x90; break;
+
 		// disable writes to protected memory
-		case 0xFEA0 ... 0xFEFF: break;
+		case PROTECTED_MEM_START_ADDRESS ... PROTECTED_MEM_END_ADDRESS: break;
 
 		// unmapped
-		case 0xFF4C ... 0xFF7F:
+		case UNMAPPED_MEM_START_ADDRESS ... UNMAPPED_MEM_END_ADDRESS:
 			// copy rom back over bios
 			if (data == 0x1)
 			{
@@ -142,13 +143,13 @@ void Memory::Write(WORD address, BYTE data)
 		break;
 
 		// echo ram (1)
-		case 0xC000 ... 0xDE00:
+		case ECHO_RAM_1_START_ADDRESS ... ECHO_RAM_1_END_ADDRESS:
 			Mem[address] = data;
 			Mem[address + 0x2000] = data;
 		break;
 
 		// echo ram (2)
-		case 0xE000 ... 0xFE00:
+		case ECHO_RAM_2_START_ADDRESS ... ECHO_RAM_2_END_ADDRESS:
 			Mem[address] = data;
 			Mem[address - 0x2000] = data;
 		break;
