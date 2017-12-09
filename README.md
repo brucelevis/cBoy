@@ -4,6 +4,8 @@ cBoy is a work in-progress [Nintendo GameBoy](https://en.wikipedia.org/wiki/Game
 
 This project is a "next step" project for me, after writing several [Chip8](https://en.wikipedia.org/wiki/CHIP-8) Emulators.
 
+**NOTE**:: This project has been cancelled. Due to various issues. It is superceded by [DreamBoy](https://github.com/DannyGlover/dreamboy), my new and improved GameBoy Emulator.
+
 #### Screenshots:
 
 ![Image 1](https://i.allthepics.net/2017/11/21/Screenshot-from-2017-11-21-17-07-10ccbc65c16126b60a.png)
